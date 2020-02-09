@@ -12,3 +12,7 @@ warp = "*"
 sqlx = { version = "*", default-features = false, features = [ "runtime-tokio", "macros", "postgres" ] }
 dotenv = "*"
 futures = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+argonautica = "*"
