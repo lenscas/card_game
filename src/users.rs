@@ -6,6 +6,7 @@ use warp::{reject::Rejection, Reply};
 
 use serde_derive::Deserialize;
 
+use crate::errors::ReturnErrors;
 use argonautica::{Hasher, Verifier};
 
 #[derive(Deserialize)]
@@ -24,7 +25,7 @@ pub struct LoginData {
 pub async fn get_db_con(db: PgPool) -> Result<PoolConnection<PgConnection>, Rejection> {
     match db.acquire().await {
         Ok(x) => Ok(x),
-        Err(_) => Err(warp::reject::not_found()),
+        Err(x) => Err(warp::reject::custom::<ReturnErrors>(x.into())),
     }
 }
 
