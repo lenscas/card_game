@@ -1,3 +1,4 @@
+use crate::util::CastRejection;
 use dotenv::var;
 use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
@@ -43,40 +44,85 @@ fn json_body_login() -> impl Filter<Extract = (LoginData,), Error = warp::Reject
 
 pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Rejection> {
     let mut con = get_db_con(db).await?;
-    match query!(
+    let user = query!(
         "SELECT id,password FROM users where username = $1",
         req_data.username
     )
     .fetch_one(&mut con)
     .await
-    {
-        Ok(user) => {
-            let v = Verifier::default()
-                .with_secret_key(var("PEPPER").unwrap())
-                .with_password(req_data.password)
-                .with_hash(user.password)
-                .verify();
-            match v {
-                Ok(res) => {
-                    if res {
-                        Ok("Logged in correctly!")
-                    } else {
-                        Err(warp::reject::reject())
+    .half_cast()
+    .map_err(|err| {
+        let err = dbg!(err);
+        err.map_not_found(|| {
+            ReturnErrors::CustomError(
+                "{\"success\":false}".into(),
+                warp::http::StatusCode::NOT_FOUND,
+            )
+        })
+    })?;
+
+    let v = Verifier::default()
+        .with_secret_key(var("PEPPER").unwrap())
+        .with_password(req_data.password)
+        .with_hash(user.password)
+        .verify()
+        .cast()?;
+    if v {
+        use base64::encode;
+        use rand::{OsRng, Rng};
+        use sha2::{Digest, Sha256};
+        use sqlx::Error;
+        use std::time::SystemTime;
+        let secret = var("LOGIN_TOKEN_SECRET").unwrap();
+        for _ in 0..3 {
+            let now = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+
+            let mut bytes = [0u8, 16];
+            OsRng::new().unwrap().fill_bytes(&mut bytes);
+            let token = format!(
+                "{}/{}/{}",
+                now,
+                bytes.iter().map(|v| v.to_string()).collect::<String>(),
+                secret
+            );
+            let token = Sha256::digest(token.as_bytes());
+            let token = encode(&token);
+
+            let success = query!(
+                "INSERT INTO sessions ( hash,user_id) VALUES ($1,$2)",
+                token,
+                user.id
+            )
+            .execute(&mut con)
+            .await;
+            match success {
+                Ok(_) => return Ok(format!("{{\"success\":true,\"token\":\"{}\"", token)),
+                Err(x) => match x {
+                    Error::Database(x) => {
+                        dbg!(x);
                     }
-                }
-                Err(x) => {
-                    dbg!(x);
-                    Err(warp::reject::reject())
-                }
+                    x => {
+                        let x = dbg!(x);
+                        return Err(x).cast();
+                    }
+                },
             }
         }
-        Err(x) => {
-            dbg!(x);
-            Err(warp::reject::reject())
-        }
+        return Err(ReturnErrors::CustomError(
+            "{{\"success\":false}}".into(),
+            warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+        ))
+        .cast();
+    } else {
+        Err(ReturnErrors::CustomError(
+            "{\"success\":false}".into(),
+            warp::http::StatusCode::NOT_FOUND,
+        )
+        .into())
     }
-
-    //return Ok("awesome");
 }
 
 pub async fn register(reg_data: RegisterData, db: PgPool) -> Result<impl Reply, Rejection> {

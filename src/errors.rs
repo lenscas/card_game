@@ -9,7 +9,27 @@ pub enum ReturnErrors {
     DatabaseError(Box<dyn DatabaseError + 'static + Send + Sync>),
     NotFound,
     HashError(HashError),
+    CustomError(String, warp::http::StatusCode),
 }
+
+impl ReturnErrors {
+    pub fn on_db_error(
+        self,
+        run: impl Fn(Box<dyn DatabaseError + 'static + Send + Sync>) -> ReturnErrors,
+    ) -> Self {
+        match self {
+            Self::DatabaseError(x) => run(x),
+            x => x,
+        }
+    }
+    pub fn map_not_found(self, run: impl Fn() -> ReturnErrors) -> ReturnErrors {
+        match self {
+            Self::NotFound => run(),
+            x => x,
+        }
+    }
+}
+
 impl warp::reject::Reject for ReturnErrors {}
 
 impl From<SqlError> for ReturnErrors {

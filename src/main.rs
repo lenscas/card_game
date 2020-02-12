@@ -97,5 +97,6 @@ fn handle_custom_error(error: &ReturnErrors) -> (StatusCode, String) {
             StatusCode::INTERNAL_SERVER_ERROR,
             "something wend wrong".into(),
         ),
+        ReturnErrors::CustomError(message, code) => (*code, message.to_string()),
     }
 }
