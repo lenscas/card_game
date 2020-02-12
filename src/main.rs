@@ -1,3 +1,4 @@
+use crate::users::force_logged_in;
 use crate::util::CastRejection;
 use dotenv::{dotenv, var};
 use errors::ReturnErrors;
@@ -44,6 +45,10 @@ async fn main() {
         users::register_route(pool.clone())
             .or(users::login_route(pool.clone()))
             .or(warp::get().and(from_db).or(hello))
+            .or(warp::get()
+                .and(warp::path("test"))
+                .and(force_logged_in(pool))
+                .map(|v| format!("awesome? {}", v)))
             .recover(handle_rejection),
     )
     .run(([127, 0, 0, 1], 3030))

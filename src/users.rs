@@ -175,6 +175,7 @@ pub fn register_route(
             .and_then(register),
     )
 }
+
 pub fn login_route(
     db: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -185,4 +186,19 @@ pub fn login_route(
             .and(with_db(db))
             .and_then(login),
     )
+}
+
+pub fn force_logged_in(
+    db: PgPool,
+) -> impl Filter<Extract = (i32,), Error = warp::Rejection> + Clone {
+    warp::header::header("authorization_token")
+        .and(with_db(db))
+        .and_then(|token: String, mut db: PgPool| async move {
+            let token = dbg!(token);
+            query!("SELECT user_id FROM sessions WHERE hash = $1", token)
+                .fetch_one(&mut db)
+                .await
+                .map(|v| v.user_id)
+                .cast()
+        })
 }
