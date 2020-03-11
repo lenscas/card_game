@@ -1,0 +1,15 @@
+[package]
+name = "card_game_client"
+version = "0.1.0"
+authors = ["lenscas <lenscas@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = {version = "*",features=["blocking"]}
+serde = "*"
+serde_json =  "*"
+serde_derive = "*"
+mergui = {path="../mergui"}
+quicksilver= {git="https://github.com/ryanisaacg/quicksilver.git", branch="add-font-support"}
