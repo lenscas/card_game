@@ -13,3 +13,4 @@ serde_json =  "*"
 serde_derive = "*"
 mergui = {path="../mergui"}
 quicksilver= {git="https://github.com/ryanisaacg/quicksilver.git", branch="add-font-support"}
+async-trait = "*"
