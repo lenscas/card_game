@@ -61,6 +61,7 @@ pub struct ErrorMessage {
 }
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+    let err = dbg!(err);
     let code;
     let message: String;
 
@@ -98,10 +99,7 @@ fn handle_custom_error(error: &ReturnErrors) -> (StatusCode, String) {
             "something wend wrong".into(),
         ),
         ReturnErrors::NotFound => (StatusCode::NOT_FOUND, "resource not found".into()),
-        ReturnErrors::HashError(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "something wend wrong".into(),
-        ),
+        ReturnErrors::HashError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into()),
         ReturnErrors::CustomError(message, code) => (*code, message.to_string()),
     }
 }

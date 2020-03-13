@@ -2,6 +2,7 @@ use crate::util::CastRejection;
 use dotenv::var;
 use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
+use warp::http::StatusCode;
 use warp::Filter;
 use warp::{reject::Rejection, Reply};
 
@@ -99,7 +100,7 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
             .execute(&mut con)
             .await;
             match success {
-                Ok(_) => return Ok(format!("{{\"success\":true,\"token\":\"{}\"", token)),
+                Ok(_) => return Ok(format!("{{\"success\":true,\"token\":\"{}\"}}", token)),
                 Err(x) => match x {
                     Error::Database(x) => {
                         dbg!(x);
@@ -111,11 +112,11 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
                 },
             }
         }
-        return Err(ReturnErrors::CustomError(
+        Err(ReturnErrors::CustomError(
             "{{\"success\":false}}".into(),
             warp::http::StatusCode::INTERNAL_SERVER_ERROR,
         ))
-        .cast();
+        .cast()
     } else {
         Err(ReturnErrors::CustomError(
             "{\"success\":false}".into(),
@@ -185,7 +186,12 @@ pub fn login_route(
             .and(json_body_login())
             .and(with_db(db))
             .and_then(login),
-    )
+    ) /*
+      .recover(|v| async move {
+          dbg!(v);
+          let var_name = warp::reply::with_status("lol", StatusCode::INTERNAL_SERVER_ERROR);
+          Ok(var_name)
+      })*/
 }
 
 pub fn force_logged_in(
