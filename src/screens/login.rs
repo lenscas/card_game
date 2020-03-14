@@ -1,8 +1,5 @@
 use super::Screen;
-use crate::{
-    responses::{CustomResult, LoginResponse},
-    Wrapper,
-};
+use crate::Wrapper;
 use async_trait::async_trait;
 use mergui::{
     channels::{BasicClickable, Clickable, InputChannel},
@@ -18,7 +15,6 @@ use quicksilver::{
     graphics::{Color, Image},
     Result as QResult,
 };
-use reqwest::blocking as reqw;
 
 pub(crate) struct Login {
     _layer: LayerId,
@@ -111,27 +107,20 @@ impl Screen for Login {
     async fn event(
         &mut self,
         wrapper: &mut Wrapper<'_>,
-        e: &quicksilver::lifecycle::Event,
+        _: &quicksilver::lifecycle::Event,
     ) -> QResult<Option<Box<dyn Screen>>> {
-        wrapper.context.event(&e, &wrapper.window);
         if self.login_button.channel.has_clicked()
             && self.password_input.channel.get() != ""
             && self.name_input.channel.get() != ""
         {
-            let client = reqw::Client::new();
-            let x = client
-                .post("http://127.0.0.1:3030/login")
-                .body(format!(
-                    "{{\"username\":\"{}\",\"password\":\"{}\"}}",
+            wrapper
+                .client
+                .log_in(
                     self.name_input.channel.get(),
-                    self.password_input.channel.get()
-                ))
-                .send()
-                .expect("Something wend wrong :(");
-            let res: CustomResult<LoginResponse> =
-                serde_json::from_str(&x.text().unwrap()).unwrap();
-            let v = Result::<_, _>::from(res).unwrap();
-            println!("{:?}", v);
+                    self.password_input.channel.get(),
+                )
+                .await
+                .unwrap();
         }
         Ok(None)
     }

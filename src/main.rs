@@ -8,8 +8,10 @@ use quicksilver::{
 
 use mergui::Context;
 
+mod client;
 mod responses;
 mod screens;
+pub(crate) use client::Client;
 
 fn main() {
     run(
@@ -28,6 +30,7 @@ pub(crate) struct Wrapper<'a> {
     pub gfx: Graphics,
     pub events: EventStream,
     pub context: Context<'a>,
+    pub client: Client,
 }
 
 async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
@@ -37,6 +40,7 @@ async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
         gfx,
         events,
         context,
+        client: Client::new("http://127.0.0.1:3030/".into()),
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;
