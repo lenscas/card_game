@@ -40,16 +40,43 @@ async fn main() {
         .and(warp::any().map(move || pool2.clone()))
         .and_then(handle_from_db);
 
-    //let user_handling = warp::post().and(warp::path("/login").map(|| "awesome"));
+    use http::method::Method;
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_credentials(true)
+        .allow_headers(vec![
+            "User-Agent",
+            "Sec-Fetch-Mode",
+            "Referer",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "content-type",
+        ])
+        .allow_methods(
+            vec![
+                Method::GET,
+                Method::POST,
+                Method::PUT,
+                Method::DELETE,
+                Method::OPTIONS,
+            ]
+            .into_iter(),
+        );
+
     warp::serve(
-        users::register_route(pool.clone())
-            .or(users::login_route(pool.clone()))
-            .or(warp::get().and(from_db).or(hello))
-            .or(warp::get()
-                .and(warp::path("test"))
-                .and(force_logged_in(pool))
-                .map(|v| format!("awesome? {}", v)))
-            .recover(handle_rejection),
+        warp::any()
+            .and(
+                users::register_route(pool.clone())
+                    .or(users::login_route(pool.clone()))
+                    .or(warp::get().and(from_db).or(hello))
+                    .or(warp::get()
+                        .and(warp::path("test"))
+                        .and(force_logged_in(pool))
+                        .map(|v| format!("awesome? {}", v)))
+                    .recover(handle_rejection),
+            )
+            .with(cors),
     )
     .run(([127, 0, 0, 1], 3030))
     .await;

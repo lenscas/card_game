@@ -2,11 +2,10 @@ use crate::util::CastRejection;
 use dotenv::var;
 use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
-use warp::http::StatusCode;
 use warp::Filter;
 use warp::{reject::Rejection, Reply};
 
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::errors::ReturnErrors;
 use argonautica::{Hasher, Verifier};
@@ -41,6 +40,12 @@ fn json_body_login() -> impl Filter<Extract = (LoginData,), Error = warp::Reject
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+#[derive(Serialize)]
+struct LoginReply {
+    success: bool,
+    token: String,
 }
 
 pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Rejection> {
@@ -100,7 +105,12 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
             .execute(&mut con)
             .await;
             match success {
-                Ok(_) => return Ok(format!("{{\"success\":true,\"token\":\"{}\"}}", token)),
+                Ok(_) => {
+                    return Ok(warp::reply::json(&LoginReply {
+                        success: true,
+                        token,
+                    }))
+                }
                 Err(x) => match x {
                     Error::Database(x) => {
                         dbg!(x);
