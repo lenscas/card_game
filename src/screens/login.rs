@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{Battle, Screen};
 use crate::Wrapper;
 use async_trait::async_trait;
 use mergui::{
@@ -121,6 +121,7 @@ impl Screen for Login {
                 )
                 .await
                 .unwrap();
+            return Ok(Some(Box::new(Battle::new())));
         }
         Ok(None)
     }
