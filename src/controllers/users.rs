@@ -75,7 +75,7 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
         .cast()?;
     if v {
         use base64::encode;
-        use rand::{OsRng, Rng};
+        use rand_core::{OsRng, RngCore};
         use sha2::{Digest, Sha256};
         use sqlx::Error;
         use std::time::SystemTime;
@@ -87,7 +87,7 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
                 .as_secs();
 
             let mut bytes = [0u8, 16];
-            OsRng::new().unwrap().fill_bytes(&mut bytes);
+            OsRng.fill_bytes(&mut bytes);
             let token = format!(
                 "{}/{}/{}",
                 now,
@@ -169,7 +169,7 @@ pub async fn register(reg_data: RegisterData, db: PgPool) -> Result<impl Reply, 
     //return Ok("Awesome!");
 }
 
-fn with_db(
+pub fn with_db(
     db: PgPool,
 ) -> impl Filter<Extract = (PgPool,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
@@ -196,12 +196,7 @@ pub fn login_route(
             .and(json_body_login())
             .and(with_db(db))
             .and_then(login),
-    ) /*
-      .recover(|v| async move {
-          dbg!(v);
-          let var_name = warp::reply::with_status("lol", StatusCode::INTERNAL_SERVER_ERROR);
-          Ok(var_name)
-      })*/
+    )
 }
 
 pub fn force_logged_in(

@@ -1,4 +1,4 @@
-use crate::users::force_logged_in;
+use crate::controllers::users::force_logged_in;
 use crate::util::CastRejection;
 use dotenv::{dotenv, var};
 use errors::ReturnErrors;
@@ -10,8 +10,9 @@ use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
 
+mod battle;
+mod controllers;
 mod errors;
-mod users;
 mod util;
 
 async fn handle_from_db(
@@ -67,8 +68,10 @@ async fn main() {
     warp::serve(
         warp::any()
             .and(
-                users::register_route(pool.clone())
-                    .or(users::login_route(pool.clone()))
+                controllers::users::register_route(pool.clone())
+                    .or(controllers::users::login_route(pool.clone()))
+                    .or(controllers::battle::do_turn_route(pool.clone()))
+                    .or(controllers::battle::create_battle_route(pool.clone()))
                     .or(warp::get().and(from_db).or(hello))
                     .or(warp::get()
                         .and(warp::path("test"))
@@ -128,5 +131,9 @@ fn handle_custom_error(error: &ReturnErrors) -> (StatusCode, String) {
         ReturnErrors::NotFound => (StatusCode::NOT_FOUND, "resource not found".into()),
         ReturnErrors::HashError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into()),
         ReturnErrors::CustomError(message, code) => (*code, message.to_string()),
+        ReturnErrors::JsonError(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Something has gone wrong".into(),
+        ),
     }
 }
