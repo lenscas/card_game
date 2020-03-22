@@ -2,7 +2,7 @@ use super::users::{force_logged_in, get_db_con};
 use crate::{
     battle::Battle, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
 };
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
@@ -62,15 +62,10 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     .half_cast()?)
 }
 
-async fn do_turn(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection> {
-    println!("do we get here");
-    let chosen_card = 2;
+async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Reply, Rejection> {
+    let chosen_card = action.play_card;
     let user_id = i64::from(user_id);
     let mut con = get_db_con(db).await?;
-    /*
-
-    */
-    //dbg!(v);
     let v = query!(
         "SELECT current_battle FROM characters WHERE user_id = $1 AND current_battle IS NOT NULL",
         user_id
@@ -106,6 +101,10 @@ struct ReturnBattle<'a> {
     success: bool,
     hand: Vec<&'a str>,
 }
+#[derive(Deserialize)]
+struct TakeAction {
+    pub(crate) play_card: usize,
+}
 
 pub fn create_battle_route(
     db: PgPool,
@@ -125,6 +124,7 @@ pub fn do_turn_route(
     use warp::{path, put};
     put()
         .and(path("battle"))
+        .and(warp::body::content_length_limit(1024 * 16).and(warp::body::json()))
         //.and(warp::path::param())
         .and(with_db(db.clone()))
         .and(force_logged_in(db))
