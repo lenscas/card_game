@@ -53,6 +53,7 @@ async fn main() {
             "Access-Control-Request-Method",
             "Access-Control-Request-Headers",
             "content-type",
+            "authorization_token",
         ])
         .allow_methods(
             vec![
