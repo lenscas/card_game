@@ -7,27 +7,21 @@ local inOrder = {}
 local aiSpeed = aiCard:get_speed()
 local playerSpeed = playerCard:get_speed()
 
-function giveRuneToPlayer(player, runeName)
-	local handler = io.open("./compiled_small_runes/config/" .. runeName .. ".lua")
-	local str = handler.read("*a")
-	handler:close()
-	local asJson = json.decode(str)
-	player:add_rune(asJson)
+local SMALL_RUNE_BASE_FOLDER = "./compiled_small_runes/code/"
+
+function load_small_rune_code(rune)
+	local name = rune:get_name()
+	return dofile(SMALL_RUNE_BASE_FOLDER .. name .. ".lua")
 end
 
---[[
-function loadSmallRune(runeName)
-	local handler = io.open("./compiled_small_runes/code/" .. runeName .. ".lua")
-	local all = handler.read("*a")
-	handler:close()
-	local asFunc, err = load("return " .. all)
-	if err then
-		error(err .. "\n type : small rune \n name: " .. runeName)
-	end
-
-
+function addPercentage(current, percentage)
+	return current + (current / 100 * percentage)
 end
---]]
+
+function subPercentage(current, percentage)
+	return current - (current / 100 * percentage)
+end
+
 local function createRunCardFunc(card, battle, owner, oponent)
 	return function()
 		print(card:get_name())
@@ -39,6 +33,18 @@ local function createRunCardFunc(card, battle, owner, oponent)
 		battle:save_ai(ai)
 		battle:save_player(player)
 	end
+end
+
+local aiRunes = ai:get_runes()
+for k, v in ipairs(aiRunes) do
+	print(k, v)
+end
+
+local playerRunes = player:get_runes()
+print("player runes:", playerRunes)
+for k, v in ipairs(playerRunes) do
+	local code = load_small_rune_code(v)
+	code:before_casting()
 end
 
 --TODO better selection on who goes first

@@ -50,7 +50,7 @@ local function process_small_runes(fileName, asStr)
 		end
 	end
 	writeToFile(PATH_COMPILED_SMALL_RUNES, "config/" .. fileName, json.encode(asCode))
-	writeToFile(PATH_COMPILED_SMALL_RUNES, "code/" .. fileName, asStr)
+	writeToFile(PATH_COMPILED_SMALL_RUNES, "code/" .. fileName, "return " .. asStr)
 end
 
 local function makeProcessFunction(func, rawPath)

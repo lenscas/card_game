@@ -19,16 +19,16 @@ impl Battle {
     ) -> Result<Battle, ReturnErrors> {
         let v = query!(
             r#"
-			SELECT cards.id,cards.json_file_path
-			FROM cards
-			INNER JOIN cards_in_deck
-			ON cards_in_deck.card_id = cards.id
-			INNER JOIN decks
-			ON decks.id = cards_in_deck.deck_id
-			INNER JOIN characters
-			ON characters.id = decks.character_id
-			WHERE characters.user_id = $1
-		"#,
+                SELECT cards.id,cards.json_file_path
+                FROM cards
+                INNER JOIN cards_in_deck
+                ON cards_in_deck.card_id = cards.id
+                INNER JOIN decks
+                ON decks.id = cards_in_deck.deck_id
+                INNER JOIN characters
+                ON characters.id = decks.character_id
+                WHERE characters.user_id = $1
+            "#,
             player_id
         )
         .fetch_all(con)
@@ -94,7 +94,7 @@ impl UserData for Battle {
         methods.add_method_mut("save_player", |_, me, player: Player| {
             me.player = player;
             Ok(())
-        })
+        });
     }
 }
 
@@ -113,9 +113,12 @@ impl SmallRune {
 
 impl UserData for SmallRune {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.add_method("get_rune_code", |ctx, me, _: ()|
-        //ctx.load(source)
-        Ok(()))
+        methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
+        methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
+
+        methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
+            Ok(me.config.turns_left -= 1)
+        });
     }
 }
 
@@ -143,6 +146,19 @@ impl UserData for Player {
         });
         methods.add_method_mut("heal", |_, me, heal_by: u64| {
             me.life = me.life.checked_add(heal_by).unwrap_or(u64::max_value());
+            Ok(())
+        });
+        methods.add_method("get_runes", |_, me, _: ()| {
+            Ok(me.runes.iter().cloned().collect::<Vec<_>>())
+        });
+        methods.add_method_mut("clean_up_runes", |_, me, _: ()| {
+            for v in &mut me.runes {
+                if let Some(rune) = v {
+                    if rune.config.turns_left == 0 {
+                        *v = None;
+                    }
+                }
+            }
             Ok(())
         });
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
