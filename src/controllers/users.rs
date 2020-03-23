@@ -1,27 +1,13 @@
 use crate::util::CastRejection;
+use card_game_shared::{LoginData, LoginReply, RegisterData};
 use dotenv::var;
 use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
 use warp::Filter;
 use warp::{reject::Rejection, Reply};
 
-use serde_derive::{Deserialize, Serialize};
-
 use crate::errors::ReturnErrors;
 use argonautica::{Hasher, Verifier};
-
-#[derive(Deserialize)]
-pub struct RegisterData {
-    username: String,
-    password: String,
-    password_check: String,
-}
-
-#[derive(Deserialize)]
-pub struct LoginData {
-    username: String,
-    password: String,
-}
 
 pub async fn get_db_con(db: PgPool) -> Result<PoolConnection<PgConnection>, Rejection> {
     match db.acquire().await {
@@ -40,12 +26,6 @@ fn json_body_login() -> impl Filter<Extract = (LoginData,), Error = warp::Reject
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-}
-
-#[derive(Serialize)]
-struct LoginReply {
-    success: bool,
-    token: String,
 }
 
 pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Rejection> {

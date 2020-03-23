@@ -1,6 +1,6 @@
 use crate::{errors::ReturnErrors, util::CastRejection};
 use rlua::{Lua, UserData, UserDataMethods};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use sqlx::pool::PoolConnection;
 use sqlx::{query, PgConnection};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};

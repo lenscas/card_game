@@ -2,7 +2,8 @@ use super::users::{force_logged_in, get_db_con};
 use crate::{
     battle::Battle, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
 };
-use serde_derive::{Deserialize, Serialize};
+use card_game_shared::ReturnBattle;
+use card_game_shared::TakeAction;
 use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
@@ -53,11 +54,11 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
         .player
         .hand
         .iter()
-        .map(|v| v.name.as_str())
+        .map(|v| v.name.clone())
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&ReturnBattle {
         success: false,
-        hand,
+        hand: hand,
     })
     .half_cast()?)
 }
@@ -87,23 +88,14 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     let hand = battle
         .player
         .hand
-        .iter()
-        .map(|v| v.name.as_str())
+        .into_iter()
+        .map(|v| v.name)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&ReturnBattle {
         success: false,
         hand,
     })
     .half_cast()?)
-}
-#[derive(Serialize)]
-struct ReturnBattle<'a> {
-    success: bool,
-    hand: Vec<&'a str>,
-}
-#[derive(Deserialize)]
-struct TakeAction {
-    pub(crate) play_card: usize,
 }
 
 pub fn create_battle_route(

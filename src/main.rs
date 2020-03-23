@@ -1,8 +1,8 @@
 use crate::controllers::users::force_logged_in;
 use crate::util::CastRejection;
+use card_game_shared::ErrorMessage;
 use dotenv::{dotenv, var};
 use errors::ReturnErrors;
-use serde_derive::Serialize;
 use sqlx::{query, PgPool};
 use std::convert::Infallible;
 use warp::http::StatusCode;
@@ -84,11 +84,6 @@ async fn main() {
     )
     .run(([127, 0, 0, 1], 3030))
     .await;
-}
-
-#[derive(Serialize)]
-pub struct ErrorMessage {
-    message: String,
 }
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {

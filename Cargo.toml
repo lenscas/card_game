@@ -12,9 +12,8 @@ warp = "*"
 sqlx = { version = "*", default-features = false, features = [ "runtime-tokio", "macros", "postgres" ] }
 dotenv = "*"
 futures = "*"
-serde = "*"
+serde = {version="1.0", features=["derive"]}
 serde_json = "*"
-serde_derive = "*"
 argonautica = "*"
 rand_core="*"
 rand = "*"
@@ -22,3 +21,4 @@ sha2 = "*"
 base64 = "*"
 http = "0.2.0"
 rlua = "*"
+card_game_shared = {git="https://github.com/lenscas/card_game_shared.git"}
