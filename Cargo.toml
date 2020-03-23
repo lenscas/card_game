@@ -8,9 +8,9 @@ edition = "2018"
 
 [dependencies]
 quick_surf = {git="https://github.com/lenscas/quick_surf.git"}
-serde = "*"
-serde_json =  "*"
-serde_derive = "*"
+card_game_shared = {path="../card_game_shared"}
+serde = {version="1.0",  features = ["derive"]}
+serde_json =  "1.0"
 mergui = {path="../mergui"}
 quicksilver= {git="https://github.com/ryanisaacg/quicksilver.git", branch="add-font-support", features=["stdweb"]}
 async-trait = "*"

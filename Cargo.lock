@@ -269,12 +269,19 @@ name = "card_game_client"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "card_game_shared",
  "mergui",
  "quick_surf",
  "quicksilver",
  "serde 1.0.104",
- "serde_derive",
  "serde_json",
+]
+
+[[package]]
+name = "card_game_shared"
+version = "0.1.0"
+dependencies = [
+ "serde 1.0.104",
 ]
 
 [[package]]

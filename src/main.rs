@@ -1,8 +1,10 @@
 use crate::screens::screen::Screen;
+use quicksilver::lifecycle::Event::PointerMoved;
 use quicksilver::{
     geom::Vector,
     graphics::Graphics,
     lifecycle::{run, EventStream, Settings, Window},
+    mint::Vector2,
     Result,
 };
 
@@ -16,7 +18,7 @@ pub(crate) use client::Client;
 fn main() {
     run(
         Settings {
-            size: Vector::new(800.0, 600.0).into(),
+            size: Vector::new(1366, 768).into(),
             title: "Image Example",
             resizable: true,
             ..Settings::default()
@@ -31,6 +33,12 @@ pub(crate) struct Wrapper<'a> {
     pub events: EventStream,
     pub context: Context<'a>,
     pub client: Client,
+    pub cursor_at: Vector2<f32>,
+}
+impl<'a> Wrapper<'a> {
+    pub(crate) fn get_cursor_loc(&self) -> Vector2<f32> {
+        self.cursor_at
+    }
 }
 
 async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
@@ -41,11 +49,15 @@ async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
         events,
         context,
         client: Client::new("http://127.0.0.1:3030/".into()),
+        cursor_at: Vector2::from_slice(&[0f32, 0f32]),
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;
     loop {
         while let Some(e) = wrapper.events.next_event().await {
+            if let PointerMoved(e) = &e {
+                wrapper.cursor_at = e.location();
+            }
             wrapper.context.event(&e, &wrapper.window);
             if let Some(x) = v.event(&mut wrapper, &e).await? {
                 v = x;

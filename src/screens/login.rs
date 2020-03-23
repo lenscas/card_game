@@ -121,7 +121,7 @@ impl Screen for Login {
                 )
                 .await
                 .unwrap();
-            return Ok(Some(Box::new(Battle::new())));
+            return Ok(Some(Box::new(Battle::new(wrapper).await.unwrap())));
         }
         Ok(None)
     }
