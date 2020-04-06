@@ -56,9 +56,27 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
         .iter()
         .map(|v| v.name.clone())
         .collect::<Vec<_>>();
+
     Ok(serde_json::to_string(&ReturnBattle {
-        success: false,
-        hand: hand,
+        player_hp: battle.player.life,
+        enemy_hp: battle.ai.life,
+        enemy_hand_size: battle.ai.hand.len(),
+        success: true,
+        hand,
+        small_runes: battle
+            .player
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
+        enemy_small_runes: battle
+            .ai
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
     })
     .half_cast()?)
 }
@@ -85,15 +103,34 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     .execute(&mut con)
     .await
     .half_cast()?;
+
     let hand = battle
         .player
         .hand
         .into_iter()
         .map(|v| v.name)
         .collect::<Vec<_>>();
+
     Ok(serde_json::to_string(&ReturnBattle {
-        success: false,
+        player_hp: battle.player.life,
+        enemy_hp: battle.ai.life,
+        enemy_hand_size: battle.ai.hand.len(),
+        success: true,
         hand,
+        small_runes: battle
+            .player
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
+        enemy_small_runes: battle
+            .ai
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
     })
     .half_cast()?)
 }
