@@ -3,6 +3,11 @@ use serde::{Deserialize, Serialize};
 pub struct ReturnBattle {
     pub success: bool,
     pub hand: Vec<String>,
+    pub small_runes: Vec<String>,
+    pub enemy_small_runes: Vec<String>,
+    pub player_hp: u64,
+    pub enemy_hp: u64,
+    pub enemy_hand_size: usize,
 }
 #[derive(Deserialize, Serialize, Debug)]
 pub struct TakeAction {
