@@ -36,7 +36,7 @@ impl Battle {
         let mut cards = Vec::new();
         for card_id in v {
             cards.push(
-                read_to_string(format!("compiled_cards/{}", card_id.json_file_path))
+                read_to_string(format!("compiled/cards/{}", card_id.json_file_path))
                     .await
                     .half_cast()
                     .and_then(|v| serde_json::from_str(&v).half_cast())?,
@@ -61,7 +61,7 @@ impl Battle {
         chosen_card: usize,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let lua = Lua::new();
-        let engine = read_to_string("./engine.lua").await?;
+        let engine = read_to_string("./lua/engine.lua").await?;
         let battle = lua.context::<_, Result<_, Box<dyn std::error::Error>>>(move |lua_ctx| {
             let globals = lua_ctx.globals();
             globals.set("battle", self)?;
@@ -75,7 +75,7 @@ impl Battle {
 impl UserData for Battle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("get_ai_card", |_, me, _: ()| {
-            let item = me.ai.hand[0].clone();
+            let item = me.ai.hand[2].clone();
             Ok(item)
         });
         methods.add_method("get_player_card", |_, me, index: usize| {
@@ -164,7 +164,7 @@ impl UserData for Player {
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
             let as_str =
-                read_to_string_sync(format!("./compiled_small_runes/config/{}.lua", rune_name))
+                read_to_string_sync(format!("./compiled/small_runes/config/{}.lua", rune_name))
                     .map_err(|v| {
                         dbg!(rune_name.clone());
                         rlua::Error::ExternalError(Arc::new(v))

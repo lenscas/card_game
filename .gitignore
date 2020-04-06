@@ -1,5 +1,4 @@
 /target
 **/*.rs.bk
 .env
-/compiled_cards/*.lua
-/compiled_small_runes/*/*.lua
+/lua/compiled/**/*.lua

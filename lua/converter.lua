@@ -1,10 +1,10 @@
 --This script turns the lua code for cards and runes into a format that is easier to work with.
 
 local PATH_RAW_CARDS = "./cards"
-local PATH_COMPILED_CARDS = "./compiled_cards"
+local PATH_COMPILED_CARDS = "./compiled/cards"
 
 local PATH_RAW_SMALL_RUNES = "./small_runes"
-local PATH_COMPILED_SMALL_RUNES = "./compiled_small_runes"
+local PATH_COMPILED_SMALL_RUNES = "./compiled/small_runes"
 
 local lfs = require "lfs"
 local json = require "json"
@@ -26,7 +26,12 @@ local function readFull(rawPath, fileName)
 end
 
 local function writeToFile(dir, fileName, str)
-	handler = io.open(dir .. "/" .. fileName, "w+")
+	local path = dir .. "/" .. fileName
+	local handler, err = io.open(path, "w+")
+	if err then
+		print("path", path)
+		error(err)
+	end
 	print("writing:")
 	print(str)
 	print()

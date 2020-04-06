@@ -7,7 +7,7 @@ local inOrder = {}
 local aiSpeed = aiCard:get_speed()
 local playerSpeed = playerCard:get_speed()
 
-local SMALL_RUNE_BASE_FOLDER = "./compiled_small_runes/code/"
+local SMALL_RUNE_BASE_FOLDER = "./compiled/small_runes/code/"
 
 function load_small_rune_code(rune)
 	local name = rune:get_name()
@@ -35,18 +35,29 @@ local function createRunCardFunc(card, battle, owner, oponent)
 	end
 end
 
-local aiRunes = ai:get_runes()
-for k, v in ipairs(aiRunes) do
-	print(k, v)
+function process_speed_runes(caster, oponent, card)
+	local casterRunes = caster:get_runes()
+	local extraSpeed = 0
+	for k, v in pairs(casterRunes) do
+		local code = load_small_rune_code(v)
+		if code.owner_modify_speed ~= nil then
+			extraSpeed = extraSpeed + code:owner_modify_speed(v, playerCard, player)
+		end
+	end
+	local oponentRunes = oponent:get_runes()
+	for k, v in pairs(oponentRunes) do
+		local code = load_small_rune_code(v)
+		if code.oponent_modify_speed ~= nil then
+			extraSpeed = extraSpeed - code:owner_modify_speed(v, playerCard, oponent)
+		end
+	end
+	return extraSpeed
 end
 
-local playerRunes = player:get_runes()
-print("player runes:", playerRunes)
-for k, v in ipairs(playerRunes) do
-	local code = load_small_rune_code(v)
-	code:before_casting()
-end
-
+print("before player", playerSpeed)
+playerSpeed = addPercentage(playerSpeed, process_speed_runes(player, ai, playerCard))
+print("after player", playerSpeed)
+aiSpeed = addPercentage(aiSpeed, process_speed_runes(ai, player, aiCard))
 --TODO better selection on who goes first
 
 if aiSpeed == playerSpeed then
