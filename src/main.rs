@@ -39,6 +39,10 @@ impl<'a> Wrapper<'a> {
     pub(crate) fn get_cursor_loc(&self) -> Vector2<f32> {
         self.cursor_at
     }
+    pub(crate) fn get_pos_vector(&self, x: f32, y: f32) -> Vector {
+        let res = self.window.size();
+        Vector::new(x * res.x, y * res.y)
+    }
 }
 
 async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
