@@ -7,14 +7,33 @@ use std::f64::consts::PI;
 
 use crate::Wrapper;
 
+fn has_rune<'a>(
+    index: usize,
+    player_runes: &'a Vec<String>,
+    enemy_runes: &'a Vec<String>,
+) -> Option<&'a String> {
+    if index > 0 && index <= 4 {
+        player_runes.get(index - 1)
+    } else if index == 0 {
+        enemy_runes.get(index)
+    } else {
+        enemy_runes.get(8 - index)
+    }
+}
+
 pub struct Battle {
     outer_points: Vec<Circle>,
     inner_points: Vec<Circle>,
     hand: Vec<(String, Rectangle)>,
+    player_runes: Vec<String>,
+    enemy_runes: Vec<String>,
     rotation: f64,
     return_is_down: bool,
     font: Font,
     clicked: bool,
+    enemy_hp: String,
+    enemy_hand_size: String,
+    player_hp: String,
 }
 
 fn calc_points(
@@ -26,7 +45,7 @@ fn calc_points(
     let radius: f64 = radius;
     let steps: f64 = 2.0 * PI / f64::from(points); //0.78539816339;
                                                    //let steps: f64 = 1.0471975512;
-    (0i8..points)
+    (0..points)
         .into_iter()
         .map(|v| f64::from(v) * steps + rotation)
         .map(|v| (radius * (v.sin()), radius * (v.cos())))
@@ -77,10 +96,15 @@ impl Battle {
             outer_points,
             inner_points,
             rotation: 0.0,
-            hand: hand,
+            hand,
             return_is_down: false,
             font: Font::load_ttf(&wrapper.gfx, "font.ttf").await.unwrap(),
             clicked: false,
+            enemy_hand_size: format!("S: {}", current.enemy_hand_size),
+            enemy_hp: format!("HP: {}", current.enemy_hp),
+            player_hp: format!("HP: {}", current.player_hp),
+            enemy_runes: current.enemy_small_runes,
+            player_runes: current.small_runes,
         })
     }
     async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> Result<(), Box<dyn std::error::Error>> {
@@ -96,6 +120,11 @@ impl Battle {
         if let Some(chosen) = chosen {
             let battle = wrapper.client.do_turn(chosen).await?;
             self.hand = get_location_of_cards(battle.hand, wrapper.window.size());
+            self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
+            self.enemy_hp = format!("HP: {}", battle.enemy_hp);
+            self.player_hp = format!("HP: {}", battle.player_hp);
+            self.enemy_runes = battle.enemy_small_runes;
+            self.player_runes = battle.small_runes;
         }
         Ok(())
     }
@@ -110,9 +139,19 @@ impl Screen for Battle {
             .iter()
             .enumerate()
             .for_each(|(key, circle)| {
-                wrapper
-                    .gfx
-                    .fill_circle(circle, Color::from_rgba(255, 0, key as u8 * 31, 1.0));
+                let rune = has_rune(key, &self.player_runes, &self.enemy_runes);
+                match rune {
+                    Some(rune) => {
+                        wrapper
+                            .gfx
+                            .fill_circle(circle, Color::from_rgba(key as u8 * 31, 0, 255, 1.0));
+                    }
+                    None => {
+                        wrapper
+                            .gfx
+                            .fill_circle(circle, Color::from_rgba(255, 0, key as u8 * 31, 1.0));
+                    }
+                }
                 wrapper.gfx.draw_point(circle.pos, Color::WHITE);
             });
         self.inner_points
@@ -153,6 +192,30 @@ impl Screen for Battle {
             //wrapper.gfx.draw_text(font, text, size, max_width, color, offset)
             //println!("{},{}", key, card)
         });
+        wrapper.gfx.draw_text(
+            font,
+            &self.player_hp,
+            25.0,
+            None,
+            Color::RED,
+            wrapper.get_pos_vector(0.02, 0.95),
+        );
+        wrapper.gfx.draw_text(
+            font,
+            &self.enemy_hp,
+            25.0,
+            None,
+            Color::RED,
+            wrapper.get_pos_vector(0.92, 0.05),
+        );
+        wrapper.gfx.draw_text(
+            font,
+            &self.enemy_hand_size,
+            25.0,
+            None,
+            Color::RED,
+            wrapper.get_pos_vector(0.92, 0.1),
+        );
         Ok(())
     }
     async fn update(
