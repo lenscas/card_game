@@ -36,7 +36,7 @@ impl Battle {
         let mut cards = Vec::new();
         for card_id in v {
             cards.push(
-                read_to_string(format!("compiled/cards/{}", card_id.json_file_path))
+                read_to_string(format!("lua/compiled/cards/{}", card_id.json_file_path))
                     .await
                     .half_cast()
                     .and_then(|v| serde_json::from_str(&v).half_cast())?,
@@ -163,12 +163,14 @@ impl UserData for Player {
         });
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
-            let as_str =
-                read_to_string_sync(format!("./compiled/small_runes/config/{}.lua", rune_name))
-                    .map_err(|v| {
-                        dbg!(rune_name.clone());
-                        rlua::Error::ExternalError(Arc::new(v))
-                    })?;
+            let as_str = read_to_string_sync(format!(
+                "./lua/compiled/small_runes/config/{}.lua",
+                rune_name
+            ))
+            .map_err(|v| {
+                dbg!(rune_name.clone());
+                rlua::Error::ExternalError(Arc::new(v))
+            })?;
             let rune = serde_json::from_str(&as_str)
                 .map_err(|v| rlua::Error::ExternalError(Arc::new(v)))?;
             let rune = SmallRune::new(me.rune_count, rune, rune_name);
