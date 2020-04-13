@@ -1,8 +1,8 @@
 {
-	name = "deal damage",
+	name = "damage over time",
 	cost = 0,
 	speed = 2,
 	func = function(self, battle,owner,oponent)
-		deal_damage(10,owner,oponent)
+		owner:add_rune("damage_over_time")
 	end
 }

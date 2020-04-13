@@ -63,6 +63,8 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
         enemy_hand_size: battle.ai.hand.len(),
         success: true,
         hand,
+        enemy_mana: battle.ai.mana,
+        mana: battle.player.mana,
         small_runes: battle
             .player
             .runes
@@ -117,6 +119,8 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
         enemy_hand_size: battle.ai.hand.len(),
         success: true,
         hand,
+        enemy_mana: battle.ai.mana,
+        mana: battle.player.mana,
         small_runes: battle
             .player
             .runes

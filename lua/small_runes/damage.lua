@@ -1,8 +1,8 @@
 {
     turns_left= 3,
-    owner_modify_damage = function(self, config, card, owner)
+    owner_modify_damage = function(self, config, owner,oponent)
         config:dec_turns_left()
-        return 10
+        return 100
     end
     --[[
     oponent_modify_speed = function(self,config, card, oponent)
