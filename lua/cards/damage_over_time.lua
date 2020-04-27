@@ -1,4 +1,6 @@
 {
+	id="test_dop",
+	image="./button.png",
 	name = "damage over time",
 	cost = 0,
 	speed = 2,

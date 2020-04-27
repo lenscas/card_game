@@ -1,4 +1,6 @@
 {
+	id="test_heal",
+	image="./button.png",
 	name = "some healing",
 	cost = 0,
 	speed = 2,

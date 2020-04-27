@@ -1,4 +1,6 @@
 {
+	id="test_runes",
+	image="./button.png",
 	name = "add speed rune",
 	cost = 0,
 	speed = 2,

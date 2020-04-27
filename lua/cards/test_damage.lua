@@ -1,4 +1,6 @@
 {
+	id="test_damag",
+	image="./button.png",
 	name = "deal damage",
 	cost = 0,
 	speed = 2,
