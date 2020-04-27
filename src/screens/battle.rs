@@ -34,6 +34,8 @@ pub struct Battle {
     enemy_hp: String,
     enemy_hand_size: String,
     player_hp: String,
+    enemy_mana: String,
+    player_mana: String,
 }
 
 fn calc_points(
@@ -93,6 +95,8 @@ impl Battle {
         let hand = get_location_of_cards(current.hand, resolution);
 
         Ok(Battle {
+            player_mana: current.mana.to_string(),
+            enemy_mana: current.enemy_mana.to_string(),
             outer_points,
             inner_points,
             rotation: 0.0,
@@ -125,6 +129,8 @@ impl Battle {
             self.player_hp = format!("HP: {}", battle.player_hp);
             self.enemy_runes = battle.enemy_small_runes;
             self.player_runes = battle.small_runes;
+            self.enemy_mana = battle.enemy_mana.to_string();
+            self.player_mana = battle.mana.to_string();
         }
         Ok(())
     }
@@ -202,6 +208,14 @@ impl Screen for Battle {
         );
         wrapper.gfx.draw_text(
             font,
+            &self.player_mana,
+            25.0,
+            None,
+            Color::RED,
+            wrapper.get_pos_vector(0.02, 0.90),
+        );
+        wrapper.gfx.draw_text(
+            font,
             &self.enemy_hp,
             25.0,
             None,
@@ -215,6 +229,14 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.92, 0.1),
+        );
+        wrapper.gfx.draw_text(
+            font,
+            &self.enemy_mana,
+            25.0,
+            None,
+            Color::RED,
+            wrapper.get_pos_vector(0.92, 0.15),
         );
         Ok(())
     }
