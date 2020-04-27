@@ -7,10 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-quick_surf = {git="https://github.com/lenscas/quick_surf.git"}
+silver_surf =  {version="0.1.2",features =["std-web"]}
 card_game_shared = {path="../card_game_shared"}
 serde = {version="1.0",  features = ["derive"]}
 serde_json =  "1.0"
-mergui = {path="../mergui"}
-quicksilver= {git="https://github.com/ryanisaacg/quicksilver.git", branch="add-font-support", features=["stdweb"]}
+mergui = "0.1.0-alpha.1"
+quicksilver= {version="0.4.0-alpha0.3", features=["stdweb"]}
 async-trait = "*"

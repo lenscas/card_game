@@ -1,7 +1,7 @@
 use super::Screen;
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
-use quicksilver::graphics::{Color, Font};
+use quicksilver::graphics::{Color, VectorFont};
 use quicksilver::mint::Vector2;
 use std::f64::consts::PI;
 
@@ -29,7 +29,7 @@ pub struct Battle {
     enemy_runes: Vec<String>,
     rotation: f64,
     return_is_down: bool,
-    font: Font,
+    font: VectorFont,
     clicked: bool,
     enemy_hp: String,
     enemy_hand_size: String,
@@ -102,7 +102,7 @@ impl Battle {
             rotation: 0.0,
             hand,
             return_is_down: false,
-            font: Font::load_ttf(&wrapper.gfx, "font.ttf").await.unwrap(),
+            font: VectorFont::load("font.ttf").await.unwrap(),
             clicked: false,
             enemy_hand_size: format!("S: {}", current.enemy_hand_size),
             enemy_hp: format!("HP: {}", current.enemy_hp),
@@ -147,7 +147,7 @@ impl Screen for Battle {
             .for_each(|(key, circle)| {
                 let rune = has_rune(key, &self.player_runes, &self.enemy_runes);
                 match rune {
-                    Some(rune) => {
+                    Some(_) => {
                         wrapper
                             .gfx
                             .fill_circle(circle, Color::from_rgba(key as u8 * 31, 0, 255, 1.0));
@@ -176,10 +176,9 @@ impl Screen for Battle {
         wrapper
             .gfx
             .stroke_path(&[(0, 0).into(), resolution.into()], Color::BLUE);
-        let mut font = &mut self.font;
-        self.hand.iter_mut().for_each(|(card, rectangle)| {
-            let mut card = card;
-            let font_size = 0.0233333333333 * resolution.y;
+        let font_size = 0.0233333333333 * resolution.y;
+        for (card, rectangle) in self.hand.iter_mut() {
+            let card = card;
             let font_location = Vector::new(
                 (0.0025 * resolution.x) + rectangle.pos.x,
                 (0.0025 * resolution.x) + font_size + rectangle.pos.y,
@@ -187,17 +186,28 @@ impl Screen for Battle {
             let rec = Rectangle::new(rectangle.pos, rectangle.size);
             wrapper.gfx.fill_rect(&rec, Color::WHITE);
             wrapper.gfx.stroke_rect(&rec, Color::RED);
-            wrapper.gfx.draw_text(
+            self.font.to_renderer(&wrapper.gfx, font_size)?.draw(
+                &mut wrapper.gfx,
+                card,
+                Color::BLACK,
+                font_location,
+            )?;
+            /*
+            font.wrapper.gfx.draw_text(
                 &mut font,
                 &mut card,
                 font_size,
                 Some(165.0),
                 Color::BLACK,
                 font_location,
-            );
+            );*/
             //wrapper.gfx.draw_text(font, text, size, max_width, color, offset)
             //println!("{},{}", key, card)
-        });
+        }
+        let mut renderer = self.font.to_renderer(&wrapper.gfx, 25.0)?;
+        let offset = wrapper.get_pos_vector(0.02, 0.95);
+        renderer.draw(&mut wrapper.gfx, &self.player_hp, Color::RED, offset)?;
+        /*
         wrapper.gfx.draw_text(
             font,
             &self.player_hp,
@@ -205,7 +215,10 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.02, 0.95),
-        );
+        );*/
+        let offset = wrapper.get_pos_vector(0.02, 0.90);
+        renderer.draw(&mut wrapper.gfx, &self.player_mana, Color::RED, offset)?;
+        /*
         wrapper.gfx.draw_text(
             font,
             &self.player_mana,
@@ -213,7 +226,10 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.02, 0.90),
-        );
+        );*/
+        let offset = wrapper.get_pos_vector(0.92, 0.05);
+        renderer.draw(&mut wrapper.gfx, &self.enemy_hp, Color::RED, offset)?;
+        /*
         wrapper.gfx.draw_text(
             font,
             &self.enemy_hp,
@@ -221,7 +237,10 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.92, 0.05),
-        );
+        );*/
+        let offset = wrapper.get_pos_vector(0.92, 0.1);
+        renderer.draw(&mut wrapper.gfx, &self.enemy_hand_size, Color::RED, offset)?;
+        /*
         wrapper.gfx.draw_text(
             font,
             &self.enemy_hand_size,
@@ -229,7 +248,10 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.92, 0.1),
-        );
+        );*/
+        let offset = wrapper.get_pos_vector(0.92, 0.15);
+        renderer.draw(&mut wrapper.gfx, &self.enemy_mana, Color::RED, offset)?;
+        /*
         wrapper.gfx.draw_text(
             font,
             &self.enemy_mana,
@@ -237,7 +259,7 @@ impl Screen for Battle {
             None,
             Color::RED,
             wrapper.get_pos_vector(0.92, 0.15),
-        );
+        );*/
         Ok(())
     }
     async fn update(

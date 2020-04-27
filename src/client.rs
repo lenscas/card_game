@@ -2,7 +2,7 @@ use crate::responses::{CustomResult, LoginResponse};
 use card_game_shared::LoginData;
 use card_game_shared::ReturnBattle;
 use card_game_shared::TakeAction;
-use quick_surf::{call, Config, Method};
+use silver_surf::{call, Config, Method};
 
 pub struct Client {
     base_url: String,
@@ -35,7 +35,7 @@ impl Client {
             method: Method::Post,
             body: Some(LoginData { username, password }),
             headers: None,
-        })
+        })?
         .json::<CustomResult<LoginResponse>>()
         .await;
         let v = match v {
@@ -53,7 +53,7 @@ impl Client {
             method: Method::Post,
             body: None,
             headers: self.set_headers(),
-        })
+        })?
         .json::<CustomResult<ReturnBattle>>()
         .await;
         let res = dbg!(res);
@@ -74,7 +74,7 @@ impl Client {
             method: Method::Put,
             body: Some(TakeAction { play_card: card }),
             headers: self.set_headers(),
-        })
+        })?
         .json::<CustomResult<ReturnBattle>>()
         .await;
         let res = dbg!(res);

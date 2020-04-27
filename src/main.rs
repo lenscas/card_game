@@ -71,7 +71,7 @@ async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
             v = x;
         }
         v.draw(&mut wrapper).await?;
-        wrapper.context.render(&mut wrapper.gfx);
+        wrapper.context.render(&mut wrapper.gfx, &wrapper.window)?;
         wrapper.gfx.present(&wrapper.window)?;
     }
 }
