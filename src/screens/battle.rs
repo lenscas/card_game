@@ -1,7 +1,7 @@
 use super::Screen;
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
-use quicksilver::graphics::{Color, VectorFont};
+use quicksilver::graphics::{Color, FontRenderer, VectorFont};
 use quicksilver::mint::Vector2;
 use std::f64::consts::PI;
 
@@ -29,13 +29,15 @@ pub struct Battle {
     enemy_runes: Vec<String>,
     rotation: f64,
     return_is_down: bool,
-    font: VectorFont,
+    card_font: FontRenderer,
+    stat_font: FontRenderer,
     clicked: bool,
     enemy_hp: String,
     enemy_hand_size: String,
     player_hp: String,
     enemy_mana: String,
     player_mana: String,
+    card_font_size: f32,
 }
 
 fn calc_points(
@@ -94,6 +96,9 @@ impl Battle {
         let resolution = v;
         let hand = get_location_of_cards(current.hand, resolution);
 
+        let font = VectorFont::load("font.ttf").await.unwrap();
+        let font_size = 0.0233333333333 * resolution.y;
+
         Ok(Battle {
             player_mana: current.mana.to_string(),
             enemy_mana: current.enemy_mana.to_string(),
@@ -102,13 +107,15 @@ impl Battle {
             rotation: 0.0,
             hand,
             return_is_down: false,
-            font: VectorFont::load("font.ttf").await.unwrap(),
             clicked: false,
             enemy_hand_size: format!("S: {}", current.enemy_hand_size),
             enemy_hp: format!("HP: {}", current.enemy_hp),
             player_hp: format!("HP: {}", current.player_hp),
             enemy_runes: current.enemy_small_runes,
             player_runes: current.small_runes,
+            card_font: font.to_renderer(&mut wrapper.gfx, font_size).unwrap(),
+            stat_font: font.to_renderer(&mut wrapper.gfx, 25.0).unwrap(),
+            card_font_size: font_size,
         })
     }
     async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> Result<(), Box<dyn std::error::Error>> {
@@ -176,90 +183,31 @@ impl Screen for Battle {
         wrapper
             .gfx
             .stroke_path(&[(0, 0).into(), resolution.into()], Color::BLUE);
-        let font_size = 0.0233333333333 * resolution.y;
+
         for (card, rectangle) in self.hand.iter_mut() {
             let card = card;
             let font_location = Vector::new(
                 (0.0025 * resolution.x) + rectangle.pos.x,
-                (0.0025 * resolution.x) + font_size + rectangle.pos.y,
+                (0.0025 * resolution.x) + self.card_font_size + rectangle.pos.y,
             );
             let rec = Rectangle::new(rectangle.pos, rectangle.size);
             wrapper.gfx.fill_rect(&rec, Color::WHITE);
             wrapper.gfx.stroke_rect(&rec, Color::RED);
-            self.font.to_renderer(&wrapper.gfx, font_size)?.draw(
-                &mut wrapper.gfx,
-                card,
-                Color::BLACK,
-                font_location,
-            )?;
-            /*
-            font.wrapper.gfx.draw_text(
-                &mut font,
-                &mut card,
-                font_size,
-                Some(165.0),
-                Color::BLACK,
-                font_location,
-            );*/
-            //wrapper.gfx.draw_text(font, text, size, max_width, color, offset)
-            //println!("{},{}", key, card)
+            self.card_font
+                .draw(&mut wrapper.gfx, card, Color::BLACK, font_location)?;
         }
-        let mut renderer = self.font.to_renderer(&wrapper.gfx, 25.0)?;
+        let renderer = &mut self.stat_font;
         let offset = wrapper.get_pos_vector(0.02, 0.95);
         renderer.draw(&mut wrapper.gfx, &self.player_hp, Color::RED, offset)?;
-        /*
-        wrapper.gfx.draw_text(
-            font,
-            &self.player_hp,
-            25.0,
-            None,
-            Color::RED,
-            wrapper.get_pos_vector(0.02, 0.95),
-        );*/
         let offset = wrapper.get_pos_vector(0.02, 0.90);
         renderer.draw(&mut wrapper.gfx, &self.player_mana, Color::RED, offset)?;
-        /*
-        wrapper.gfx.draw_text(
-            font,
-            &self.player_mana,
-            25.0,
-            None,
-            Color::RED,
-            wrapper.get_pos_vector(0.02, 0.90),
-        );*/
         let offset = wrapper.get_pos_vector(0.92, 0.05);
         renderer.draw(&mut wrapper.gfx, &self.enemy_hp, Color::RED, offset)?;
-        /*
-        wrapper.gfx.draw_text(
-            font,
-            &self.enemy_hp,
-            25.0,
-            None,
-            Color::RED,
-            wrapper.get_pos_vector(0.92, 0.05),
-        );*/
+
         let offset = wrapper.get_pos_vector(0.92, 0.1);
         renderer.draw(&mut wrapper.gfx, &self.enemy_hand_size, Color::RED, offset)?;
-        /*
-        wrapper.gfx.draw_text(
-            font,
-            &self.enemy_hand_size,
-            25.0,
-            None,
-            Color::RED,
-            wrapper.get_pos_vector(0.92, 0.1),
-        );*/
         let offset = wrapper.get_pos_vector(0.92, 0.15);
         renderer.draw(&mut wrapper.gfx, &self.enemy_mana, Color::RED, offset)?;
-        /*
-        wrapper.gfx.draw_text(
-            font,
-            &self.enemy_mana,
-            25.0,
-            None,
-            Color::RED,
-            wrapper.get_pos_vector(0.92, 0.15),
-        );*/
         Ok(())
     }
     async fn update(

@@ -57,7 +57,6 @@ impl Client {
         .json::<CustomResult<ReturnBattle>>()
         .await;
         let res = dbg!(res);
-        let res = dbg!(res);
         let res = match res {
             Ok(x) => x,
             Err(x) => return Err(x),
