@@ -1,24 +1,15 @@
 local json = require "json"
-local sql = require("luasql.postgres").postgres()
+local sql = require"compiler/sql"
 
-local envReader = require "compiler/envReader"
 local files = require"compiler/fileSystem"
 local constants = require "compiler/constants"
 
 
-local saved,con = {}, nil
+local saved = {}
 
-local function getConnection()
-	if con == nil then
-		local conectionString = envReader("DATABASE_URL")
-		con = assert(
-			sql:connect(conectionString),
-			"Couldn't connect to the database. Connection string used : " .. conectionString
-		)
-		--we don't want to automatically commit our changes, but make sure nothing wend wrong before we commit them all
-		assert(con:setautocommit(false), "apparently psql does not have transactions? :(")
-	end
-	return con
+local function saveRune(basePath,fileName, rune, codeStr)
+	files.writeToFile(basePath, "config/" .. fileName, json.encode(rune))
+	files.writeToFile(basePath, "code/" .. fileName, "return " .. codeStr)
 end
 
 return {
@@ -37,47 +28,21 @@ Tried saving : ]] .. fileName .. [[
 Collides with : ]] .. (saved[cardId] or "no collision")
 		)
 
-		local con = getConnection()
-
-		local textId = con:escape(cardId)
-		local imagePath = con:escape(card.image)
-		local isObtainable = tostring(
-			card.is_obtainable == nil or (card.is_obtainable == true)
-		)
-
+		sql.saveCard(card,fileName)
 		local as_json = json.encode(card)
 		files.writeToFile(constants.PATH_COMPILED_CARDS, fileName, as_json)
-		print(imagePath,fileName,textId,isObtainable, "end")
 
-		local query = [[
-INSERT INTO cards (
-	image_path,
-	json_file_path,
-	text_id,
-	is_obtainable
-) VALUES (
-	]] .. "'" ..imagePath.."','" ..
-fileName.. "','" ..
-	textId..
-	"'," ..
-	isObtainable .. [[
-)
-ON CONFLICT (text_id)
-DO
-	UPDATE
-	SET
-		image_path =  EXCLUDED.image_path,
-		json_file_path = EXCLUDED.json_file_path,
-		is_obtainable = EXCLUDED.is_obtainable
-]]
-		print(query)
-		assert(con:execute(query))
 
-		saved[textId] = fileName;
+		saved[cardId] = fileName;
+	end,
+	saveSmallRune = function(fileName,rune,codeStr)
+		saveRune(constants.PATH_COMPILED_SMALL_RUNES,fileName,rune,codeStr)
+	end,
+	saveHexaRune = function(fileName,rune,codeStr)
+		saveRune(constants.PATH_COMPILED_HEXA_RUNES,fileName,rune,codeStr)
 	end,
 	--commits the changes to the database.
 	doSave = function()
-		local con = getConnection()
-		con:commit()
+		sql.commit()
 	end
 }

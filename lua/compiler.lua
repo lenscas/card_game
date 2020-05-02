@@ -6,4 +6,5 @@ local saver = require "compiler/saver"
 
 processor.process(processor.processCards, constants.PATH_RAW_CARDS)
 processor.process(processor.processSmallRunes, constants.PATH_RAW_SMALL_RUNES)
+processor.process(processor.processHexaRunes,constants.PATH_RAW_HEXA_RUNES)
 saver.doSave()

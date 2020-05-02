@@ -1,7 +1,5 @@
-local constants = require"compiler/constants"
 local files = require "compiler/fileSystem"
 local saver = require"compiler/saver"
-
 
 local function doStr(str)
 	local func, err = load("return " .. str)
@@ -19,15 +17,24 @@ local function process_cards(fileName, asStr)
 	saver.readySaveCard(card,fileName)
 end
 
-local function process_small_runes(fileName, asStr)
+local function process_rune(asStr)
 	local asCode = doStr(asStr)
 	for key, value in pairs(asCode) do
 		if type(value) == "function" then
 			asCode[key] = nil
 		end
 	end
-	files.writeToFile(constants.PATH_COMPILED_SMALL_RUNES, "config/" .. fileName, json.encode(asCode))
-	files.writeToFile(constants.PATH_COMPILED_SMALL_RUNES, "code/" .. fileName, "return " .. asStr)
+	return asCode
+end
+
+local function process_small_runes(fileName, asStr)
+	local asCode = process_rune(asStr)
+	saver.saveSmallRune(fileName,asCode, asStr)
+end
+
+local function process_hexa_runes(fileName,asStr)
+	local asCode = process_rune(asStr)
+	saver.saveHexaRune(fileName,asCode, asStr)
 end
 
 local function makeProcessFunction(func, rawPath)
@@ -50,5 +57,6 @@ end
 return {
 	process = process,
 	processCards = process_cards,
-	processSmallRunes = process_small_runes
+	processSmallRunes = process_small_runes,
+	processHexaRunes = process_hexa_runes,
 }
