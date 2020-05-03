@@ -4,10 +4,10 @@
 	name = "deal damage",
 	cost = 0,
 	speed = 2,
-	func = function(self, battle,owner,oponent)
+	func = function(self, owner,oponent)
 		print("got here two?")
-		local env = require"engine/battle"
+		local battle = require"engine/battle"
 		print("got here?")
-		env.deal_damage(10,owner,oponent)
+		battle.deal_damage(10,owner,oponent)
 	end
 }
