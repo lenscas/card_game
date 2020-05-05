@@ -19,7 +19,7 @@ rand_core="*"
 rand = "*"
 sha2 = "*"
 base64 = "*"
-http = "0.2.0"
+http = "0.2.1"
 rlua = "*"
 card_game_shared = {git="https://github.com/lenscas/card_game_shared.git"}
 
