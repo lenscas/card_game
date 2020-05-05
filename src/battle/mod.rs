@@ -6,4 +6,4 @@ pub(crate) mod runes;
 pub(crate) use battle::{Battle, SimpleError};
 pub(crate) use card::Card;
 pub(crate) use player::Player;
-pub(crate) use runes::{HexaRune, RawRune, SmallRune};
+pub(crate) use runes::{HexaRune, SmallRune};

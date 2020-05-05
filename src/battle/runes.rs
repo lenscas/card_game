@@ -11,8 +11,8 @@ impl UserData for RawRune {}
 #[derive(Clone, Deserialize, Serialize, Debug)]
 pub(crate) struct HexaRune {
     pub(crate) config: RawRune,
-    name: String,
-    id: u64,
+    pub(crate) name: String,
+    pub(crate) id: u64,
 }
 
 impl HexaRune {

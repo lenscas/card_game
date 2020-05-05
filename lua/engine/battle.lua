@@ -11,8 +11,17 @@ local battle = {
 
 local runes = require"engine/runes"
 
+--this function allows cards to deal damage and allow runes to interact with it
+--the order of how damage interactions is calculated is
+--runes from the caster that increase damage
+--runes from the caster that decrease damage
+--hexa runes that increase damage
+--hexa runes that decrease damage
+--runes from the target that increase damage
+--runes from the target that decrease damage
 local function deal_damage(amount, from, to)
 	local fromRunes = from:get_runes()
+	--deal with the caster runes first
 	local negatives = {}
 	for k, v in pairs(fromRunes) do
 		local buff =
@@ -29,12 +38,29 @@ local function deal_damage(amount, from, to)
 			negatives[#negatives] = buff
 		end
 	end
-	for _, v in pairs(negatives) do
-		amount = amount + (amount / 100 * v)
+	for _, v in ipairs(negatives) do
+		amount = amount - (amount / 100 * v)
 	end
+
+	--now, time to deal with the hexa runes
+	local hexaRunes = battle.battle:get_runes()
+	negatives = {}
+	for key, rune in ipairs(hexaRunes) do
+		local value = runes.run_hexa_code(battle.battle,key,rune,"modify_damage",{rune,from,to})
+		if value > 0 then
+			amount = amount + (amount / 100 * value)
+		elseif value <0 then
+			table.insert(negatives,value)
+		end
+	end
+	for _,v in ipairs(negatives) do
+		amount = amount - (amount / 100 * v)
+	end
+
+	--and finally, the runes from the target
 	local positives = {}
 	local toRunes = to:get_runes()
-	for k, v in pairs(toRunes) do
+	for k, v in ipairs(toRunes) do
 		local reduction = runes.run_rune_code(
 				from,
 				k,

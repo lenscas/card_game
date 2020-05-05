@@ -65,6 +65,12 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
         hand,
         enemy_mana: battle.ai.mana,
         mana: battle.player.mana,
+        hexa_runes: battle
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
         small_runes: battle
             .player
             .runes
@@ -121,6 +127,12 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
         hand,
         enemy_mana: battle.ai.mana,
         mana: battle.player.mana,
+        hexa_runes: battle
+            .runes
+            .iter()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.name.clone())
+            .collect(),
         small_runes: battle
             .player
             .runes
