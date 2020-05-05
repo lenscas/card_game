@@ -6,7 +6,7 @@ use std::io::Error as ioError;
 pub enum ReturnErrors {
     Io(ioError),
     GenericError(String),
-    DatabaseError(Box<dyn DatabaseError + 'static + Send + Sync>),
+    DatabaseError(Box<dyn DatabaseError + 'static>),
     NotFound,
     HashError(HashError),
     CustomError(String, warp::http::StatusCode),
@@ -16,7 +16,7 @@ pub enum ReturnErrors {
 impl ReturnErrors {
     pub fn on_db_error(
         self,
-        run: impl Fn(Box<dyn DatabaseError + 'static + Send + Sync>) -> ReturnErrors,
+        run: impl Fn(Box<dyn DatabaseError + 'static>) -> ReturnErrors,
     ) -> Self {
         match self {
             Self::DatabaseError(x) => run(x),
@@ -39,10 +39,7 @@ impl From<SqlError> for ReturnErrors {
             SqlError::Io(a) => ReturnErrors::Io(a),
             SqlError::UrlParse(_) => ReturnErrors::GenericError("Couldn't parse db string".into()),
             SqlError::Database(x) => ReturnErrors::DatabaseError(x),
-            SqlError::NotFound => ReturnErrors::NotFound,
-            SqlError::FoundMoreThanOne => ReturnErrors::GenericError(
-                "More than one result got returned while only one was expected".into(),
-            ),
+            SqlError::RowNotFound => ReturnErrors::NotFound,
             SqlError::ColumnNotFound(x) => {
                 ReturnErrors::GenericError(format!("Collumn {:0} not found", x))
             }
@@ -52,13 +49,13 @@ impl From<SqlError> for ReturnErrors {
             )),
             SqlError::PoolTimedOut(_) => ReturnErrors::GenericError("The pool timed out".into()),
             SqlError::PoolClosed => ReturnErrors::GenericError("The pool got closed".into()),
-            SqlError::TlsUpgrade(_) => {
-                ReturnErrors::GenericError("Couldn't upgrade the tls".into())
-            }
             SqlError::Decode(_) => ReturnErrors::GenericError("Couldn't decode something".into()),
-            SqlError::__Nonexhaustive => {
-                ReturnErrors::GenericError("Something wend wrong with the database".into())
-            }
+            SqlError::ColumnIndexOutOfBounds { index, len } => ReturnErrors::GenericError(format!(
+                "collomn {} is out of bounds. Len {}",
+                index, len
+            )),
+            SqlError::Tls(_) => ReturnErrors::GenericError("Couldn't upgrade the tls".into()),
+            _ => ReturnErrors::GenericError("Something wend wrong with the database".into()),
         }
     }
 }

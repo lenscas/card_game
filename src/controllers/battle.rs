@@ -8,7 +8,7 @@ use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
 async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection> {
-    let user_id = user_id.into();
+    let user_id = i64::from(user_id);
 
     let mut con = get_db_con(db).await?;
 
@@ -33,7 +33,7 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     ))
     .cast();
     let v = dbg!(v);
-    if v.count == 1 {
+    if v.count.unwrap() == 1 {
         return conflict_error;
     }
     let battle = Battle::new(user_id, &mut con).await?;
@@ -100,7 +100,7 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     .fetch_one(&mut con)
     .await
     .half_cast()?;
-    let battle: Battle = serde_json::from_str(&v.current_battle).half_cast()?;
+    let battle: Battle = serde_json::from_str(&v.current_battle.unwrap()).half_cast()?;
     let battle = battle.process_turn(chosen_card).await.unwrap();
     let c = serde_json::to_string(&battle).half_cast()?;
     query!(

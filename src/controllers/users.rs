@@ -184,10 +184,11 @@ pub fn force_logged_in(
 ) -> impl Filter<Extract = (i32,), Error = warp::Rejection> + Clone {
     warp::header::header("authorization_token")
         .and(with_db(db))
-        .and_then(|token: String, mut db: PgPool| async move {
+        .and_then(|token: String, db: PgPool| async move {
             let token = dbg!(token);
+            let mut con = db.acquire().await.cast()?;
             query!("SELECT user_id FROM sessions WHERE hash = $1", token)
-                .fetch_one(&mut db)
+                .fetch_one(&mut con)
                 .await
                 .map(|v| v.user_id)
                 .cast()
