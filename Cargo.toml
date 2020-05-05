@@ -21,7 +21,7 @@ sha2 = "*"
 base64 = "*"
 http = "0.2.0"
 rlua = "*"
-card_game_shared = {path="../card_game_shared"} #{git="https://github.com/lenscas/card_game_shared.git"}
+card_game_shared = {git="https://github.com/lenscas/card_game_shared.git"}
 
 [profile.dev.package."*"]
 opt-level = 3
