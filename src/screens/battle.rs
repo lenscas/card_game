@@ -38,6 +38,7 @@ pub struct Battle {
     enemy_mana: String,
     player_mana: String,
     card_font_size: f32,
+    hexa_runes: Vec<String>,
 }
 
 fn calc_points(
@@ -116,6 +117,7 @@ impl Battle {
             card_font: font.to_renderer(&mut wrapper.gfx, font_size).unwrap(),
             stat_font: font.to_renderer(&mut wrapper.gfx, 25.0).unwrap(),
             card_font_size: font_size,
+            hexa_runes: current.hexa_runes,
         })
     }
     async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> Result<(), Box<dyn std::error::Error>> {
@@ -138,6 +140,7 @@ impl Battle {
             self.player_runes = battle.small_runes;
             self.enemy_mana = battle.enemy_mana.to_string();
             self.player_mana = battle.mana.to_string();
+            self.hexa_runes = battle.hexa_runes;
         }
         Ok(())
     }
@@ -170,10 +173,18 @@ impl Screen for Battle {
         self.inner_points
             .iter()
             .enumerate()
-            .for_each(|(key, circle)| {
-                wrapper
-                    .gfx
-                    .fill_circle(circle, Color::from_rgba(0, 255, key as u8 * 63, 1.0));
+            .map(|(key, circle)| {
+                (
+                    circle,
+                    if self.hexa_runes.get(key).is_some() {
+                        Color::from_rgba(255, key as u8 * 63, 0, 1.0)
+                    } else {
+                        Color::from_rgba(0, 255, key as u8 * 63, 1.0)
+                    },
+                )
+            })
+            .for_each(|(circle, color)| {
+                wrapper.gfx.fill_circle(circle, color);
                 wrapper.gfx.draw_point(circle.pos, Color::WHITE);
             });
         wrapper.gfx.fill_circle(
