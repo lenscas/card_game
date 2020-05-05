@@ -10,6 +10,7 @@ pub enum ReturnErrors {
     NotFound,
     HashError(HashError),
     CustomError(String, warp::http::StatusCode),
+    JsonError(serde_json::error::Error),
 }
 
 impl ReturnErrors {
@@ -69,5 +70,16 @@ impl From<HashError> for ReturnErrors {
 impl From<ReturnErrors> for warp::reject::Rejection {
     fn from(error: ReturnErrors) -> Self {
         warp::reject::custom(error)
+    }
+}
+
+impl From<std::io::Error> for ReturnErrors {
+    fn from(error: std::io::Error) -> Self {
+        ReturnErrors::Io(error)
+    }
+}
+impl From<serde_json::error::Error> for ReturnErrors {
+    fn from(error: serde_json::error::Error) -> Self {
+        ReturnErrors::JsonError(error)
     }
 }
