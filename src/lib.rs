@@ -8,6 +8,9 @@ pub struct ReturnBattle {
     pub player_hp: u64,
     pub enemy_hp: u64,
     pub enemy_hand_size: usize,
+    pub mana: u64,
+    pub enemy_mana: u64,
+    pub hexa_runes: Vec<String>,
 }
 #[derive(Deserialize, Serialize, Debug)]
 pub struct TakeAction {
