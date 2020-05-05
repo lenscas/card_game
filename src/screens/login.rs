@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{Battle, Screen};
 use crate::Wrapper;
 use async_trait::async_trait;
 use mergui::{
@@ -12,7 +12,7 @@ use mergui::{
 };
 use quicksilver::{
     geom::{Rectangle, Vector},
-    graphics::{Color, Image},
+    graphics::{Color, Image, VectorFont},
     Result as QResult,
 };
 
@@ -27,13 +27,12 @@ pub(crate) struct Login {
 impl Login {
     pub(crate) async fn new<'a>(wrapper: &mut Wrapper<'a>) -> QResult<Self> {
         let layer = wrapper.context.add_layer();
-        let font = MFont::load_ttf(&wrapper.gfx, "font.ttf").await?;
+        let ttf = VectorFont::load("font.ttf").await?;
+        let font = MFont::from_font(&ttf, &wrapper.gfx, 30.0)?;
         let basic_font_style = FontStyle {
             font: font.clone(),
-            size: 30.0,
             location: Vector::new(350, 40),
             color: Color::BLACK,
-            max_width: None,
         };
         let conf = Text {
             text: "Login".into(),
@@ -42,7 +41,7 @@ impl Login {
         let _text = wrapper.context.add_widget(conf, &layer).unwrap();
 
         let input_font = FontStyle {
-            size: 20.0,
+            font: MFont::from_font(&ttf, &wrapper.gfx, 20.0)?,
             ..basic_font_style.clone()
         };
         let placeholder_font = FontStyle {
@@ -57,6 +56,7 @@ impl Login {
             }), //Option<PlaceholderConfig>,
             location: Rectangle::new((200, 200), (300, 25)),
             start_value: None,
+            cursor_config: Default::default(),
         };
         let name_input = wrapper.context.add_widget(conf, &layer).unwrap();
 
@@ -68,6 +68,7 @@ impl Login {
             }), //Option<PlaceholderConfig>,
             location: Rectangle::new((200, 230), (300, 25)),
             start_value: None,
+            cursor_config: Default::default(),
         };
         let password_input = wrapper.context.add_widget(conf, &layer).unwrap();
 
@@ -121,6 +122,7 @@ impl Screen for Login {
                 )
                 .await
                 .unwrap();
+            return Ok(Some(Box::new(Battle::new(wrapper).await.unwrap())));
         }
         Ok(None)
     }

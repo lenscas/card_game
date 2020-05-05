@@ -1,6 +1,8 @@
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use std::{error::Error, fmt};
+
 #[derive(Deserialize, Debug)]
+#[serde(untagged)]
 pub(crate) enum ErrorRes {
     Basic { message: String },
 }
