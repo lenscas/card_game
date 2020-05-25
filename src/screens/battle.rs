@@ -2,15 +2,14 @@ use super::Screen;
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
 use quicksilver::graphics::{Color, FontRenderer, VectorFont};
-use quicksilver::mint::Vector2;
 use std::f64::consts::PI;
 
 use crate::Wrapper;
 
 fn has_rune<'a>(
     index: usize,
-    player_runes: &'a Vec<String>,
-    enemy_runes: &'a Vec<String>,
+    player_runes: &'a [String],
+    enemy_runes: &'a [String],
 ) -> Option<&'a String> {
     if index > 0 && index <= 4 {
         player_runes.get(index - 1)
@@ -51,7 +50,6 @@ fn calc_points(
     let steps: f64 = 2.0 * PI / f64::from(points); //0.78539816339;
                                                    //let steps: f64 = 1.0471975512;
     (0..points)
-        .into_iter()
         .map(|v| f64::from(v) * steps + rotation)
         .map(|v| (radius * (v.sin()), radius * (v.cos())))
         .map(|(x, y)| offset(x, y, radius))
@@ -64,10 +62,10 @@ fn get_location_of_cards(cards: Vec<String>, resolution: Vector) -> Vec<(String,
         .into_iter()
         .enumerate()
         .map(|(key, card)| {
-            let rec_size = (0.1375 * resolution.x, 0.283333333333 * resolution.y);
+            let rec_size = (0.1375 * resolution.x, 0.283_333_33 * resolution.y);
             let rec_location = (
                 0.00625 * resolution.x,
-                (0.00833333333333 + (0.0466666666667 * key as f32)) * resolution.y,
+                (0.008_333_334 + (0.046_666_667 * key as f32)) * resolution.y,
             );
             (card, Rectangle::new(rec_location, rec_size))
         })
@@ -82,15 +80,15 @@ impl Battle {
         let outer_radius = 0.4f64 * f64::from(v.y);
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
             (
-                x + f64::from(0.500625 * v.x),
-                y + f64::from(0.500833333333 * v.y), /*300.5f64*/
+                x + f64::from(0.500_625 * v.x),
+                y + f64::from(0.500_833_33 * v.y), /*300.5f64*/
             )
         });
-        let inner_radius = 0.233333333333 * f64::from(v.y);
+        let inner_radius = 0.233_333_333_333 * f64::from(v.y);
         let inner_points = calc_points(inner_radius, 5, 0.0, |x, y, _| {
             (
-                x + f64::from(0.500625 * v.x),
-                y + f64::from(0.500833333333 * v.y),
+                x + f64::from(0.500_625 * v.x),
+                y + f64::from(0.500_833_33 * v.y),
             )
         });
         let current = wrapper.client.new_battle().await?;
@@ -98,7 +96,7 @@ impl Battle {
         let hand = get_location_of_cards(current.hand, resolution);
 
         let font = VectorFont::load("font.ttf").await.unwrap();
-        let font_size = 0.0233333333333 * resolution.y;
+        let font_size = 0.023_333_333 * resolution.y;
 
         Ok(Battle {
             player_mana: current.mana.to_string(),
@@ -114,8 +112,8 @@ impl Battle {
             player_hp: format!("HP: {}", current.player_hp),
             enemy_runes: current.enemy_small_runes,
             player_runes: current.small_runes,
-            card_font: font.to_renderer(&mut wrapper.gfx, font_size).unwrap(),
-            stat_font: font.to_renderer(&mut wrapper.gfx, 25.0).unwrap(),
+            card_font: font.to_renderer(&wrapper.gfx, font_size).unwrap(),
+            stat_font: font.to_renderer(&wrapper.gfx, 25.0).unwrap(),
             card_font_size: font_size,
             hexa_runes: current.hexa_runes,
         })
@@ -193,7 +191,7 @@ impl Screen for Battle {
         );
         wrapper
             .gfx
-            .stroke_path(&[(0, 0).into(), resolution.into()], Color::BLUE);
+            .stroke_path(&[(0, 0).into(), resolution], Color::BLUE);
 
         for (card, rectangle) in self.hand.iter_mut() {
             let card = card;
@@ -227,11 +225,11 @@ impl Screen for Battle {
     ) -> quicksilver::Result<Option<Box<dyn Screen>>> {
         let v = wrapper.window.size();
         self.rotation += 0.0005;
-        let inner_radius = 0.233333333333 * f64::from(v.y);
+        let inner_radius = 0.233_333_333_333 * f64::from(v.y);
         self.inner_points = calc_points(inner_radius, 5, self.rotation, |x, y, _| {
             (
-                x + f64::from(0.500625 * v.x),
-                y + f64::from(0.500833333333 * v.y),
+                x + f64::from(0.500_625 * v.x),
+                y + f64::from(0.500_833_33 * v.y),
             )
         });
         Ok(None)

@@ -25,7 +25,7 @@ pub(crate) struct Login {
 }
 
 impl Login {
-    pub(crate) async fn new<'a>(wrapper: &mut Wrapper<'a>) -> QResult<Self> {
+    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> QResult<Self> {
         let layer = wrapper.context.add_layer();
         let ttf = VectorFont::load("font.ttf").await?;
         let font = MFont::from_font(&ttf, &wrapper.gfx, 30.0)?;

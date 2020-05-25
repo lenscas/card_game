@@ -12,9 +12,9 @@ pub(crate) use client::Client;
 fn main() {
     run(
         Settings {
-            size: Vector::new(1366, 768).into(),
+            size: Vector::new(1366, 768),
             title: "Image Example",
-            resizable: true,
+            resizable: false,
             ..Settings::default()
         },
         app,
