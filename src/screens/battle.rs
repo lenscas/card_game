@@ -59,7 +59,7 @@ fn calc_points(
         .collect()
 }
 
-fn get_location_of_cards(cards: Vec<String>, resolution: Vector2<f32>) -> Vec<(String, Rectangle)> {
+fn get_location_of_cards(cards: Vec<String>, resolution: Vector) -> Vec<(String, Rectangle)> {
     cards
         .into_iter()
         .enumerate()
@@ -239,9 +239,9 @@ impl Screen for Battle {
     async fn event(
         &mut self,
         wrapper: &mut Wrapper<'_>,
-        event: &quicksilver::lifecycle::Event,
+        event: &quicksilver::input::Event,
     ) -> quicksilver::Result<Option<Box<dyn Screen>>> {
-        use quicksilver::lifecycle::{Event::*, Key, MouseButton};
+        use quicksilver::input::{Event::*, Key, MouseButton};
         match event {
             KeyboardInput(x) => {
                 if x.key() == Key::Return {

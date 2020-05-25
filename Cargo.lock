@@ -262,6 +262,7 @@ dependencies = [
  "gilrs",
  "glow",
  "glutin",
+ "image",
  "mint",
  "rustc-hash",
  "stdweb",
@@ -1729,9 +1730,9 @@ dependencies = [
 
 [[package]]
 name = "mergui"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b6a4417acf5252bb8c43ca381dbd7a7fd8529e76657f07500c6149b5482df47"
+checksum = "29fa11ab3732367aec83c753c4968f6c620c422d885031affbdfec704421e35a"
 dependencies = [
  "indexmap",
  "quicksilver",
@@ -2175,9 +2176,9 @@ dependencies = [
 
 [[package]]
 name = "quicksilver"
-version = "0.4.0-alpha0.3"
+version = "0.4.0-alpha0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d074a1363ecf8bf115321235310857ca5f23928ff253fb48a3fa20f2c1b43e4"
+checksum = "f793e62f4156ba31a2cd61b8810aa89ada26a4eb18af9d817cd8a4129d8953f2"
 dependencies = [
  "blinds",
  "bytemuck",

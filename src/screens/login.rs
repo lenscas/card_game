@@ -108,7 +108,7 @@ impl Screen for Login {
     async fn event(
         &mut self,
         wrapper: &mut Wrapper<'_>,
-        _: &quicksilver::lifecycle::Event,
+        _: &quicksilver::input::Event,
     ) -> QResult<Option<Box<dyn Screen>>> {
         if self.login_button.channel.has_clicked()
             && self.password_input.channel.get() != ""

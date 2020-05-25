@@ -1,12 +1,6 @@
 use crate::screens::screen::Screen;
-use quicksilver::lifecycle::Event::PointerMoved;
-use quicksilver::{
-    geom::Vector,
-    graphics::Graphics,
-    lifecycle::{run, EventStream, Settings, Window},
-    mint::Vector2,
-    Result,
-};
+use quicksilver::input::Event::PointerMoved;
+use quicksilver::{geom::Vector, graphics::Graphics, input::Input, run, Result, Settings, Window};
 
 use mergui::Context;
 
@@ -30,13 +24,13 @@ fn main() {
 pub(crate) struct Wrapper<'a> {
     pub window: Window,
     pub gfx: Graphics,
-    pub events: EventStream,
+    pub events: Input,
     pub context: Context<'a>,
     pub client: Client,
-    pub cursor_at: Vector2<f32>,
+    pub cursor_at: Vector,
 }
 impl<'a> Wrapper<'a> {
-    pub(crate) fn get_cursor_loc(&self) -> Vector2<f32> {
+    pub(crate) fn get_cursor_loc(&self) -> Vector {
         self.cursor_at
     }
     pub(crate) fn get_pos_vector(&self, x: f32, y: f32) -> Vector {
@@ -45,15 +39,15 @@ impl<'a> Wrapper<'a> {
     }
 }
 
-async fn app(window: Window, gfx: Graphics, events: EventStream) -> Result<()> {
-    let context = Context::new([0.0, 0.0].into());
+async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
+    let context = Context::new(Vector::new(0, 0));
     let mut wrapper = Wrapper {
         window,
         gfx,
         events,
         context,
         client: Client::new("http://127.0.0.1:3030/".into()),
-        cursor_at: Vector2::from_slice(&[0f32, 0f32]),
+        cursor_at: Vector::new(0, 0),
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;
