@@ -1,4 +1,7 @@
-use crate::responses::{CustomResult, LoginResponse};
+use crate::{
+    responses::{CustomResult, LoginResponse},
+    Result,
+};
 use card_game_shared::LoginData;
 use card_game_shared::ReturnBattle;
 use card_game_shared::TakeAction;
@@ -25,11 +28,7 @@ impl Client {
             None
         }
     }
-    pub(crate) async fn log_in(
-        &mut self,
-        username: String,
-        password: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub(crate) async fn log_in(&mut self, username: String, password: String) -> Result<()> {
         let v = call(Config {
             url: format!("{}{}", self.base_url, "login"),
             method: Method::Post,
@@ -43,11 +42,11 @@ impl Client {
             Err(x) => return Err(x),
         };
         let v = dbg!(v);
-        let v = Result::<_, _>::from(v)?;
+        let v = v.into_dyn_res()?;
         self.authorization_code = Some(v.token);
         Ok(())
     }
-    pub(crate) async fn new_battle(&mut self) -> Result<ReturnBattle, Box<dyn std::error::Error>> {
+    pub(crate) async fn new_battle(&mut self) -> Result<ReturnBattle> {
         let res = call(Config::<()> {
             url: self.set_url("battle"),
             method: Method::Post,
@@ -56,18 +55,17 @@ impl Client {
         })?
         .json::<CustomResult<ReturnBattle>>()
         .await;
-        let res = dbg!(res);
+        res?.into_dyn_res()
+        /*
         let res = match res {
             Ok(x) => x,
             Err(x) => return Err(x),
         };
-        let res = Result::<_, _>::from(res)?;
         Ok(res)
+        let res = Result::<_>::from(res)?;
+        Ok(res)*/
     }
-    pub(crate) async fn do_turn(
-        &self,
-        card: usize,
-    ) -> Result<ReturnBattle, Box<dyn std::error::Error>> {
+    pub(crate) async fn do_turn(&self, card: usize) -> Result<ReturnBattle> {
         let res = call(Config {
             url: self.set_url("battle/"),
             method: Method::Put,
@@ -77,11 +75,6 @@ impl Client {
         .json::<CustomResult<ReturnBattle>>()
         .await;
         let res = dbg!(res);
-        let res = match res {
-            Ok(x) => x,
-            Err(x) => return Err(x),
-        };
-        let res = Result::<_, _>::from(res)?;
-        Ok(res)
+        res?.into_dyn_res()
     }
 }

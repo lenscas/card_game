@@ -27,6 +27,12 @@ pub(crate) enum CustomResult<T> {
     Err(ErrorRes),
 }
 
+impl<T> CustomResult<T> {
+    pub(crate) fn into_dyn_res(self) -> Result<T, crate::Error> {
+        Ok(std::result::Result::<_, ErrorRes>::from(self)?)
+    }
+}
+
 impl<T> From<CustomResult<T>> for Result<T, ErrorRes> {
     fn from(from: CustomResult<T>) -> Self {
         match from {

@@ -73,9 +73,7 @@ fn get_location_of_cards(cards: Vec<String>, resolution: Vector) -> Vec<(String,
 }
 
 impl Battle {
-    pub(crate) async fn new(
-        wrapper: &mut Wrapper<'_>,
-    ) -> Result<Battle, Box<dyn std::error::Error>> {
+    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> crate::Result<Battle> {
         let v = wrapper.window.size();
         let outer_radius = 0.4f64 * f64::from(v.y);
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
@@ -95,7 +93,7 @@ impl Battle {
         let resolution = v;
         let hand = get_location_of_cards(current.hand, resolution);
 
-        let font = VectorFont::load("font.ttf").await.unwrap();
+        let font = VectorFont::load("font.ttf").await?;
         let font_size = 0.023_333_333 * resolution.y;
 
         Ok(Battle {
@@ -112,13 +110,13 @@ impl Battle {
             player_hp: format!("HP: {}", current.player_hp),
             enemy_runes: current.enemy_small_runes,
             player_runes: current.small_runes,
-            card_font: font.to_renderer(&wrapper.gfx, font_size).unwrap(),
-            stat_font: font.to_renderer(&wrapper.gfx, 25.0).unwrap(),
+            card_font: font.to_renderer(&wrapper.gfx, font_size)?,
+            stat_font: font.to_renderer(&wrapper.gfx, 25.0)?,
             card_font_size: font_size,
             hexa_runes: current.hexa_runes,
         })
     }
-    async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> Result<(), Box<dyn std::error::Error>> {
+    async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> crate::Result<()> {
         let cursor_pos = wrapper.get_cursor_loc();
         let chosen = self
             .hand
@@ -146,7 +144,7 @@ impl Battle {
 
 #[async_trait(?Send)]
 impl Screen for Battle {
-    async fn draw(&mut self, wrapper: &mut crate::Wrapper<'_>) -> quicksilver::Result<()> {
+    async fn draw(&mut self, wrapper: &mut crate::Wrapper<'_>) -> crate::Result<()> {
         let resolution = wrapper.window.size();
         wrapper.gfx.clear(Color::BLACK);
         self.outer_points
@@ -222,7 +220,7 @@ impl Screen for Battle {
     async fn update(
         &mut self,
         wrapper: &mut crate::Wrapper<'_>,
-    ) -> quicksilver::Result<Option<Box<dyn Screen>>> {
+    ) -> crate::Result<Option<Box<dyn Screen>>> {
         let v = wrapper.window.size();
         self.rotation += 0.0005;
         let inner_radius = 0.233_333_333_333 * f64::from(v.y);
@@ -238,7 +236,7 @@ impl Screen for Battle {
         &mut self,
         wrapper: &mut Wrapper<'_>,
         event: &quicksilver::input::Event,
-    ) -> quicksilver::Result<Option<Box<dyn Screen>>> {
+    ) -> crate::Result<Option<Box<dyn Screen>>> {
         use quicksilver::input::{Event::*, Key, MouseButton};
         match event {
             KeyboardInput(x) => {
@@ -247,7 +245,7 @@ impl Screen for Battle {
                         return Ok(None);
                     } else if x.is_down() && !self.return_is_down {
                         self.hand = get_location_of_cards(
-                            wrapper.client.do_turn(0).await.unwrap().hand,
+                            wrapper.client.do_turn(0).await?.hand,
                             wrapper.window.size(),
                         );
                         self.return_is_down = true;
@@ -260,7 +258,7 @@ impl Screen for Battle {
                 if x.is_down() {
                     if !self.clicked {
                         self.clicked = true;
-                        self.play_card(wrapper).await.unwrap();
+                        self.play_card(wrapper).await?;
                     }
                 } else {
                     self.clicked = false;

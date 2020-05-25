@@ -1,5 +1,5 @@
 use super::{Battle, Screen};
-use crate::Wrapper;
+use crate::{Result as CResult, Wrapper};
 use async_trait::async_trait;
 use mergui::{
     channels::{BasicClickable, Clickable, InputChannel},
@@ -13,7 +13,6 @@ use mergui::{
 use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::{Color, Image, VectorFont},
-    Result as QResult,
 };
 
 pub(crate) struct Login {
@@ -25,7 +24,7 @@ pub(crate) struct Login {
 }
 
 impl Login {
-    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> QResult<Self> {
+    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> CResult<Self> {
         let layer = wrapper.context.add_layer();
         let ttf = VectorFont::load("font.ttf").await?;
         let font = MFont::from_font(&ttf, &wrapper.gfx, 30.0)?;
@@ -98,18 +97,18 @@ impl Login {
 
 #[async_trait(?Send)]
 impl Screen for Login {
-    async fn draw(&mut self, wrapper: &mut Wrapper<'_>) -> QResult<()> {
+    async fn draw(&mut self, wrapper: &mut Wrapper<'_>) -> CResult<()> {
         wrapper.gfx.clear(Color::WHITE);
         Ok(())
     }
-    async fn update(&mut self, _: &mut Wrapper<'_>) -> QResult<Option<Box<dyn Screen>>> {
+    async fn update(&mut self, _: &mut Wrapper<'_>) -> CResult<Option<Box<dyn Screen>>> {
         Ok(None)
     }
     async fn event(
         &mut self,
         wrapper: &mut Wrapper<'_>,
         _: &quicksilver::input::Event,
-    ) -> QResult<Option<Box<dyn Screen>>> {
+    ) -> CResult<Option<Box<dyn Screen>>> {
         if self.login_button.channel.has_clicked()
             && self.password_input.channel.get() != ""
             && self.name_input.channel.get() != ""
@@ -120,9 +119,8 @@ impl Screen for Login {
                     self.name_input.channel.get(),
                     self.password_input.channel.get(),
                 )
-                .await
-                .unwrap();
-            return Ok(Some(Box::new(Battle::new(wrapper).await.unwrap())));
+                .await?;
+            return Ok(Some(Box::new(Battle::new(wrapper).await?)));
         }
         Ok(None)
     }

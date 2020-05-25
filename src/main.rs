@@ -1,14 +1,17 @@
 use crate::screens::screen::Screen;
+pub(crate) use client::Client;
 use quicksilver::input::Event::PointerMoved;
-use quicksilver::{geom::Vector, graphics::Graphics, input::Input, run, Result, Settings, Window};
+use quicksilver::{geom::Vector, graphics::Graphics, input::Input, run, Settings, Window};
+use std::error::Error as TError;
 
 use mergui::Context;
 
 mod client;
 mod responses;
 mod screens;
-pub(crate) use client::Client;
 
+pub(crate) type Error = Box<dyn TError + 'static + Send + Sync>;
+pub(crate) type Result<T> = std::result::Result<T, Error>;
 fn main() {
     run(
         Settings {

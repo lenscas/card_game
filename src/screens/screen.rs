@@ -1,6 +1,6 @@
-use crate::Wrapper;
+use crate::{Result, Wrapper};
 use async_trait::async_trait;
-use quicksilver::{input::Event, Result};
+use quicksilver::input::Event;
 
 #[async_trait(?Send)]
 pub(crate) trait Screen {
