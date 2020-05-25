@@ -98,7 +98,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         let res = handle_custom_error(error);
         code = res.0;
         message = res.1;
-    } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+    } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
         // We can handle a specific error, here METHOD_NOT_ALLOWED,
         // and render it however we want
         code = StatusCode::METHOD_NOT_ALLOWED;
@@ -110,9 +110,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         message = "UNHANDLED_REJECTION".into();
     }
 
-    let json = warp::reply::json(&ErrorMessage {
-        message: message.into(),
-    });
+    let json = warp::reply::json(&ErrorMessage { message });
 
     Ok(warp::reply::with_status(json, code))
 }

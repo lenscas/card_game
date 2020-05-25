@@ -20,7 +20,7 @@ impl Player {
         let hand = &mut self.hand;
         (0..amount_needed)
             .filter_map(|_| {
-                if deck.len() > 0 {
+                if !deck.is_empty() {
                     Some(deck.remove(0))
                 } else {
                     None
@@ -38,7 +38,10 @@ impl UserData for Player {
                 println!("has removed : {}", card);
                 me.hand.remove(card);
             } else {
-                return Err(SimpleError::new(format!("Index {} out of bounds", card)));
+                return Err(SimpleError::new_lua_error(format!(
+                    "Index {} out of bounds",
+                    card
+                )));
             }
             Ok(())
         });
@@ -57,22 +60,20 @@ impl UserData for Player {
         });
         methods.add_method("get_mana", |_, me, _: ()| Ok(me.mana));
         methods.add_method_mut("deal_damage", |_, me, damage: u64| {
-            me.life = me.life.checked_sub(damage).unwrap_or(0);
+            me.life = me.life.saturating_sub(damage);
             Ok(())
         });
         methods.add_method_mut("heal", |_, me, heal_by: u64| {
-            me.life = me.life.checked_add(heal_by).unwrap_or(u64::max_value());
+            me.life = me.life.saturating_add(heal_by);
             Ok(())
         });
-        methods.add_method("get_runes", |_, me, _: ()| {
-            Ok(me.runes.iter().cloned().collect::<Vec<_>>())
-        });
+        methods.add_method("get_runes", |_, me, _: ()| Ok(me.runes.to_vec()));
 
         methods.add_method_mut("save_rune", |_, me, (rune, index): (SmallRune, usize)| {
             if let Some(old_rune) = me.runes.get_mut(index).and_then(|v| v.as_mut()) {
                 *old_rune = rune;
             } else {
-                return Err(SimpleError::new(format!(
+                return Err(SimpleError::new_lua_error(format!(
                     "Error saving rune. Requested index {}, but length is {}.\n Rune : {:?}",
                     index,
                     me.runes.len(),
@@ -106,7 +107,7 @@ impl UserData for Player {
                 .map_err(|v| rlua::Error::ExternalError(Arc::new(v)))?;
             let rune = SmallRune::new(me.rune_count, rune, rune_name);
             for v in &mut me.runes {
-                if let None = v {
+                if v.is_none() {
                     me.rune_count += 1;
                     *v = Some(rune.clone());
                     found = true;

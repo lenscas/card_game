@@ -9,18 +9,18 @@ use std::{error::Error, fmt::Display, sync::Arc};
 use tokio::fs::read_to_string;
 
 #[derive(Deserialize, Serialize, Clone)]
-pub(crate) struct Battle {
+pub(crate) struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
     pub(crate) runes: [Option<HexaRune>; 5],
     pub(crate) rune_count: u64,
 }
 
-impl Battle {
+impl Field {
     pub(crate) async fn new(
         player_id: i64,
         con: &mut PoolConnection<PgConnection>,
-    ) -> Result<Battle, ReturnErrors> {
+    ) -> Result<Field, ReturnErrors> {
         let v = query!(
             r#"
                 SELECT cards.id,cards.json_file_path
@@ -54,13 +54,13 @@ impl Battle {
         let mut player = Player {
             hand: vec![],
             life: 20,
-            deck: cards.iter().cloned().collect(),
+            deck: cards.to_vec(),
             mana: 0,
             runes: Default::default(),
             rune_count: 0,
         };
         player.fill_hand();
-        Ok(Battle {
+        Ok(Self {
             player: player.clone(),
             ai: player,
             runes: Default::default(),
@@ -85,7 +85,7 @@ impl Battle {
                 let globals = lua_ctx.globals();
                 globals.set("battle", self)?;
                 globals.set("chosenCard", chosen_card)?;
-                let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Battle>()?;
+                let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Self>()?;
                 Ok(v)
             })?;
         battle.player.fill_hand();
@@ -93,7 +93,7 @@ impl Battle {
         Ok(battle)
     }
 }
-impl UserData for Battle {
+impl UserData for Field {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("get_ai_card", |_, me, _: ()| {
             let index = 0;
@@ -101,7 +101,7 @@ impl UserData for Battle {
             Ok((item, index))
         });
         methods.add_method("get_player_card", |_, me, index: usize| {
-            let item = me.player.hand.get(index).map(|v| v.clone());
+            let item = me.player.hand.get(index).cloned();
             Ok((item, index))
         });
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
@@ -117,14 +117,12 @@ impl UserData for Battle {
             me.player = player;
             Ok(())
         });
-        methods.add_method("get_runes", |_, me, _: ()| {
-            Ok(me.runes.iter().cloned().collect::<Vec<_>>())
-        });
+        methods.add_method("get_runes", |_, me, _: ()| Ok(me.runes.to_vec()));
         methods.add_method_mut("save_rune", |_, me, (rune, index): (HexaRune, usize)| {
             if let Some(old_rune) = me.runes.get_mut(index).and_then(|v| v.as_mut()) {
                 *old_rune = rune;
             } else {
-                return Err(SimpleError::new(format!(
+                return Err(SimpleError::new_lua_error(format!(
                     "Error saving rune. Requested index {}, but length is {}.\n Rune : {:?}",
                     index,
                     me.runes.len(),
@@ -157,7 +155,7 @@ impl UserData for Battle {
                 .map_err(|v| rlua::Error::ExternalError(Arc::new(v)))?;
             let rune = HexaRune::new(me.rune_count, rune, rune_name);
             for v in &mut me.runes {
-                if let None = v {
+                if v.is_none() {
                     me.rune_count += 1;
                     *v = Some(rune.clone());
                     found = true;
@@ -187,7 +185,7 @@ impl UserData for Battle {
 #[derive(Clone, Deserialize, Serialize, Debug)]
 pub(crate) struct SimpleError(pub String);
 impl SimpleError {
-    pub fn new(str: String) -> rlua::Error {
+    pub fn new_lua_error(str: String) -> rlua::Error {
         rlua::Error::ExternalError(Arc::new(Self(str)))
     }
 }

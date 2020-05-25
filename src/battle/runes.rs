@@ -27,7 +27,8 @@ impl UserData for HexaRune {
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
-            Ok(me.config.turns_left -= 1)
+            me.config.turns_left -= 1;
+            Ok(me.config.turns_left)
         });
     }
 }
@@ -51,7 +52,8 @@ impl UserData for SmallRune {
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
-            Ok(me.config.turns_left -= 1)
+            me.config.turns_left -= 1;
+            Ok(me.config.turns_left)
         });
     }
 }

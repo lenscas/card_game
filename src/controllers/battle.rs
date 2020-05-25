@@ -1,6 +1,6 @@
 use super::users::{force_logged_in, get_db_con};
 use crate::{
-    battle::Battle, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
+    battle::Field, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
 };
 use card_game_shared::ReturnBattle;
 use card_game_shared::TakeAction;
@@ -36,7 +36,7 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     if v.count.unwrap() == 1 {
         return conflict_error;
     }
-    let battle = Battle::new(user_id, &mut con).await?;
+    let battle = Field::new(user_id, &mut con).await?;
     let as_str = serde_json::to_string(&battle).half_cast()?;
     let rows = query!(
         "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND current_battle IS NULL",
@@ -100,7 +100,7 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     .fetch_one(&mut con)
     .await
     .half_cast()?;
-    let battle: Battle = serde_json::from_str(&v.current_battle.unwrap()).half_cast()?;
+    let battle: Field = serde_json::from_str(&v.current_battle.unwrap()).half_cast()?;
     let battle = battle.process_turn(chosen_card).await.unwrap();
     let c = serde_json::to_string(&battle).half_cast()?;
     query!(
