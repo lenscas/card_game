@@ -1,7 +1,7 @@
 {
 	id="test_runes",
-	image="./button.png",
 	name = "add speed rune",
+	description = "+10 to speed for 3 spells.\n100% extra damage for 3 spells.",
 	cost = 0,
 	speed = 2,
 	func = function(self, owner,oponent)

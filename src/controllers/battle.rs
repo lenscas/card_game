@@ -53,8 +53,8 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     let hand = battle
         .player
         .hand
-        .iter()
-        .map(|v| v.name.clone())
+        .into_iter()
+        .map(|v| v.id)
         .collect::<Vec<_>>();
 
     Ok(serde_json::to_string(&ReturnBattle {
@@ -116,9 +116,9 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
         .player
         .hand
         .into_iter()
-        .map(|v| v.name)
+        .map(|v| v.id)
         .collect::<Vec<_>>();
-
+    let hand = dbg!(hand);
     Ok(serde_json::to_string(&ReturnBattle {
         player_hp: battle.player.life,
         enemy_hp: battle.ai.life,

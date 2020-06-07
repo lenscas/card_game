@@ -70,6 +70,7 @@ async fn main() {
         warp::any()
             .and(
                 controllers::users::register_route(pool.clone())
+                    .or(warp::path("assets").and(warp::fs::dir("assets")))
                     .or(controllers::users::login_route(pool.clone()))
                     .or(controllers::battle::do_turn_route(pool.clone()))
                     .or(controllers::battle::create_battle_route(pool.clone()))

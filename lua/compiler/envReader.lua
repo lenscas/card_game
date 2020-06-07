@@ -1,11 +1,20 @@
+--This module is made to read the .env file for this project,
+--It is a rather naive implementation, so it mostlikely misses some edge cases.
+--It ignores lines that start with a #
+--other lines get split to a key/value pair upon the first "="
+--they are then stored in vars
+--Note, this happens lazily, so it only reads the .env file when the function gets first called.
+--It also caches the key/value pairs. So, it only has to read the file once per run.
+
 local files = require "compiler/fileSystem"
+local constants = require "compiler/constants"
 
 local vars = {}
 
 return function(key, allowError)
 	allowError = allowError or false
 	if next(vars) == nil then
-		files.openAndReadLines("../.env",function(line)
+		files.openAndReadLines(constants.PATH_ENV_FILE,function(line)
 			print(line)
 			if line:sub(1,1) ~= "#" then
 				local value = {}

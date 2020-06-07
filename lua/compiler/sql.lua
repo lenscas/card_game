@@ -1,3 +1,9 @@
+--This contains functions to work with the database.
+
+--------------------------------------------------------------
+--NOTE: This is the ONLY place where sql queries should exist.
+--------------------------------------------------------------
+
 local sql = require("luasql.postgres").postgres()
 
 local envReader = require "compiler/envReader"
@@ -21,29 +27,25 @@ return {
 	saveCard = function(card,fileName)
 		local con = getConnection()
 		local textId = con:escape(card.id)
-		local imagePath = con:escape(card.image)
 		local isObtainable = tostring(
 			card.is_obtainable == nil or (card.is_obtainable == true)
 		)
-		print(imagePath,fileName,textId,isObtainable)
+		print(fileName,textId,isObtainable)
 		local query = [[
 INSERT INTO cards (
-	image_path,
 	json_file_path,
 	text_id,
 	is_obtainable
 ) VALUES (
-	]] .. "'" ..imagePath.."','" ..
-fileName.. "','" ..
-	textId..
-	"'," ..
-	isObtainable .. [[
+	]] .. "'" ..fileName.."','" ..
+textId.. "','" ..
+	isObtainable..
+[['
 )
 ON CONFLICT (text_id)
 DO
 	UPDATE
 	SET
-		image_path =  EXCLUDED.image_path,
 		json_file_path = EXCLUDED.json_file_path,
 		is_obtainable = EXCLUDED.is_obtainable
 ]]

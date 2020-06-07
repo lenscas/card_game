@@ -1,7 +1,7 @@
 {
 	id="test_damag",
-	image="./button.png",
 	name = "deal damage",
+	description="10 damage",
 	cost = 0,
 	speed = 2,
 	func = function(self, owner,oponent)

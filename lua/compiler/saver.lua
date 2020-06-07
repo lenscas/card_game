@@ -1,6 +1,9 @@
-local json = require "json"
-local sql = require"compiler/sql"
+--This module is to save the new format for the cards at their correct places in the file system
 
+local json = require "json"
+
+local imageCreator = require "compiler/imageCreator"
+local sql = require"compiler/sql"
 local files = require"compiler/fileSystem"
 local constants = require "compiler/constants"
 
@@ -29,8 +32,10 @@ Collides with : ]] .. (saved[cardId] or "no collision")
 		)
 
 		sql.saveCard(card,fileName)
+		imageCreator.imageifyCard(card)
 		local as_json = json.encode(card)
 		files.writeToFile(constants.PATH_COMPILED_CARDS, fileName, as_json)
+		
 
 
 		saved[cardId] = fileName;

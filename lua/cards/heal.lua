@@ -1,7 +1,7 @@
 {
 	id="test_heal",
-	image="./button.png",
 	name = "some healing",
+	description = "Heal 10",
 	cost = 0,
 	speed = 2,
 	func = function(self, owner,oponent)

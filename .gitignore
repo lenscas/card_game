@@ -2,3 +2,5 @@
 **/*.rs.bk
 .env
 /lua/compiled/**/*.lua
+/assets/cards/*.png
+/assets/cards/*.svg

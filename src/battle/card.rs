@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct Card {
+    pub(crate) id: String,
     pub(crate) name: String,
     pub(crate) speed: u8,
     pub(crate) cost: u64,

@@ -1,3 +1,5 @@
+--this contains the functions that actually do the heavy work of transforming the files from one format to another.
+
 local files = require "compiler/fileSystem"
 local saver = require"compiler/saver"
 

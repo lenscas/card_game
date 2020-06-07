@@ -1,7 +1,7 @@
 {
 	id="hexa_rune",
-	image="./button.png",
 	name = "test hexa",
+	description="+10 damage to all spells.",
 	cost = 0,
 	speed = 2,
 	func = function(self, owner,oponent)

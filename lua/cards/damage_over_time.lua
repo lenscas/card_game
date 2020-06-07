@@ -1,7 +1,7 @@
 {
 	id="test_dop",
-	image="./button.png",
 	name = "damage over time",
+	description = "5 damage for 3 turns.",
 	cost = 0,
 	speed = 2,
 	func = function(self,owner,oponent)
