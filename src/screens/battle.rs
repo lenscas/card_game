@@ -53,7 +53,7 @@ fn calc_points(
         .map(|v| f64::from(v) * steps + rotation)
         .map(|v| (radius * (v.sin()), radius * (v.cos())))
         .map(|(x, y)| offset(x, y, radius))
-        .map(|(x, y)| Circle::new((x as f32, y as f32), 35))
+        .map(|(x, y)| Circle::new(Vector::new(x as f32, y as f32), 35.))
         .collect()
 }
 
@@ -62,8 +62,8 @@ fn get_location_of_cards(cards: Vec<String>, resolution: Vector) -> Vec<(String,
         .into_iter()
         .enumerate()
         .map(|(key, card)| {
-            let rec_size = (0.1375 * resolution.x, 0.283_333_33 * resolution.y);
-            let rec_location = (
+            let rec_size = Vector::new(0.1375 * resolution.x, 0.283_333_33 * resolution.y);
+            let rec_location = Vector::new(
                 0.00625 * resolution.x,
                 (0.008_333_334 + (0.046_666_667 * key as f32)) * resolution.y,
             );
@@ -73,7 +73,7 @@ fn get_location_of_cards(cards: Vec<String>, resolution: Vector) -> Vec<(String,
 }
 
 impl Battle {
-    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> crate::Result<Battle> {
+    pub(crate) async fn new(wrapper: &mut Wrapper) -> crate::Result<Battle> {
         let v = wrapper.window.size();
         let outer_radius = 0.4f64 * f64::from(v.y);
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
@@ -116,7 +116,7 @@ impl Battle {
             hexa_runes: current.hexa_runes,
         })
     }
-    async fn play_card(&mut self, wrapper: &Wrapper<'_>) -> crate::Result<()> {
+    async fn play_card(&mut self, wrapper: &Wrapper) -> crate::Result<()> {
         let cursor_pos = wrapper.get_cursor_loc();
         let chosen = self
             .hand
@@ -144,7 +144,7 @@ impl Battle {
 
 #[async_trait(?Send)]
 impl Screen for Battle {
-    async fn draw(&mut self, wrapper: &mut crate::Wrapper<'_>) -> crate::Result<()> {
+    async fn draw(&mut self, wrapper: &mut crate::Wrapper) -> crate::Result<()> {
         let resolution = wrapper.window.size();
         wrapper.gfx.clear(Color::BLACK);
         self.outer_points
@@ -184,12 +184,12 @@ impl Screen for Battle {
                 wrapper.gfx.draw_point(circle.pos, Color::WHITE);
             });
         wrapper.gfx.fill_circle(
-            &Circle::new((resolution.x / 2f32, resolution.y / 2f32), 20),
+            &Circle::new(Vector::new(resolution.x / 2f32, resolution.y / 2f32), 20.),
             Color::WHITE,
         );
         wrapper
             .gfx
-            .stroke_path(&[(0, 0).into(), resolution], Color::BLUE);
+            .stroke_path(&[(0., 0.).into(), resolution], Color::BLUE);
 
         for (card, rectangle) in self.hand.iter_mut() {
             let card = card;
@@ -219,7 +219,7 @@ impl Screen for Battle {
     }
     async fn update(
         &mut self,
-        wrapper: &mut crate::Wrapper<'_>,
+        wrapper: &mut crate::Wrapper,
     ) -> crate::Result<Option<Box<dyn Screen>>> {
         let v = wrapper.window.size();
         self.rotation += 0.0005;
@@ -234,7 +234,7 @@ impl Screen for Battle {
     }
     async fn event(
         &mut self,
-        wrapper: &mut Wrapper<'_>,
+        wrapper: &mut Wrapper,
         event: &quicksilver::input::Event,
     ) -> crate::Result<Option<Box<dyn Screen>>> {
         use quicksilver::input::{Event::*, Key, MouseButton};
