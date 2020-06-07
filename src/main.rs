@@ -15,7 +15,7 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 fn main() {
     run(
         Settings {
-            size: Vector::new(1366, 768),
+            size: Vector::new(1366., 768.),
             title: "Image Example",
             resizable: false,
             ..Settings::default()
@@ -24,15 +24,15 @@ fn main() {
     );
 }
 
-pub(crate) struct Wrapper<'a> {
+pub(crate) struct Wrapper {
     pub window: Window,
     pub gfx: Graphics,
     pub events: Input,
-    pub context: Context<'a>,
+    pub context: Context,
     pub client: Client,
     pub cursor_at: Vector,
 }
-impl<'a> Wrapper<'a> {
+impl Wrapper {
     pub(crate) fn get_cursor_loc(&self) -> Vector {
         self.cursor_at
     }
@@ -43,14 +43,14 @@ impl<'a> Wrapper<'a> {
 }
 
 async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
-    let context = Context::new(Vector::new(0, 0));
+    let context = Context::new();
     let mut wrapper = Wrapper {
         window,
         gfx,
         events,
         context,
         client: Client::new("http://127.0.0.1:3030/".into()),
-        cursor_at: Vector::new(0, 0),
+        cursor_at: Vector::new(0., 0.),
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;

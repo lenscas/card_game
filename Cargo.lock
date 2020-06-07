@@ -1799,9 +1799,9 @@ dependencies = [
 
 [[package]]
 name = "mergui"
-version = "0.1.0-alpha0.3"
+version = "0.1.0-alpha0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29fa11ab3732367aec83c753c4968f6c620c422d885031affbdfec704421e35a"
+checksum = "8900b6c1d60b97c5e41265471e33f0779c898b5ca15a6037e57c2d47651e56b6"
 dependencies = [
  "indexmap",
  "quicksilver",
@@ -2341,9 +2341,9 @@ dependencies = [
 
 [[package]]
 name = "quicksilver"
-version = "0.4.0-alpha0.4"
+version = "0.4.0-alpha0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f793e62f4156ba31a2cd61b8810aa89ada26a4eb18af9d817cd8a4129d8953f2"
+checksum = "eb205a4429c2ca003455a9fa3edabd570cc6bdb136ff63cb364dc591564b8a33"
 dependencies = [
  "blinds",
  "bytemuck",

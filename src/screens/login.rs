@@ -2,7 +2,7 @@ use super::{Battle, Screen};
 use crate::{Result as CResult, Wrapper};
 use async_trait::async_trait;
 use mergui::{
-    channels::{BasicClickable, Clickable, InputChannel},
+    channels::{BasicClickable, InputChannel},
     core::Text,
     widgets::{
         input::{InputConfig, PlaceholderConfig},
@@ -24,13 +24,13 @@ pub(crate) struct Login {
 }
 
 impl Login {
-    pub(crate) async fn new(wrapper: &mut Wrapper<'_>) -> CResult<Self> {
+    pub(crate) async fn new(wrapper: &mut Wrapper) -> CResult<Self> {
         let layer = wrapper.context.add_layer();
         let ttf = VectorFont::load("font.ttf").await?;
         let font = MFont::from_font(&ttf, &wrapper.gfx, 30.0)?;
         let basic_font_style = FontStyle {
             font: font.clone(),
-            location: Vector::new(350, 40),
+            location: Vector::new(350., 40.),
             color: Color::BLACK,
         };
         let conf = Text {
@@ -53,7 +53,7 @@ impl Login {
                 font: placeholder_font.clone(),
                 text: "Username".into(),
             }), //Option<PlaceholderConfig>,
-            location: Rectangle::new((200, 200), (300, 25)),
+            location: Rectangle::new(Vector::new(200., 200.), Vector::new(300., 25.)),
             start_value: None,
             cursor_config: Default::default(),
         };
@@ -65,7 +65,7 @@ impl Login {
                 font: placeholder_font,
                 text: "Password".into(),
             }), //Option<PlaceholderConfig>,
-            location: Rectangle::new((200, 230), (300, 25)),
+            location: Rectangle::new(Vector::new(200., 230.), Vector::new(300., 25.)),
             start_value: None,
             cursor_config: Default::default(),
         };
@@ -75,11 +75,11 @@ impl Login {
             text: "Login".into(),
             font_style: FontStyle {
                 color: Color::WHITE,
-                location: Vector::new(10, 20),
+                location: Vector::new(10., 20.),
                 ..input_font
             },
             background: Image::load(&wrapper.gfx, "button.png").await?,
-            background_location: Rectangle::new((510, 230), (70, 30)),
+            background_location: Rectangle::new(Vector::new(510., 230.), Vector::new(70., 30.)),
             blend_color: Some(Color::from_hex("#008B24")),
             hover_color: Some(Color::from_hex("#07C739")),
         };
@@ -97,16 +97,16 @@ impl Login {
 
 #[async_trait(?Send)]
 impl Screen for Login {
-    async fn draw(&mut self, wrapper: &mut Wrapper<'_>) -> CResult<()> {
+    async fn draw(&mut self, wrapper: &mut Wrapper) -> CResult<()> {
         wrapper.gfx.clear(Color::WHITE);
         Ok(())
     }
-    async fn update(&mut self, _: &mut Wrapper<'_>) -> CResult<Option<Box<dyn Screen>>> {
+    async fn update(&mut self, _: &mut Wrapper) -> CResult<Option<Box<dyn Screen>>> {
         Ok(None)
     }
     async fn event(
         &mut self,
-        wrapper: &mut Wrapper<'_>,
+        wrapper: &mut Wrapper,
         _: &quicksilver::input::Event,
     ) -> CResult<Option<Box<dyn Screen>>> {
         if self.login_button.channel.has_clicked()
