@@ -16,7 +16,7 @@ fn main() {
     run(
         Settings {
             size: Vector::new(1366., 768.),
-            title: "Image Example",
+            title: "Card game",
             resizable: false,
             ..Settings::default()
         },
