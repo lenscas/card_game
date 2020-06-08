@@ -35,6 +35,7 @@ pub struct Battle {
     enemy_mana: String,
     player_mana: String,
     hexa_runes: Vec<String>,
+    hover_over: Option<usize>,
 }
 
 fn calc_points(
@@ -110,18 +111,21 @@ impl Battle {
             player_runes: current.small_runes,
             stat_font: font.to_renderer(&wrapper.gfx, 25.0)?,
             hexa_runes: current.hexa_runes,
+            hover_over: None,
         })
     }
-    async fn play_card(&mut self, wrapper: &mut Wrapper) -> crate::Result<()> {
-        let cursor_pos = wrapper.get_cursor_loc();
-        let chosen = self
-            .hand
+    fn get_card_hovering_over(&self, cursor_pos: Vector) -> Option<usize> {
+        self.hand
             .iter()
             .enumerate()
             .rev()
             .map(|(key, card)| (key, card.1))
             .find(|(_, card)| card.contains(cursor_pos))
-            .map(|(k, _)| k);
+            .map(|(k, _)| k)
+    }
+    async fn play_card(&mut self, wrapper: &mut Wrapper) -> crate::Result<()> {
+        let cursor_pos = wrapper.get_cursor_loc();
+        let chosen = self.get_card_hovering_over(cursor_pos);
         if let Some(chosen) = chosen {
             let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
             let (battle, hand) = (battle.battle, battle.images);
@@ -134,6 +138,7 @@ impl Battle {
             self.enemy_mana = battle.enemy_mana.to_string();
             self.player_mana = battle.mana.to_string();
             self.hexa_runes = battle.hexa_runes;
+            self.hover_over = self.get_card_hovering_over(cursor_pos);
         }
         Ok(())
     }
@@ -192,6 +197,15 @@ impl Screen for Battle {
         for (card, rectangle) in self.hand.iter() {
             wrapper.gfx.draw_image(card, *rectangle);
         }
+        if let Some(card) = self.hover_over.and_then(|v| self.hand.get(v)) {
+            wrapper.gfx.draw_image(
+                &card.0,
+                Rectangle::new(
+                    Vector::new(card.1.pos.x + card.1.size.x + 5., card.1.pos.y),
+                    card.1.size() * 1.2,
+                ),
+            );
+        }
         let renderer = &mut self.stat_font;
         let offset = wrapper.get_pos_vector(0.02, 0.95);
         renderer.draw(&mut wrapper.gfx, &self.player_hp, Color::RED, offset)?;
@@ -228,6 +242,9 @@ impl Screen for Battle {
     ) -> crate::Result<Option<Box<dyn Screen>>> {
         use quicksilver::input::{Event::*, MouseButton};
         match event {
+            PointerMoved(x) => {
+                self.hover_over = self.get_card_hovering_over(x.location());
+            }
             PointerInput(x) if x.button() == MouseButton::Left => {
                 if x.is_down() {
                     if !self.clicked {
