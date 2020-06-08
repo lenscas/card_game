@@ -40,6 +40,6 @@ return {
 			:gsub(escape(v.MANA),escape2(card.cost))
 		local fullPath = files.writeToFile(constants.PATH_OUT_CARD_PICTURES, card.id .. ".svg", newSvg)
 		local path_png = constants.PATH_OUT_CARD_PICTURES  .. "/".. card.id .. ".png"
-		os.execute("inkscape --export-png="..path_png .. " " .. fullPath)
+		os.execute("inkscape --export-background=#FFFFFF --export-png="..path_png .. " " .. fullPath)
 	end
 }
