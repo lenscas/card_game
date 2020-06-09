@@ -1,7 +1,12 @@
 use crate::screens::screen::Screen;
 pub(crate) use client::Client;
-use quicksilver::input::Event::PointerMoved;
-use quicksilver::{geom::Vector, graphics::Graphics, input::Input, run, Settings, Window};
+use quicksilver::input::Event::{PointerMoved, Resized};
+use quicksilver::{
+    geom::{Rectangle, Transform, Vector},
+    graphics::{Graphics, ResizeHandler},
+    input::Input,
+    run, Settings, Window,
+};
 use std::error::Error as TError;
 
 use mergui::Context;
@@ -10,14 +15,16 @@ mod client;
 mod responses;
 mod screens;
 
+const SIZE: Vector = Vector { x: 1366., y: 768. };
+
 pub(crate) type Error = Box<dyn TError + 'static + Send + Sync>;
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 fn main() {
     run(
         Settings {
-            size: Vector::new(1366., 768.),
+            size: SIZE,
             title: "Card game",
-            resizable: false,
+            resizable: true,
             ..Settings::default()
         },
         app,
@@ -36,10 +43,6 @@ impl Wrapper {
     pub(crate) fn get_cursor_loc(&self) -> Vector {
         self.cursor_at
     }
-    pub(crate) fn get_pos_vector(&self, x: f32, y: f32) -> Vector {
-        let res = self.window.size();
-        Vector::new(x * res.x, y * res.y)
-    }
 }
 
 async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
@@ -54,10 +57,33 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;
+
+    // Create a ResizeHandler that will Fit the content to the screen, leaving off area if we need
+    // to. Here, we provide an aspect ratio of 4:3.
+    let resize_handler = ResizeHandler::Fit {
+        aspect_width: 16.0,
+        aspect_height: 9.0,
+    };
+    let screen = Rectangle::new_sized(SIZE);
+    // If we want to handle resizes, we'll be setting the 'projection.' This is a transformation
+    // applied to eveyrthing we draw. By default, the projection is an 'orthographic' view of our
+    // window size. This means it takes a rectangle equal to the size of our window and transforms
+    // those coordinates to draw correctly on the screen.
+    let projection = Transform::orthographic(screen);
+    let mut current_projection = projection;
     loop {
         while let Some(e) = wrapper.events.next_event().await {
+            if let Resized(ev) = &e {
+                // Using our resize handler from above, create a transform that will correctly fit
+                // our content to the screen size
+                let letterbox = resize_handler.projection(ev.size());
+                // Apply our projection (convert content coordinates to screen coordinates) and
+                // then the letterbox (fit the content correctly on the screen)
+                current_projection = letterbox * projection;
+                wrapper.gfx.set_projection(current_projection);
+            }
             if let PointerMoved(e) = &e {
-                wrapper.cursor_at = e.location();
+                wrapper.cursor_at = current_projection.inverse() * e.location();
             }
             wrapper.context.event(&e, &wrapper.window);
             if let Some(x) = v.event(&mut wrapper, &e).await? {

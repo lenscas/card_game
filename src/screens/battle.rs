@@ -4,7 +4,7 @@ use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
 use quicksilver::graphics::{Color, FontRenderer, Image, VectorFont};
 use std::f64::consts::PI;
 
-use crate::Wrapper;
+use crate::{Wrapper, SIZE};
 
 fn has_rune<'a>(
     index: usize,
@@ -55,18 +55,13 @@ fn calc_points(
         .collect()
 }
 
-fn get_location_of_cards(cards: Vec<Image>, resolution: Vector) -> Vec<(Image, Rectangle)> {
+fn get_location_of_cards(cards: Vec<Image>) -> Vec<(Image, Rectangle)> {
     cards
         .into_iter()
         .enumerate()
         .map(|(key, card)| {
-            //original = 794 X 1123
-            //0.794 X 1.123
-            let rec_size = Vector::new(0.176_758_68 * resolution.y, 0.25 * resolution.y);
-            let rec_location = Vector::new(
-                0.00625 * resolution.x,
-                (0.008_333_334 + (0.046_666_667 * key as f32)) * resolution.y,
-            );
+            let rec_size = Vector::new(135.750_67, 192.);
+            let rec_location = Vector::new(8.5375, 6.400_000_6 + (35.84 * key as f32));
             (card, Rectangle::new(rec_location, rec_size))
         })
         .collect()
@@ -74,25 +69,17 @@ fn get_location_of_cards(cards: Vec<Image>, resolution: Vector) -> Vec<(Image, R
 
 impl Battle {
     pub(crate) async fn new(wrapper: &mut Wrapper) -> crate::Result<Battle> {
-        let v = wrapper.window.size();
-        let outer_radius = 0.4f64 * f64::from(v.y);
+        let outer_radius = 307.200_000_000_000_05;
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
-            (
-                x + f64::from(0.500_625 * v.x),
-                y + f64::from(0.500_833_33 * v.y), /*300.5f64*/
-            )
+            (x + 683.85375, y + 384.639_997_44 /*300.5f64*/)
         });
-        let inner_radius = 0.233_333_333_333 * f64::from(v.y);
+        let inner_radius = 179.199_999_999_744;
         let inner_points = calc_points(inner_radius, 5, 0.0, |x, y, _| {
-            (
-                x + f64::from(0.500_625 * v.x),
-                y + f64::from(0.500_833_33 * v.y),
-            )
+            (x + 683.85375, y + 384.639_997_44)
         });
         let current = wrapper.client.new_battle(&wrapper.gfx).await?;
         let (current, hand) = (current.battle, current.images);
-        let resolution = v;
-        let hand = get_location_of_cards(hand, resolution);
+        let hand = get_location_of_cards(hand);
 
         let font = VectorFont::load("font.ttf").await?;
 
@@ -129,7 +116,7 @@ impl Battle {
         if let Some(chosen) = chosen {
             let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
             let (battle, hand) = (battle.battle, battle.images);
-            self.hand = get_location_of_cards(hand, wrapper.window.size());
+            self.hand = get_location_of_cards(hand);
             self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
             self.enemy_hp = format!("HP: {}", battle.enemy_hp);
             self.player_hp = format!("HP: {}", battle.player_hp);
@@ -147,7 +134,7 @@ impl Battle {
 #[async_trait(?Send)]
 impl Screen for Battle {
     async fn draw(&mut self, wrapper: &mut crate::Wrapper) -> crate::Result<()> {
-        let resolution = wrapper.window.size();
+        //let resolution = SIZE;
         wrapper.gfx.clear(Color::from_hex("#031234"));
 
         self.outer_points
@@ -187,12 +174,12 @@ impl Screen for Battle {
                 wrapper.gfx.draw_point(circle.pos, Color::WHITE);
             });
         wrapper.gfx.fill_circle(
-            &Circle::new(Vector::new(resolution.x / 2f32, resolution.y / 2f32), 20.),
+            &Circle::new(Vector::new(SIZE.x / 2f32, SIZE.y / 2f32), 20.),
             Color::WHITE,
         );
         wrapper
             .gfx
-            .stroke_path(&[(0., 0.).into(), resolution], Color::BLUE);
+            .stroke_path(&[(0., 0.).into(), SIZE], Color::BLUE);
 
         for (card, rectangle) in self.hand.iter() {
             wrapper.gfx.draw_image(card, *rectangle);
@@ -207,34 +194,28 @@ impl Screen for Battle {
             );
         }
         let renderer = &mut self.stat_font;
-        let offset = wrapper.get_pos_vector(0.02, 0.95);
+        let offset = Vector::new(27.32, 729.6);
         renderer.draw(&mut wrapper.gfx, &self.player_hp, Color::RED, offset)?;
-        let offset = wrapper.get_pos_vector(0.02, 0.90);
+        let offset = Vector::new(27.32, 691.2); // wrapper.get_pos_vector(0.02, 0.90);
         renderer.draw(&mut wrapper.gfx, &self.player_mana, Color::RED, offset)?;
-        let offset = wrapper.get_pos_vector(0.92, 0.05);
+        let offset = Vector::new(1256.72, 38.4); //wrapper.get_pos_vector(0.92, 0.05);
         renderer.draw(&mut wrapper.gfx, &self.enemy_hp, Color::RED, offset)?;
 
-        let offset = wrapper.get_pos_vector(0.92, 0.1);
+        let offset = Vector::new(1256.72, 76.8); //wrapper.get_pos_vector(0.92, 0.1);
         renderer.draw(&mut wrapper.gfx, &self.enemy_hand_size, Color::RED, offset)?;
-        let offset = wrapper.get_pos_vector(0.92, 0.15);
+        let offset = Vector::new(1256.72, 115.2);
         renderer.draw(&mut wrapper.gfx, &self.enemy_mana, Color::RED, offset)?;
         Ok(())
     }
-    async fn update(
-        &mut self,
-        wrapper: &mut crate::Wrapper,
-    ) -> crate::Result<Option<Box<dyn Screen>>> {
-        let v = wrapper.window.size();
+    async fn update(&mut self, _: &mut crate::Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
         self.rotation += 0.0005;
-        let inner_radius = 0.233_333_333_333 * f64::from(v.y);
+        let inner_radius = 179.199_999_999_744;
         self.inner_points = calc_points(inner_radius, 5, self.rotation, |x, y, _| {
-            (
-                x + f64::from(0.500_625 * v.x),
-                y + f64::from(0.500_833_33 * v.y),
-            )
+            (x + 683.85375, y + 384.639_997_44)
         });
         Ok(None)
     }
+
     async fn event(
         &mut self,
         wrapper: &mut Wrapper,
@@ -242,9 +223,10 @@ impl Screen for Battle {
     ) -> crate::Result<Option<Box<dyn Screen>>> {
         use quicksilver::input::{Event::*, MouseButton};
         match event {
-            PointerMoved(x) => {
-                self.hover_over = self.get_card_hovering_over(x.location());
+            PointerMoved(_) => {
+                self.hover_over = self.get_card_hovering_over(wrapper.cursor_at);
             }
+
             PointerInput(x) if x.button() == MouseButton::Left => {
                 if x.is_down() {
                     if !self.clicked {
