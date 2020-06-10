@@ -4,7 +4,10 @@ use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
 use quicksilver::graphics::{Color, FontRenderer, Image, VectorFont};
 use std::f64::consts::PI;
 
-use crate::{Wrapper, SIZE};
+use crate::{
+    animations::{calc_points, RuneAnimation},
+    Wrapper, SIZE,
+};
 
 fn has_rune<'a>(
     index: usize,
@@ -22,11 +25,10 @@ fn has_rune<'a>(
 
 pub struct Battle {
     outer_points: Vec<Circle>,
-    inner_points: Vec<Circle>,
+    hexa_runes: RuneAnimation,
     hand: Vec<(Image, Rectangle)>,
     player_runes: Vec<String>,
     enemy_runes: Vec<String>,
-    rotation: f64,
     stat_font: FontRenderer,
     clicked: bool,
     enemy_hp: String,
@@ -34,25 +36,7 @@ pub struct Battle {
     player_hp: String,
     enemy_mana: String,
     player_mana: String,
-    hexa_runes: Vec<String>,
     hover_over: Option<usize>,
-}
-
-fn calc_points(
-    radius: f64,
-    points: i8,
-    rotation: f64,
-    offset: impl Fn(f64, f64, f64) -> (f64, f64),
-) -> Vec<Circle> {
-    let radius: f64 = radius;
-    let steps: f64 = 2.0 * PI / f64::from(points); //0.78539816339;
-                                                   //let steps: f64 = 1.0471975512;
-    (0..points)
-        .map(|v| f64::from(v) * steps + rotation)
-        .map(|v| (radius * (v.sin()), radius * (v.cos())))
-        .map(|(x, y)| offset(x, y, radius))
-        .map(|(x, y)| Circle::new(Vector::new(x as f32, y as f32), 35.))
-        .collect()
 }
 
 fn get_location_of_cards(cards: Vec<Image>) -> Vec<(Image, Rectangle)> {
@@ -73,10 +57,8 @@ impl Battle {
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
             (x + 683.85375, y + 384.639_997_44 /*300.5f64*/)
         });
-        let inner_radius = 179.199_999_999_744;
-        let inner_points = calc_points(inner_radius, 5, 0.0, |x, y, _| {
-            (x + 683.85375, y + 384.639_997_44)
-        });
+        //let inner_radius = ;
+
         let current = wrapper.client.new_battle(&wrapper.gfx).await?;
         let (current, hand) = (current.battle, current.images);
         let hand = get_location_of_cards(hand);
@@ -87,8 +69,6 @@ impl Battle {
             player_mana: current.mana.to_string(),
             enemy_mana: current.enemy_mana.to_string(),
             outer_points,
-            inner_points,
-            rotation: 0.0,
             hand,
             clicked: false,
             enemy_hand_size: format!("S: {}", current.enemy_hand_size),
@@ -97,7 +77,7 @@ impl Battle {
             enemy_runes: current.enemy_small_runes,
             player_runes: current.small_runes,
             stat_font: font.to_renderer(&wrapper.gfx, 25.0)?,
-            hexa_runes: current.hexa_runes,
+            hexa_runes: RuneAnimation::new(179.2),
             hover_over: None,
         })
     }
@@ -124,7 +104,8 @@ impl Battle {
             self.player_runes = battle.small_runes;
             self.enemy_mana = battle.enemy_mana.to_string();
             self.player_mana = battle.mana.to_string();
-            self.hexa_runes = battle.hexa_runes;
+            self.hexa_runes.set_state(battle.hexa_runes);
+            //self.hexa_runes = battle.hexa_runes;
             self.hover_over = self.get_card_hovering_over(cursor_pos);
         }
         Ok(())
@@ -156,23 +137,7 @@ impl Screen for Battle {
                 }
                 wrapper.gfx.draw_point(circle.pos, Color::WHITE);
             });
-        self.inner_points
-            .iter()
-            .enumerate()
-            .map(|(key, circle)| {
-                (
-                    circle,
-                    if self.hexa_runes.get(key).is_some() {
-                        Color::from_rgba(255, key as u8 * 63, 0, 1.0)
-                    } else {
-                        Color::from_rgba(0, 255, key as u8 * 63, 1.0)
-                    },
-                )
-            })
-            .for_each(|(circle, color)| {
-                wrapper.gfx.fill_circle(circle, color);
-                wrapper.gfx.draw_point(circle.pos, Color::WHITE);
-            });
+        self.hexa_runes.draw(&mut wrapper.gfx);
         wrapper.gfx.fill_circle(
             &Circle::new(Vector::new(SIZE.x / 2f32, SIZE.y / 2f32), 20.),
             Color::WHITE,
@@ -208,11 +173,6 @@ impl Screen for Battle {
         Ok(())
     }
     async fn update(&mut self, _: &mut crate::Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
-        self.rotation += 0.0005;
-        let inner_radius = 179.199_999_999_744;
-        self.inner_points = calc_points(inner_radius, 5, self.rotation, |x, y, _| {
-            (x + 683.85375, y + 384.639_997_44)
-        });
         Ok(None)
     }
 

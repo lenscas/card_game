@@ -368,6 +368,7 @@ dependencies = [
  "quicksilver",
  "serde 1.0.111",
  "serde_json",
+ "silver_animation",
  "silver_surf",
 ]
 
@@ -2768,6 +2769,15 @@ checksum = "5a9e7e0f2bfae24d8a5b5a66c5b257a83c7412304311512a0c054cd5e619da11"
 dependencies = [
  "lazy_static 1.4.0",
  "libc",
+]
+
+[[package]]
+name = "silver_animation"
+version = "0.1.0-alpha0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c6e121f81b127906cbe533047ff6798fac40ca8300783e21ae61f0940f4a164"
+dependencies = [
+ "quicksilver",
 ]
 
 [[package]]
