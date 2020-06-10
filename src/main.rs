@@ -11,6 +11,7 @@ use std::error::Error as TError;
 
 use mergui::Context;
 
+mod animations;
 mod client;
 mod responses;
 mod screens;
@@ -70,7 +71,6 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
     // window size. This means it takes a rectangle equal to the size of our window and transforms
     // those coordinates to draw correctly on the screen.
     let projection = Transform::orthographic(screen);
-    let mut current_projection = projection;
     loop {
         while let Some(e) = wrapper.events.next_event().await {
             if let Resized(ev) = &e {
@@ -79,11 +79,10 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
                 let letterbox = resize_handler.projection(ev.size());
                 // Apply our projection (convert content coordinates to screen coordinates) and
                 // then the letterbox (fit the content correctly on the screen)
-                current_projection = letterbox * projection;
-                wrapper.gfx.set_projection(current_projection);
+                wrapper.gfx.set_projection(letterbox * projection);
             }
             if let PointerMoved(e) = &e {
-                wrapper.cursor_at = current_projection.inverse() * e.location();
+                wrapper.cursor_at = e.location();
             }
             wrapper.context.event(&e, &wrapper.window);
             if let Some(x) = v.event(&mut wrapper, &e).await? {
