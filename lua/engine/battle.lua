@@ -91,8 +91,6 @@ local function makeSaveRun(func)
 end
 
 local function end_turn()
-	battle.player:remove_card(battle.playerCardIndex)
-	battle.ai:remove_card(battle.aiCardIndex)
 	battle.player:clean_up_runes()
 	battle.ai:clean_up_runes()
 	battle.player:add_mana(1)
@@ -106,12 +104,11 @@ local returnData = {
 	deal_damage = makeSaveRun(deal_damage),
 	end_turn = makeSaveRun(end_turn),
 	init = function(self,battleInjected,chosenCardInjected)
-		battle.chosenCard = chosenCardInjected
 		battle.battle = battleInjected
 		battle.ai =  battleInjected:get_ai()
 		battle.player =  battleInjected:get_player()
-		battle.aiCard, battle.aiCardIndex =  battleInjected:get_ai_card()
-		battle.playerCard, battle.playerCardIndex =  battleInjected:get_player_card(chosenCardInjected)
+		battle.aiCard = battleInjected:get_ai_card()
+		battle.playerCard = chosenCardInjected
 		return self
 	end
 }

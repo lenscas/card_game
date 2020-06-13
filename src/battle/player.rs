@@ -32,16 +32,12 @@ impl Player {
 
 impl UserData for Player {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.add_method_mut("remove_card", |_, me, card| {
-            println!("to remove : {}", card);
-            if me.hand.len() > card {
-                println!("has removed : {}", card);
-                me.hand.remove(card);
-            } else {
-                return Err(SimpleError::new_lua_error(format!(
-                    "Index {} out of bounds",
-                    card
-                )));
+        methods.add_method_mut("discard_cards", |_, me, amount| {
+            println!("to remove {} cards", amount);
+            for _ in 0..amount {
+                if me.hand.pop().is_none() {
+                    break;
+                }
             }
             Ok(())
         });

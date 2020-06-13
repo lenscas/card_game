@@ -68,23 +68,25 @@ impl Field {
         })
     }
     pub async fn process_turn(
-        self,
+        mut self,
         chosen_card: usize,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        if let Some(card) = self.player.hand.get(chosen_card) {
+        let card = if self.player.hand.len() > chosen_card {
+            let card = self.player.hand.remove(chosen_card);
             if card.cost > self.player.mana {
                 panic!("Card cost can't be higher than available mana")
             }
+            card
         } else {
             panic!("Selected card does not exist")
-        }
+        };
         let lua = Lua::new();
         let engine = read_to_string("./lua/engine.lua").await?;
         let mut battle =
             lua.context::<_, Result<_, Box<dyn std::error::Error>>>(move |lua_ctx| {
                 let globals = lua_ctx.globals();
                 globals.set("battle", self)?;
-                globals.set("chosenCard", chosen_card)?;
+                globals.set("chosenCard", card)?;
                 let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Self>()?;
                 Ok(v)
             })?;
@@ -95,15 +97,12 @@ impl Field {
 }
 impl UserData for Field {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("get_ai_card", |_, me, _: ()| {
+        methods.add_method_mut("get_ai_card", |_, me, _: ()| {
             let index = 0;
-            let item = me.ai.hand[index].clone();
-            Ok((item, index))
+            let item = me.ai.hand.remove(index);
+            Ok(item)
         });
-        methods.add_method("get_player_card", |_, me, index: usize| {
-            let item = me.player.hand.get(index).cloned();
-            Ok((item, index))
-        });
+
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
         methods.add_method("get_player", |_, me, _: ()| Ok(me.player.clone()));
         methods.add_method("has_ended", |_, me, _: ()| {
