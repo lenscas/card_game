@@ -2,9 +2,10 @@ use crate::{
     responses::{CustomResult, LoginResponse},
     Result,
 };
-use card_game_shared::LoginData;
-use card_game_shared::ReturnBattle;
-use card_game_shared::TakeAction;
+use card_game_shared::{
+    battle::{BattleErrors, ReturnBattle, TakeAction, TurnResponse},
+    users::LoginData,
+};
 use quicksilver::{graphics::Image, Graphics};
 use silver_surf::{call, Config, Method};
 use std::collections::HashMap;
@@ -104,17 +105,33 @@ impl Client {
         &mut self,
         card: usize,
         gfx: &Graphics,
-    ) -> Result<ReturnBattleWithImages> {
+    ) -> Result<Option<ReturnBattleWithImages>> {
         let res = call(Config {
             url: self.set_url("battle/"),
             method: Method::Put,
             body: Some(TakeAction { play_card: card }),
             headers: self.set_headers(),
         })?
-        .json::<CustomResult<ReturnBattle>>()
+        .json::<CustomResult<TurnResponse>>()
         .await;
         let res = dbg!(res);
         let res = res?.into_dyn_res()?;
+        let res = match res {
+            TurnResponse::NextTurn(b) => b,
+            TurnResponse::Error(x) => match x {
+                BattleErrors::ChosenCardNotInHand(_) => {
+                    todo!("We should try to reget the state here. However there is no endpoint to do this yet so instead lets crash")
+                },
+                BattleErrors::CardCostsTooMuch {..} => {
+                    return Ok(None)
+                }
+            },
+            //we should return something else to let the caller know the battle is over
+            //however, at this point the server doesn't even know when a battle is over (nor who won/lost)
+            //until that is added this should be decent enough.
+            TurnResponse::Done => return Ok(None),
+        };
+
         let mut cards = Vec::new();
         for id in &res.hand {
             cards.push(
@@ -122,9 +139,9 @@ impl Client {
                     .await?,
             );
         }
-        Ok(ReturnBattleWithImages {
+        Ok(Some(ReturnBattleWithImages {
             battle: res,
             images: cards,
-        })
+        }))
     }
 }

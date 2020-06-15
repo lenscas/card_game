@@ -1,11 +1,9 @@
 use quicksilver::{
-    geom::{Circle, Rectangle, Vector},
+    geom::{Circle, Vector},
     graphics::Color,
     Graphics, Result, Timer,
 };
-use silver_animation::{
-    AnimationTimer, BasicAnimationContainer, ContainedAnimation, EditableState, Linear, Resetable,
-};
+use silver_animation::{AnimationTimer, ContainedAnimation, EditableState};
 use std::f64::consts::PI;
 
 pub fn calc_points(

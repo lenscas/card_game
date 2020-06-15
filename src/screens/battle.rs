@@ -2,7 +2,6 @@ use super::Screen;
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
 use quicksilver::graphics::{Color, FontRenderer, Image, VectorFont};
-use std::f64::consts::PI;
 
 use crate::{
     animations::{calc_points, RuneAnimation},
@@ -95,6 +94,10 @@ impl Battle {
         let chosen = self.get_card_hovering_over(cursor_pos);
         if let Some(chosen) = chosen {
             let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
+            let battle = match battle {
+                Some(x) => x,
+                None => return Ok(()),
+            };
             let (battle, hand) = (battle.battle, battle.images);
             self.hand = get_location_of_cards(hand);
             self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
