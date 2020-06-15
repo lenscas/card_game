@@ -1,9 +1,10 @@
 use argonautica::Error as HashError;
+use card_game_shared::battle::BattleErrors;
 use sqlx::{error::DatabaseError, Error as SqlError};
 use std::io::Error as ioError;
 
 #[derive(Debug)]
-pub enum ReturnErrors {
+pub(crate) enum ReturnErrors {
     Io(ioError),
     GenericError(String),
     DatabaseError(Box<dyn DatabaseError + 'static>),
@@ -11,18 +12,11 @@ pub enum ReturnErrors {
     HashError(HashError),
     CustomError(String, warp::http::StatusCode),
     JsonError(serde_json::error::Error),
+    BattleErrors(BattleErrors),
+    LuaError(rlua::Error),
 }
 
 impl ReturnErrors {
-    pub fn on_db_error(
-        self,
-        run: impl Fn(Box<dyn DatabaseError + 'static>) -> ReturnErrors,
-    ) -> Self {
-        match self {
-            Self::DatabaseError(x) => run(x),
-            x => x,
-        }
-    }
     pub fn map_not_found(self, run: impl Fn() -> ReturnErrors) -> ReturnErrors {
         match self {
             Self::NotFound => run(),
@@ -78,5 +72,17 @@ impl From<std::io::Error> for ReturnErrors {
 impl From<serde_json::error::Error> for ReturnErrors {
     fn from(error: serde_json::error::Error) -> Self {
         ReturnErrors::JsonError(error)
+    }
+}
+
+impl From<BattleErrors> for ReturnErrors {
+    fn from(error: BattleErrors) -> Self {
+        ReturnErrors::BattleErrors(error)
+    }
+}
+
+impl From<rlua::Error> for ReturnErrors {
+    fn from(error: rlua::Error) -> Self {
+        ReturnErrors::LuaError(error)
     }
 }

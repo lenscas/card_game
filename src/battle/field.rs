@@ -1,11 +1,9 @@
-use super::{HexaRune, Player};
+use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnErrors, util::CastRejection};
 use rlua::{Lua, UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
-use sqlx::pool::PoolConnection;
-use sqlx::{query, PgConnection};
-use std::fs::read_to_string as read_to_string_sync;
-use std::{error::Error, fmt::Display, sync::Arc};
+use sqlx::{pool::PoolConnection, PgConnection};
+use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -21,45 +19,14 @@ impl Field {
         player_id: i64,
         con: &mut PoolConnection<PgConnection>,
     ) -> Result<Field, ReturnErrors> {
-        let v = query!(
-            r#"
-                SELECT cards.id,cards.json_file_path
-                FROM cards
-                INNER JOIN cards_in_deck
-                ON cards_in_deck.card_id = cards.id
-                INNER JOIN decks
-                ON decks.id = cards_in_deck.deck_id
-                INNER JOIN characters
-                ON characters.id = decks.character_id
-                WHERE characters.user_id = $1
-            "#,
-            player_id
-        )
-        .fetch_all(con)
-        .await?;
-        let mut cards = Vec::new();
-        for card_id in v {
-            let path = format!("./lua/compiled/cards/{}", card_id.json_file_path);
-            cards.push(
-                read_to_string(&path)
-                    .await
-                    .map_err(|v| {
-                        println!("Error reading {}, error: {}", path, v);
-                        v
-                    })
-                    .half_cast()
-                    .and_then(|v| serde_json::from_str(&v).half_cast())?,
-            );
-        }
-        let mut player = Player {
-            hand: vec![],
+        let deck = Deck::create_deck_for_player(player_id, con).await?;
+        let player = Player {
             life: 20,
-            deck: cards.to_vec(),
+            deck,
             mana: 0,
             runes: Default::default(),
             rune_count: 0,
         };
-        player.fill_hand();
         Ok(Self {
             player: player.clone(),
             ai: player,
@@ -67,29 +34,17 @@ impl Field {
             rune_count: 0,
         })
     }
-    pub async fn process_turn(
-        mut self,
-        chosen_card: usize,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let card = if self.player.hand.len() > chosen_card {
-            let card = self.player.hand.remove(chosen_card);
-            if card.cost > self.player.mana {
-                panic!("Card cost can't be higher than available mana")
-            }
-            card
-        } else {
-            panic!("Selected card does not exist")
-        };
+    pub async fn process_turn(mut self, chosen_card: usize) -> Result<Self, ReturnErrors> {
+        let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
         let engine = read_to_string("./lua/engine.lua").await?;
-        let mut battle =
-            lua.context::<_, Result<_, Box<dyn std::error::Error>>>(move |lua_ctx| {
-                let globals = lua_ctx.globals();
-                globals.set("battle", self)?;
-                globals.set("chosenCard", card)?;
-                let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Self>()?;
-                Ok(v)
-            })?;
+        let mut battle = lua.context::<_, Result<_, ReturnErrors>>(move |lua_ctx| {
+            let globals = lua_ctx.globals();
+            globals.set("battle", self).half_cast()?;
+            globals.set("chosenCard", card).half_cast()?;
+            let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Self>()?;
+            Ok(v)
+        })?;
         battle.player.fill_hand();
         battle.ai.fill_hand();
         Ok(battle)
@@ -99,7 +54,7 @@ impl UserData for Field {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("get_ai_card", |_, me, _: ()| {
             let index = 0;
-            let item = me.ai.hand.remove(index);
+            let item = me.ai.deck.get_card_from_hand(index)?;
             Ok(item)
         });
 

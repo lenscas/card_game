@@ -1,4 +1,5 @@
 pub(crate) mod card;
+pub(crate) mod deck;
 pub(crate) mod field;
 pub(crate) mod player;
 pub(crate) mod runes;

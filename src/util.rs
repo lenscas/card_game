@@ -1,14 +1,14 @@
 use crate::errors::ReturnErrors;
 use warp::Rejection;
 
-pub fn cast_result<T>(data: Result<T, impl Into<ReturnErrors>>) -> Result<T, Rejection> {
+pub(crate) fn cast_result<T>(data: Result<T, impl Into<ReturnErrors>>) -> Result<T, Rejection> {
     match data {
         Ok(x) => Ok(x),
         Err(x) => Err(warp::reject::custom::<ReturnErrors>(x.into())),
     }
 }
 
-pub trait CastRejection {
+pub(crate) trait CastRejection {
     type ToCast;
     fn half_cast(self) -> Result<Self::ToCast, ReturnErrors>;
     fn cast(self) -> Result<Self::ToCast, Rejection>;

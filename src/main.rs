@@ -97,6 +97,10 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         message = "NOT_FOUND".into();
     } else if let Some(error) = err.find::<ReturnErrors>() {
         let res = handle_custom_error(error);
+        let res = match res {
+            ReturnHandle::Custom(x) => return Ok(x),
+            ReturnHandle::Parts(x, y) => (x, y),
+        };
         code = res.0;
         message = res.1;
     } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
@@ -113,22 +117,49 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
 
     let json = warp::reply::json(&ErrorMessage { message });
 
-    Ok(warp::reply::with_status(json, code))
+    Ok(Box::new(warp::reply::with_status(json, code)))
 }
-fn handle_custom_error(error: &ReturnErrors) -> (StatusCode, String) {
+
+enum ReturnHandle {
+    Custom(Box<dyn Reply>),
+    Parts(StatusCode, String),
+}
+
+impl ReturnHandle {
+    fn new(a: StatusCode, b: String) -> Self {
+        Self::Parts(a, b)
+    }
+}
+impl<T: Reply + 'static> From<T> for ReturnHandle {
+    fn from(a: T) -> Self {
+        Self::Custom(Box::new(a))
+    }
+}
+
+fn handle_custom_error(error: &ReturnErrors) -> ReturnHandle {
     match error {
-        ReturnErrors::Io(_) => (StatusCode::INTERNAL_SERVER_ERROR, "file not found".into()),
-        ReturnErrors::GenericError(x) => (StatusCode::INTERNAL_SERVER_ERROR, x.to_owned()),
-        ReturnErrors::DatabaseError(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "something wend wrong".into(),
-        ),
-        ReturnErrors::NotFound => (StatusCode::NOT_FOUND, "resource not found".into()),
-        ReturnErrors::HashError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into()),
-        ReturnErrors::CustomError(message, code) => (*code, message.to_string()),
-        ReturnErrors::JsonError(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Something has gone wrong".into(),
-        ),
+        ReturnErrors::Io(_) => {
+            ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, "file not found".into())
+        }
+        ReturnErrors::GenericError(x) => {
+            ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, x.to_owned())
+        }
+
+        ReturnErrors::NotFound => {
+            ReturnHandle::new(StatusCode::NOT_FOUND, "resource not found".into())
+        }
+        ReturnErrors::HashError(_) => {
+            ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into())
+        }
+        ReturnErrors::CustomError(message, code) => ReturnHandle::new(*code, message.to_string()),
+        ReturnErrors::BattleErrors(x) => serde_json::to_string(x)
+            .map(|v| warp::reply::with_status(v, StatusCode::CONFLICT).into())
+            .unwrap_or_else(|v| handle_custom_error(&ReturnErrors::from(v))),
+        ReturnErrors::DatabaseError(_) | ReturnErrors::LuaError(_) | ReturnErrors::JsonError(_) => {
+            ReturnHandle::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "something wend wrong".into(),
+            )
+        }
     }
 }

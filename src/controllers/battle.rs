@@ -2,8 +2,7 @@ use super::users::{force_logged_in, get_db_con};
 use crate::{
     battle::Field, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
 };
-use card_game_shared::ReturnBattle;
-use card_game_shared::TakeAction;
+use card_game_shared::battle::{ReturnBattle, TakeAction};
 use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
@@ -50,17 +49,12 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     if rows != 1 {
         return conflict_error;
     }
-    let hand = battle
-        .player
-        .hand
-        .into_iter()
-        .map(|v| v.id)
-        .collect::<Vec<_>>();
+    let hand = battle.player.deck.get_ids_from_hand();
 
     Ok(serde_json::to_string(&ReturnBattle {
         player_hp: battle.player.life,
         enemy_hp: battle.ai.life,
-        enemy_hand_size: battle.ai.hand.len(),
+        enemy_hand_size: battle.ai.deck.hand.len(),
         success: true,
         hand,
         enemy_mana: battle.ai.mana,
@@ -101,7 +95,7 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     .await
     .half_cast()?;
     let battle: Field = serde_json::from_str(&v.current_battle.unwrap()).half_cast()?;
-    let battle = battle.process_turn(chosen_card).await.unwrap();
+    let battle = battle.process_turn(chosen_card).await.half_cast()?;
     let c = serde_json::to_string(&battle).half_cast()?;
     query!(
         "UPDATE characters SET current_battle = $1 WHERE user_id = $2",
@@ -112,17 +106,12 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
     .await
     .half_cast()?;
 
-    let hand = battle
-        .player
-        .hand
-        .into_iter()
-        .map(|v| v.id)
-        .collect::<Vec<_>>();
+    let hand = battle.player.deck.get_ids_from_hand();
     let hand = dbg!(hand);
     Ok(serde_json::to_string(&ReturnBattle {
         player_hp: battle.player.life,
         enemy_hp: battle.ai.life,
-        enemy_hand_size: battle.ai.hand.len(),
+        enemy_hand_size: battle.ai.deck.hand.len(),
         success: true,
         hand,
         enemy_mana: battle.ai.mana,

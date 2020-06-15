@@ -2,7 +2,7 @@
 	id="hexa_rune",
 	name = "test hexa",
 	description="+10 damage to all spells.",
-	cost = 0,
+	cost = 20,
 	speed = 2,
 	func = function(self, owner,oponent)
 		local battle = require"engine/battle"

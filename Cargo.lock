@@ -227,8 +227,9 @@ dependencies = [
 [[package]]
 name = "card_game_shared"
 version = "0.1.0"
-source = "git+https://github.com/lenscas/card_game_shared.git#532d340bd02ca8dad70c253f844585e398558847"
+source = "git+https://github.com/lenscas/card_game_shared.git#11ce9dabd1780221b376a08815f0a220cc474257"
 dependencies = [
+ "rlua 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.110 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

@@ -1,13 +1,14 @@
-use super::{Card, SimpleError, SmallRune};
+use super::{deck::Deck, Card, SimpleError, SmallRune};
+use crate::errors::ReturnErrors;
 use rlua::{UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};
+use card_game_shared::battle::BattleErrors;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub(crate) struct Player {
-    pub(crate) hand: Vec<Card>,
     pub(crate) life: u64,
-    pub(crate) deck: Vec<Card>,
+    pub(crate) deck: Deck,
     pub(crate) mana: u64,
     pub(crate) runes: [Option<SmallRune>; 5],
     pub(crate) rune_count: u64,
@@ -15,18 +16,20 @@ pub(crate) struct Player {
 
 impl Player {
     pub(crate) fn fill_hand(&mut self) {
-        let amount_needed = 7 - self.hand.len();
-        let deck = &mut self.deck;
-        let hand = &mut self.hand;
-        (0..amount_needed)
-            .filter_map(|_| {
-                if !deck.is_empty() {
-                    Some(deck.remove(0))
-                } else {
-                    None
-                }
-            })
-            .for_each(|card| hand.push(card));
+        self.deck.fill_hand();
+    }
+    pub(crate) fn get_casted_card(&mut self, index: usize) -> Result<Card, ReturnErrors> {
+        let card = self.deck.get_card_from_hand(index)?;
+        if card.cost > self.mana {
+            return Err(ReturnErrors::BattleErrors(
+                BattleErrors::CardCostsTooMuch {
+                    chosen: index,
+                    mana_available: self.mana,
+                    mana_needed: card.cost,
+                },
+            ));
+        }
+        Ok(card)
     }
 }
 
@@ -35,7 +38,7 @@ impl UserData for Player {
         methods.add_method_mut("discard_cards", |_, me, amount| {
             println!("to remove {} cards", amount);
             for _ in 0..amount {
-                if me.hand.pop().is_none() {
+                if me.deck.discard_card() {
                     break;
                 }
             }

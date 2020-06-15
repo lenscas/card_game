@@ -1,5 +1,5 @@
 use crate::util::CastRejection;
-use card_game_shared::{LoginData, LoginReply, RegisterData};
+use card_game_shared::users::{LoginData, LoginReply, RegisterData};
 use dotenv::var;
 use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
