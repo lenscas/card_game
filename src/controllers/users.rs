@@ -155,28 +155,21 @@ pub fn with_db(
     warp::any().map(move || db.clone())
 }
 
-pub fn register_route(
+pub fn user_route(
     db: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     use warp::{path, post};
-    post().and(
-        path("register")
+    post()
+        .and(
+            path("login")
+                .and(json_body_login())
+                .and(with_db(db.clone()))
+                .and_then(login),
+        )
+        .or(path("register")
             .and(json_body_register())
             .and(with_db(db))
-            .and_then(register),
-    )
-}
-
-pub fn login_route(
-    db: PgPool,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    use warp::{path, post};
-    post().and(
-        path("login")
-            .and(json_body_login())
-            .and(with_db(db))
-            .and_then(login),
-    )
+            .and_then(register))
 }
 
 pub fn force_logged_in(

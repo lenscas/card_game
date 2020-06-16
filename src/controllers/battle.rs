@@ -6,7 +6,7 @@ use card_game_shared::battle::{ReturnBattle, TakeAction};
 use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
-async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection> {
+async fn create_battle(db: PgPool, user_id: i32) -> Result<Box<dyn Reply>, Rejection> {
     let user_id = i64::from(user_id);
 
     let mut con = get_db_con(db).await?;
@@ -51,39 +51,45 @@ async fn create_battle(db: PgPool, user_id: i32) -> Result<impl Reply, Rejection
     }
     let hand = battle.player.deck.get_ids_from_hand();
 
-    Ok(serde_json::to_string(&ReturnBattle {
-        player_hp: battle.player.life,
-        enemy_hp: battle.ai.life,
-        enemy_hand_size: battle.ai.deck.hand.len(),
-        success: true,
-        hand,
-        enemy_mana: battle.ai.mana,
-        mana: battle.player.mana,
-        hexa_runes: battle
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-        small_runes: battle
-            .player
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-        enemy_small_runes: battle
-            .ai
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-    })
-    .half_cast()?)
+    Ok(Box::new(
+        serde_json::to_string(&ReturnBattle {
+            player_hp: battle.player.life,
+            enemy_hp: battle.ai.life,
+            enemy_hand_size: battle.ai.deck.hand.len(),
+            success: true,
+            hand,
+            enemy_mana: battle.ai.mana,
+            mana: battle.player.mana,
+            hexa_runes: battle
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            small_runes: battle
+                .player
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            enemy_small_runes: battle
+                .ai
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+        })
+        .half_cast()?,
+    ))
 }
 
-async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Reply, Rejection> {
+async fn do_turn(
+    action: TakeAction,
+    db: PgPool,
+    user_id: i32,
+) -> Result<Box<dyn Reply>, Rejection> {
     let chosen_card = action.play_card;
     let user_id = i64::from(user_id);
     let mut con = get_db_con(db).await?;
@@ -108,59 +114,55 @@ async fn do_turn(action: TakeAction, db: PgPool, user_id: i32) -> Result<impl Re
 
     let hand = battle.player.deck.get_ids_from_hand();
     let hand = dbg!(hand);
-    Ok(serde_json::to_string(&ReturnBattle {
-        player_hp: battle.player.life,
-        enemy_hp: battle.ai.life,
-        enemy_hand_size: battle.ai.deck.hand.len(),
-        success: true,
-        hand,
-        enemy_mana: battle.ai.mana,
-        mana: battle.player.mana,
-        hexa_runes: battle
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-        small_runes: battle
-            .player
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-        enemy_small_runes: battle
-            .ai
-            .runes
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.name.clone())
-            .collect(),
-    })
-    .half_cast()?)
+    Ok(Box::new(
+        serde_json::to_string(&ReturnBattle {
+            player_hp: battle.player.life,
+            enemy_hp: battle.ai.life,
+            enemy_hand_size: battle.ai.deck.hand.len(),
+            success: true,
+            hand,
+            enemy_mana: battle.ai.mana,
+            mana: battle.player.mana,
+            hexa_runes: battle
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            small_runes: battle
+                .player
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            enemy_small_runes: battle
+                .ai
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+        })
+        .half_cast()?,
+    ))
 }
 
-pub fn create_battle_route(
+pub fn battle_route(
     db: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    use warp::{path, post};
-    post().and(
-        path("battle")
+    use warp::{path, post, put};
+    path("battle")
+        .and(
+            post()
+                .and(with_db(db.clone()))
+                .and(force_logged_in(db.clone()))
+                .and_then(create_battle),
+        )
+        .or(put()
+            .and(warp::body::content_length_limit(1024 * 16).and(warp::body::json()))
             .and(with_db(db.clone()))
             .and(force_logged_in(db))
-            .and_then(create_battle),
-    )
-}
-
-pub fn do_turn_route(
-    db: PgPool,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    use warp::{path, put};
-    put()
-        .and(path("battle"))
-        .and(warp::body::content_length_limit(1024 * 16).and(warp::body::json()))
-        //.and(warp::path::param())
-        .and(with_db(db.clone()))
-        .and(force_logged_in(db))
-        .and_then(do_turn)
+            .and_then(do_turn))
+        .boxed()
 }
