@@ -10,6 +10,11 @@ use quicksilver::{graphics::Image, Graphics};
 use silver_surf::{call, Config, Method};
 use std::collections::HashMap;
 
+pub enum AfterTurn {
+    Over,
+    NewTurn(ReturnBattleWithImages),
+    NoTurnHappened,
+}
 pub struct ReturnBattleWithImages {
     pub(crate) images: Vec<Image>,
     pub(crate) battle: ReturnBattle,
@@ -101,11 +106,7 @@ impl Client {
             images: cards,
         })
     }
-    pub(crate) async fn do_turn(
-        &mut self,
-        card: usize,
-        gfx: &Graphics,
-    ) -> Result<Option<ReturnBattleWithImages>> {
+    pub(crate) async fn do_turn(&mut self, card: usize, gfx: &Graphics) -> Result<AfterTurn> {
         let res = call(Config {
             url: self.set_url("battle/"),
             method: Method::Put,
@@ -123,13 +124,13 @@ impl Client {
                     todo!("We should try to reget the state here. However there is no endpoint to do this yet so instead lets crash")
                 },
                 BattleErrors::CardCostsTooMuch {..} => {
-                    return Ok(None)
+                    return Ok(AfterTurn::NoTurnHappened)
                 }
             },
             //we should return something else to let the caller know the battle is over
             //however, at this point the server doesn't even know when a battle is over (nor who won/lost)
             //until that is added this should be decent enough.
-            TurnResponse::Done => return Ok(None),
+            TurnResponse::Done => return Ok(AfterTurn::Over),
         };
 
         let mut cards = Vec::new();
@@ -139,7 +140,7 @@ impl Client {
                     .await?,
             );
         }
-        Ok(Some(ReturnBattleWithImages {
+        Ok(AfterTurn::NewTurn(ReturnBattleWithImages {
             battle: res,
             images: cards,
         }))

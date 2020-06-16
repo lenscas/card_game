@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{BattleOver, Screen};
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
 use quicksilver::graphics::{Color, FontRenderer, Image, VectorFont};
@@ -89,14 +89,17 @@ impl Battle {
             .find(|(_, card)| card.contains(cursor_pos))
             .map(|(k, _)| k)
     }
-    async fn play_card(&mut self, wrapper: &mut Wrapper) -> crate::Result<()> {
+    async fn play_card(&mut self, wrapper: &mut Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
         let cursor_pos = wrapper.get_cursor_loc();
         let chosen = self.get_card_hovering_over(cursor_pos);
         if let Some(chosen) = chosen {
             let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
             let battle = match battle {
-                Some(x) => x,
-                None => return Ok(()),
+                crate::client::AfterTurn::Over => {
+                    return Ok(Some(Box::new(BattleOver::new(wrapper).await?)))
+                }
+                crate::client::AfterTurn::NewTurn(x) => x,
+                crate::client::AfterTurn::NoTurnHappened => return Ok(None),
             };
             let (battle, hand) = (battle.battle, battle.images);
             self.hand = get_location_of_cards(hand);
@@ -111,7 +114,7 @@ impl Battle {
             //self.hexa_runes = battle.hexa_runes;
             self.hover_over = self.get_card_hovering_over(cursor_pos);
         }
-        Ok(())
+        Ok(None)
     }
 }
 
@@ -194,7 +197,7 @@ impl Screen for Battle {
                 if x.is_down() {
                     if !self.clicked {
                         self.clicked = true;
-                        self.play_card(wrapper).await?;
+                        return self.play_card(wrapper).await;
                     }
                 } else {
                     self.clicked = false;
