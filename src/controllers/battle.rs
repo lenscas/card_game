@@ -2,7 +2,7 @@ use super::users::{force_logged_in, get_db_con};
 use crate::{
     battle::Field, controllers::users::with_db, errors::ReturnErrors, util::CastRejection,
 };
-use card_game_shared::battle::{ReturnBattle, TakeAction};
+use card_game_shared::battle::{ReturnBattle, TakeAction, TurnResponse};
 use sqlx::{query, PgPool};
 use warp::{Filter, Rejection, Reply};
 
@@ -101,16 +101,29 @@ async fn do_turn(
     .await
     .half_cast()?;
     let battle: Field = serde_json::from_str(&v.current_battle.unwrap()).half_cast()?;
-    let battle = battle.process_turn(chosen_card).await.half_cast()?;
-    let c = serde_json::to_string(&battle).half_cast()?;
-    query!(
-        "UPDATE characters SET current_battle = $1 WHERE user_id = $2",
-        c,
-        user_id
-    )
-    .execute(&mut con)
-    .await
-    .half_cast()?;
+    let (battle, is_over) = battle.process_turn(chosen_card).await.half_cast()?;
+    if is_over {
+        query!(
+            "UPDATE characters SET current_battle = null WHERE user_id = $1",
+            user_id
+        )
+        .execute(&mut con)
+        .await
+        .half_cast()?;
+        return Ok(Box::new(
+            serde_json::to_string(&TurnResponse::Done).half_cast()?,
+        ));
+    } else {
+        let c = serde_json::to_string(&battle).half_cast()?;
+        query!(
+            "UPDATE characters SET current_battle = $1 WHERE user_id = $2",
+            c,
+            user_id
+        )
+        .execute(&mut con)
+        .await
+        .half_cast()?;
+    }
 
     let hand = battle.player.deck.get_ids_from_hand();
     let hand = dbg!(hand);

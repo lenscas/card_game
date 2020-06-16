@@ -34,20 +34,18 @@ impl Field {
             rune_count: 0,
         })
     }
-    pub async fn process_turn(mut self, chosen_card: usize) -> Result<Self, ReturnErrors> {
+    pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnErrors> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
         let engine = read_to_string("./lua/engine.lua").await?;
-        let mut battle = lua.context::<_, Result<_, ReturnErrors>>(move |lua_ctx| {
+        let (battle, is_over) = lua.context::<_, Result<_, ReturnErrors>>(move |lua_ctx| {
             let globals = lua_ctx.globals();
             globals.set("battle", self).half_cast()?;
             globals.set("chosenCard", card).half_cast()?;
-            let v = lua_ctx.load(&engine).set_name("test?")?.eval::<Self>()?;
+            let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
             Ok(v)
         })?;
-        battle.player.fill_hand();
-        battle.ai.fill_hand();
-        Ok(battle)
+        Ok((battle, is_over))
     }
 }
 impl UserData for Field {

@@ -63,23 +63,29 @@ local function decideTurnOrder()
 	return inOrder
 end
 
-local function doTurn()
+local function procTurn()
 	local cardsInOrder = decideTurnOrder()
 	local atEndOfTurnRunes = {}
+
 	for _, card in ipairs(cardsInOrder) do
 		table.insert(atEndOfTurnRunes, card())
 		if battle.battle:has_ended() then
-			break
+			return true
 		end
 	end
 
 	for _, rune in ipairs(atEndOfTurnRunes) do
 		rune()
 		if battle.battle:has_ended() then
-			break
+			return true
 		end
 	end
-	return battle.end_turn()
+	return battle.battle:has_ended()
+end
+
+local function doTurn()
+	local has_ended = procTurn()
+	return battle.end_turn(),has_ended
 end
 
 return doTurn

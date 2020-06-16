@@ -1,9 +1,9 @@
 use super::{deck::Deck, Card, SimpleError, SmallRune};
 use crate::errors::ReturnErrors;
+use card_game_shared::battle::BattleErrors;
 use rlua::{UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};
-use card_game_shared::battle::BattleErrors;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub(crate) struct Player {
@@ -21,13 +21,11 @@ impl Player {
     pub(crate) fn get_casted_card(&mut self, index: usize) -> Result<Card, ReturnErrors> {
         let card = self.deck.get_card_from_hand(index)?;
         if card.cost > self.mana {
-            return Err(ReturnErrors::BattleErrors(
-                BattleErrors::CardCostsTooMuch {
-                    chosen: index,
-                    mana_available: self.mana,
-                    mana_needed: card.cost,
-                },
-            ));
+            return Err(ReturnErrors::BattleErrors(BattleErrors::CardCostsTooMuch {
+                chosen: index,
+                mana_available: self.mana,
+                mana_needed: card.cost,
+            }));
         }
         Ok(card)
     }
@@ -35,6 +33,10 @@ impl Player {
 
 impl UserData for Player {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.add_method_mut("fill_hand", |_, me, _: ()| {
+            me.fill_hand();
+            Ok(())
+        });
         methods.add_method_mut("discard_cards", |_, me, amount| {
             println!("to remove {} cards", amount);
             for _ in 0..amount {

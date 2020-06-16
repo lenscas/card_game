@@ -95,6 +95,8 @@ local function end_turn()
 	battle.ai:clean_up_runes()
 	battle.player:add_mana(1)
 	battle.ai:add_mana(1)
+	battle.player:fill_hand()
+	battle.ai:fill_hand()
 	battle.battle:save_ai(battle.ai)
 	battle.battle:save_player(battle.player)
 	return battle.battle
