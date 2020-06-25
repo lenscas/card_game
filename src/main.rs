@@ -5,7 +5,9 @@ use quicksilver::{
     geom::{Rectangle, Transform, Vector},
     graphics::{Graphics, ResizeHandler},
     input::Input,
-    run, Settings, Window,
+    load_file, run,
+    saving::Location,
+    Settings, Window,
 };
 use std::error::Error as TError;
 
@@ -17,6 +19,7 @@ mod responses;
 mod screens;
 
 const SIZE: Vector = Vector { x: 1366., y: 768. };
+const APP_NAME: &str = "Card game";
 
 pub(crate) type Error = Box<dyn TError + 'static + Send + Sync>;
 pub(crate) type Result<T> = std::result::Result<T, Error>;
@@ -48,12 +51,22 @@ impl Wrapper {
 
 async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
     let context = Context::new();
+
+    let last_used_url = match quicksilver::saving::load::<String>(
+        Location::Config,
+        APP_NAME,
+        "last_connected_server",
+    ) {
+        Ok(x) => x,
+        Err(_) => String::from_utf8(load_file("default_server.txt").await?).unwrap(),
+    };
+
     let mut wrapper = Wrapper {
         window,
         gfx,
         events,
         context,
-        client: Client::new("http://127.0.0.1:3030/".into()),
+        client: Client::new(last_used_url),
         cursor_at: Vector::new(0., 0.),
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);

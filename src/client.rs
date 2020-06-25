@@ -2,6 +2,7 @@ use crate::{
     responses::{CustomResult, LoginResponse},
     Result,
 };
+
 use card_game_shared::{
     battle::{BattleErrors, ReturnBattle, TakeAction, TurnResponse},
     users::LoginData,
@@ -21,7 +22,7 @@ pub struct ReturnBattleWithImages {
 }
 
 pub struct Client {
-    base_url: String,
+    pub base_url: String,
     authorization_code: Option<String>,
     cached_images: HashMap<String, Image>,
 }
@@ -33,8 +34,13 @@ impl Client {
             cached_images: HashMap::new(),
         }
     }
+
     fn set_url(&self, part: &str) -> String {
-        format!("{}{}", self.base_url, part)
+        if self.base_url.ends_with('/') {
+            format!("{}{}", self.base_url, part)
+        } else {
+            format!("{}/{}", self.base_url, part)
+        }
     }
     fn set_headers(&self) -> Option<Vec<(&'static str, String)>> {
         if let Some(code) = &self.authorization_code {
@@ -45,7 +51,7 @@ impl Client {
     }
     pub(crate) async fn log_in(&mut self, username: String, password: String) -> Result<()> {
         let v = call(Config {
-            url: format!("{}{}", self.base_url, "login"),
+            url: self.set_url("login"),
             method: Method::Post,
             body: Some(LoginData { username, password }),
             headers: None,

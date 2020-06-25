@@ -1,31 +1,33 @@
 use super::{Battle, Screen};
-use crate::{Result as CResult, Wrapper};
+use crate::{Result as CResult, Wrapper, APP_NAME};
 use async_trait::async_trait;
 use mergui::{
-    channels::{BasicClickable, InputChannel},
+    channels::{BasicClickable, ConcealerReturn, InputChannel},
     core::Text,
     widgets::{
         input::{InputConfig, PlaceholderConfig},
-        ButtonConfig,
+        ButtonConfig, ConcealerConfig,
     },
-    FontStyle, LayerId, MFont, Response,
+    FontStyle, MFont, Response,
 };
 use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::{Color, Image, VectorFont},
+    saving::{save, Location},
 };
 
 pub(crate) struct Login {
-    _layer: LayerId,
     _text: Response<()>,
     name_input: Response<InputChannel>,
     password_input: Response<InputChannel>,
     login_button: Response<BasicClickable>,
+    _concealer: Response<ConcealerReturn>,
+    server_address: Response<InputChannel>,
 }
 
 impl Login {
     pub(crate) async fn new(wrapper: &mut Wrapper) -> CResult<Self> {
-        let layer = wrapper.context.add_layer();
+        let mut layer = wrapper.context.add_layer();
         let ttf = VectorFont::load("font.ttf").await?;
         let font = MFont::from_font(&ttf, &wrapper.gfx, 30.0)?;
         let basic_font_style = FontStyle {
@@ -71,26 +73,60 @@ impl Login {
         };
         let password_input = wrapper.context.add_widget(conf, &layer).unwrap();
 
+        let button_background = Image::load(&wrapper.gfx, "button.png").await?;
+
         let conf = ButtonConfig {
             text: "Login".into(),
             font_style: FontStyle {
                 color: Color::WHITE,
                 location: Vector::new(10., 20.),
-                ..input_font
+                ..input_font.clone()
             },
-            background: Image::load(&wrapper.gfx, "button.png").await?,
-            background_location: Rectangle::new(Vector::new(510., 230.), Vector::new(70., 30.)),
+            background: button_background.clone(),
+            background_location: Rectangle::new(Vector::new(430., 260.), Vector::new(70., 30.)),
             blend_color: Some(Color::from_hex("#008B24")),
             hover_color: Some(Color::from_hex("#07C739")),
         };
         let login_button = wrapper.context.add_widget(conf, &layer).unwrap();
 
+        let mut secret_layer = wrapper.context.add_singular_layer();
+
+        let server_address = InputConfig {
+            font: input_font.clone(),
+            placeholder: None,
+            location: Rectangle::new(Vector::new(200., 295.), Vector::new(300., 25.)),
+            start_value: Some(wrapper.client.base_url.clone()),
+            cursor_config: Default::default(),
+        };
+        let server_address = secret_layer.add_widget(server_address);
+
+        let concealer_config = ConcealerConfig {
+            button: ButtonConfig {
+                text: "Advanced".into(),
+                font_style: FontStyle {
+                    location: Vector::new(10., 20.),
+                    color: Color::WHITE,
+                    ..input_font
+                },
+                background: button_background,
+                background_location: (Rectangle::new(
+                    Vector::new(200., 260.),
+                    Vector::new(110., 30.),
+                )),
+                blend_color: Some(Color::from_hex("008B24")),
+                hover_color: Some(Color::from_hex("#07C739")),
+            },
+            layer: secret_layer,
+        };
+        let concealer = layer.add_widget(concealer_config);
+
         Ok(Login {
-            _layer: layer,
             _text,
             name_input,
             password_input,
             login_button,
+            _concealer: concealer,
+            server_address,
         })
     }
 }
@@ -112,15 +148,29 @@ impl Screen for Login {
         if self.login_button.channel.has_clicked()
             && self.password_input.channel.get() != ""
             && self.name_input.channel.get() != ""
+            && self.server_address.channel.get() != ""
         {
-            wrapper
+            let new_address = self.server_address.channel.get();
+            if new_address != wrapper.client.base_url {
+                save(
+                    Location::Config,
+                    APP_NAME,
+                    "last_connected_server",
+                    &new_address,
+                )?;
+                wrapper.client.base_url = new_address;
+            }
+            return match wrapper
                 .client
                 .log_in(
                     self.name_input.channel.get(),
                     self.password_input.channel.get(),
                 )
-                .await?;
-            return Ok(Some(Box::new(Battle::new(wrapper).await?)));
+                .await
+            {
+                Ok(_) => Ok(Some(Box::new(Battle::new(wrapper).await?))),
+                Err(_) => Ok(None),
+            };
         }
         Ok(None)
     }
