@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{pool::PoolConnection, query, PgConnection};
 use tokio::fs::read_to_string;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Deck {
     pub(crate) hand: Vec<Card>,
     pub(crate) deck: Vec<Card>,

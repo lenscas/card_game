@@ -5,7 +5,7 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct Card {
     pub(crate) id: String,
     pub(crate) name: String,

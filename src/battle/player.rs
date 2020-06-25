@@ -5,7 +5,7 @@ use rlua::{UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub(crate) struct Player {
     pub(crate) life: u64,
     pub(crate) deck: Deck,

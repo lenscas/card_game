@@ -6,7 +6,7 @@ use sqlx::{pool::PoolConnection, PgConnection};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
