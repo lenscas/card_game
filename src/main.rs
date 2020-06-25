@@ -16,6 +16,7 @@ use mergui::Context;
 mod animations;
 mod client;
 mod responses;
+mod screen_parts;
 mod screens;
 
 const SIZE: Vector = Vector { x: 1366., y: 768. };
@@ -41,10 +42,10 @@ pub(crate) struct Wrapper {
     pub events: Input,
     pub context: Context,
     pub client: Client,
-    pub cursor_at: Vector,
+    cursor_at: Vector,
 }
 impl Wrapper {
-    pub(crate) fn get_cursor_loc(&self) -> Vector {
+    pub(crate) fn cursor_at(&self) -> Vector {
         self.cursor_at
     }
 }

@@ -1,10 +1,11 @@
 use super::{BattleOver, Screen};
 use async_trait::async_trait;
-use quicksilver::geom::{Circle, Rectangle, Shape, Vector};
-use quicksilver::graphics::{Color, FontRenderer, Image, VectorFont};
+use quicksilver::geom::{Circle, Vector};
+use quicksilver::graphics::{Color, FontRenderer, VectorFont};
 
 use crate::{
     animations::{calc_points, RuneAnimation},
+    screen_parts::Hand,
     Wrapper, SIZE,
 };
 
@@ -25,29 +26,15 @@ fn has_rune<'a>(
 pub struct Battle {
     outer_points: Vec<Circle>,
     hexa_runes: RuneAnimation,
-    hand: Vec<(Image, Rectangle)>,
     player_runes: Vec<String>,
     enemy_runes: Vec<String>,
     stat_font: FontRenderer,
-    clicked: bool,
     enemy_hp: String,
     enemy_hand_size: String,
     player_hp: String,
     enemy_mana: String,
     player_mana: String,
-    hover_over: Option<usize>,
-}
-
-fn get_location_of_cards(cards: Vec<Image>) -> Vec<(Image, Rectangle)> {
-    cards
-        .into_iter()
-        .enumerate()
-        .map(|(key, card)| {
-            let rec_size = Vector::new(135.750_67, 192.);
-            let rec_location = Vector::new(8.5375, 6.400_000_6 + (35.84 * key as f32));
-            (card, Rectangle::new(rec_location, rec_size))
-        })
-        .collect()
+    hand_2: Hand,
 }
 
 impl Battle {
@@ -56,11 +43,11 @@ impl Battle {
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
             (x + 683.85375, y + 384.639_997_44 /*300.5f64*/)
         });
-        //let inner_radius = ;
+        let mut hand = Hand::new();
 
         let current = wrapper.client.new_battle(&wrapper.gfx).await?;
-        let (current, hand) = (current.battle, current.images);
-        let hand = get_location_of_cards(hand);
+        let (current, cards) = (current.battle, current.images);
+        hand.update_hand(cards, wrapper);
 
         let font = VectorFont::load("font.ttf").await?;
 
@@ -68,8 +55,6 @@ impl Battle {
             player_mana: current.mana.to_string(),
             enemy_mana: current.enemy_mana.to_string(),
             outer_points,
-            hand,
-            clicked: false,
             enemy_hand_size: format!("S: {}", current.enemy_hand_size),
             enemy_hp: format!("HP: {}", current.enemy_hp),
             player_hp: format!("HP: {}", current.player_hp),
@@ -77,43 +62,32 @@ impl Battle {
             player_runes: current.small_runes,
             stat_font: font.to_renderer(&wrapper.gfx, 25.0)?,
             hexa_runes: RuneAnimation::new(179.2),
-            hover_over: None,
+            hand_2: hand,
         })
     }
-    fn get_card_hovering_over(&self, cursor_pos: Vector) -> Option<usize> {
-        self.hand
-            .iter()
-            .enumerate()
-            .rev()
-            .map(|(key, card)| (key, card.1))
-            .find(|(_, card)| card.contains(cursor_pos))
-            .map(|(k, _)| k)
-    }
-    async fn play_card(&mut self, wrapper: &mut Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
-        let cursor_pos = wrapper.get_cursor_loc();
-        let chosen = self.get_card_hovering_over(cursor_pos);
-        if let Some(chosen) = chosen {
-            let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
-            let battle = match battle {
-                crate::client::AfterTurn::Over => {
-                    return Ok(Some(Box::new(BattleOver::new(wrapper).await?)))
-                }
-                crate::client::AfterTurn::NewTurn(x) => x,
-                crate::client::AfterTurn::NoTurnHappened => return Ok(None),
-            };
-            let (battle, hand) = (battle.battle, battle.images);
-            self.hand = get_location_of_cards(hand);
-            self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
-            self.enemy_hp = format!("HP: {}", battle.enemy_hp);
-            self.player_hp = format!("HP: {}", battle.player_hp);
-            self.enemy_runes = battle.enemy_small_runes;
-            self.player_runes = battle.small_runes;
-            self.enemy_mana = battle.enemy_mana.to_string();
-            self.player_mana = battle.mana.to_string();
-            self.hexa_runes.set_state(battle.hexa_runes);
-            //self.hexa_runes = battle.hexa_runes;
-            self.hover_over = self.get_card_hovering_over(cursor_pos);
-        }
+    async fn play_card(
+        &mut self,
+        wrapper: &mut Wrapper,
+        chosen: usize,
+    ) -> crate::Result<Option<Box<dyn Screen>>> {
+        let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
+        let battle = match battle {
+            crate::client::AfterTurn::Over => {
+                return Ok(Some(Box::new(BattleOver::new(wrapper).await?)))
+            }
+            crate::client::AfterTurn::NewTurn(x) => x,
+            crate::client::AfterTurn::NoTurnHappened => return Ok(None),
+        };
+        let (battle, hand) = (battle.battle, battle.images);
+        self.hand_2.update_hand(hand, &wrapper);
+        self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
+        self.enemy_hp = format!("HP: {}", battle.enemy_hp);
+        self.player_hp = format!("HP: {}", battle.player_hp);
+        self.enemy_runes = battle.enemy_small_runes;
+        self.player_runes = battle.small_runes;
+        self.enemy_mana = battle.enemy_mana.to_string();
+        self.player_mana = battle.mana.to_string();
+        self.hexa_runes.set_state(battle.hexa_runes);
         Ok(None)
     }
 }
@@ -152,18 +126,7 @@ impl Screen for Battle {
             .gfx
             .stroke_path(&[(0., 0.).into(), SIZE], Color::BLUE);
 
-        for (card, rectangle) in self.hand.iter() {
-            wrapper.gfx.draw_image(card, *rectangle);
-        }
-        if let Some(card) = self.hover_over.and_then(|v| self.hand.get(v)) {
-            wrapper.gfx.draw_image(
-                &card.0,
-                Rectangle::new(
-                    Vector::new(card.1.pos.x + card.1.size.x + 5., card.1.pos.y),
-                    card.1.size() * 1.2,
-                ),
-            );
-        }
+        self.hand_2.draw(wrapper);
         let renderer = &mut self.stat_font;
         let offset = Vector::new(27.32, 729.6);
         renderer.draw(&mut wrapper.gfx, &self.player_hp, Color::RED, offset)?;
@@ -187,24 +150,9 @@ impl Screen for Battle {
         wrapper: &mut Wrapper,
         event: &quicksilver::input::Event,
     ) -> crate::Result<Option<Box<dyn Screen>>> {
-        use quicksilver::input::{Event::*, MouseButton};
-        match event {
-            PointerMoved(_) => {
-                self.hover_over = self.get_card_hovering_over(wrapper.cursor_at);
-            }
-
-            PointerInput(x) if x.button() == MouseButton::Left => {
-                if x.is_down() {
-                    if !self.clicked {
-                        self.clicked = true;
-                        return self.play_card(wrapper).await;
-                    }
-                } else {
-                    self.clicked = false;
-                }
-            }
-            _ => {}
+        match self.hand_2.event(event, wrapper) {
+            Some(x) => self.play_card(wrapper, x).await,
+            None => Ok(None),
         }
-        Ok(None)
     }
 }
