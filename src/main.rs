@@ -4,7 +4,7 @@ use card_game_shared::ErrorMessage;
 use dotenv::{dotenv, var};
 use errors::ReturnErrors;
 use sqlx::{query, PgPool};
-use std::convert::Infallible;
+use std::{convert::Infallible, net::SocketAddr};
 use warp::http::StatusCode;
 use warp::Filter;
 use warp::Rejection;
@@ -30,6 +30,15 @@ async fn handle_from_db(
 async fn main() {
     dotenv().unwrap();
     let db_url = var("DATABASE_URL").expect("DATABASE_URL is not set.");
+    let binding_address = var("BINDING_ADDRESS")
+        .expect("BINDING_ADDRESS is not set.")
+        .parse()
+        .expect("Malformed ip address");
+    let port = var("PORT")
+        .expect("PORT is not set")
+        .parse()
+        .expect("Invalid port");
+    let addr = SocketAddr::new(binding_address, port);
     println!("Hello, world!");
 
     let pool = PgPool::new(&db_url)
@@ -81,7 +90,7 @@ async fn main() {
             )
             .with(cors),
     )
-    .run(([127, 0, 0, 1], 3030))
+    .run(addr)
     .await;
 }
 
