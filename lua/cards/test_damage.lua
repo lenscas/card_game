@@ -4,6 +4,7 @@
 	description="10 damage",
 	cost = 0,
 	speed = 2,
+	is_starting=true,
 	func = function(self, owner,oponent)
 		print("got here two?")
 		local battle = require"engine/battle"

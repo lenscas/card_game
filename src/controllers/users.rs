@@ -133,20 +133,28 @@ pub async fn register(reg_data: RegisterData, db: PgPool) -> Result<impl Reply, 
         }
     }?;
     let v = query!(
-        "INSERT INTO users ( username, password ) VALUES ( $1 , $2 )",
+        "INSERT INTO users ( username, password ) VALUES ( $1 , $2 ) RETURNING id",
         reg_data.username,
         hashed_password
     )
+    .fetch_one(&mut con)
+    .await
+    .half_cast()?;
+    query!(
+        "INSERT INTO owned_starting_cards
+        SELECT
+            $1 as user_id,
+            nextval('owned_starting_cards_id_seq') as id,
+            id as card_id
+        FROM cards
+        WHERE is_starting_card = true
+        ",
+        v.id as i64
+    )
     .execute(&mut con)
-    .await;
-    match v {
-        Ok(_) => Ok("Account created!"),
-        Err(x) => {
-            dbg!(x);
-            Err(warp::reject::reject())
-        }
-    }
-    //return Ok("Awesome!");
+    .await
+    .half_cast()?;
+    Ok("Account created")
 }
 
 pub fn with_db(

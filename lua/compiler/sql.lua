@@ -30,16 +30,21 @@ return {
 		local isObtainable = tostring(
 			card.is_obtainable == nil or (card.is_obtainable == true)
 		)
+		local is_starting = tostring(card.is_starting == true)
 		print(fileName,textId,isObtainable)
 		local query = [[
 INSERT INTO cards (
 	json_file_path,
 	text_id,
-	is_obtainable
+	is_obtainable,
+	is_starting_card
 ) VALUES (
-	]] .. "'" ..fileName.."','" ..
-textId.. "','" ..
-	isObtainable..
+	]] .. "'" ..
+	fileName.."','" ..
+	textId.. "','" ..
+	isObtainable.. "','" ..
+	is_starting ..
+
 [['
 )
 ON CONFLICT (text_id)
