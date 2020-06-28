@@ -1,5 +1,5 @@
 use super::{deck::Deck, HexaRune, Player};
-use crate::{errors::ReturnErrors, util::CastRejection};
+use crate::{errors::ReturnError, util::CastRejection};
 use rlua::{Lua, UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use sqlx::{pool::PoolConnection, PgConnection};
@@ -18,7 +18,7 @@ impl Field {
     pub(crate) async fn new(
         player_id: i64,
         con: &mut PoolConnection<PgConnection>,
-    ) -> Result<Field, ReturnErrors> {
+    ) -> Result<Field, ReturnError> {
         let deck = Deck::create_deck_for_player(player_id, con).await?;
         let player = Player {
             life: 20,
@@ -34,11 +34,11 @@ impl Field {
             rune_count: 0,
         })
     }
-    pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnErrors> {
+    pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
         let engine = read_to_string("./lua/engine.lua").await?;
-        let (battle, is_over) = lua.context::<_, Result<_, ReturnErrors>>(move |lua_ctx| {
+        let (battle, is_over) = lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
             let globals = lua_ctx.globals();
             globals.set("battle", self).half_cast()?;
             globals.set("chosenCard", card).half_cast()?;

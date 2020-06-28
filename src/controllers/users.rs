@@ -1,20 +1,12 @@
-use crate::util::CastRejection;
+use crate::util::{convert_error, CastRejection};
 use card_game_shared::users::{LoginData, LoginReply, RegisterData};
 use dotenv::var;
-use sqlx::{pool::PoolConnection, PgConnection};
 use sqlx::{query, PgPool};
 use warp::Filter;
-use warp::{reject::Rejection, Reply};
+use warp::Reply;
 
-use crate::errors::ReturnErrors;
+use crate::errors::ReturnError;
 use argonautica::{Hasher, Verifier};
-
-pub async fn get_db_con(db: PgPool) -> Result<PoolConnection<PgConnection>, Rejection> {
-    match db.acquire().await {
-        Ok(x) => Ok(x),
-        Err(x) => Err(warp::reject::custom::<ReturnErrors>(x.into())),
-    }
-}
 
 fn json_body_register() -> impl Filter<Extract = (RegisterData,), Error = warp::Rejection> + Clone {
     // When accepting a body, we want a JSON body
@@ -28,8 +20,8 @@ fn json_body_login() -> impl Filter<Extract = (LoginData,), Error = warp::Reject
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
-pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Rejection> {
-    let mut con = get_db_con(db).await?;
+pub(crate) async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, ReturnError> {
+    let mut con = db.begin().await?;
     let user = query!(
         "SELECT id,password FROM users where username = $1",
         req_data.username
@@ -40,7 +32,7 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
     .map_err(|err| {
         let err = dbg!(err);
         err.map_not_found(|| {
-            ReturnErrors::CustomError(
+            ReturnError::CustomError(
                 "{\"success\":false}".into(),
                 warp::http::StatusCode::NOT_FOUND,
             )
@@ -51,8 +43,7 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
         .with_secret_key(var("PEPPER").unwrap())
         .with_password(req_data.password)
         .with_hash(user.password)
-        .verify()
-        .cast()?;
+        .verify()?;
     if v {
         use base64::encode;
         use rand_core::{OsRng, RngCore};
@@ -86,10 +77,11 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
             .await;
             match success {
                 Ok(_) => {
+                    con.commit().await?;
                     return Ok(warp::reply::json(&LoginReply {
                         success: true,
                         token,
-                    }))
+                    }));
                 }
                 Err(x) => match x {
                     Error::Database(x) => {
@@ -97,64 +89,61 @@ pub async fn login(req_data: LoginData, db: PgPool) -> Result<impl Reply, Reject
                     }
                     x => {
                         let x = dbg!(x);
-                        return Err(x).cast();
+                        return Err(x.into());
                     }
                 },
             }
         }
-        Err(ReturnErrors::CustomError(
+        Err(ReturnError::CustomError(
             "{{\"success\":false}}".into(),
             warp::http::StatusCode::INTERNAL_SERVER_ERROR,
         ))
-        .cast()
     } else {
-        Err(ReturnErrors::CustomError(
+        Err(ReturnError::CustomError(
             "{\"success\":false}".into(),
             warp::http::StatusCode::NOT_FOUND,
-        )
-        .into())
+        ))
     }
 }
 
-pub async fn register(reg_data: RegisterData, db: PgPool) -> Result<impl Reply, Rejection> {
+pub(crate) async fn register(
+    reg_data: RegisterData,
+    con: PgPool,
+) -> Result<impl Reply, ReturnError> {
     if reg_data.password != reg_data.password_check {
-        return Err(warp::reject::reject());
+        return Err(ReturnError::CustomError(
+            "Password does not match password check".into(),
+            warp::http::StatusCode::BAD_REQUEST,
+        ));
     }
-    let mut con = get_db_con(db).await?;
     let hashed_password = Hasher::default()
         .with_password(reg_data.password)
         .with_secret_key(var("PEPPER").unwrap())
-        .hash();
-    let hashed_password = match hashed_password {
-        Ok(x) => Ok(x),
-        Err(x) => {
-            dbg!(x);
-            Err(warp::reject::reject())
-        }
-    }?;
+        .hash()?;
+    let mut con = con.begin().await?;
     let v = query!(
         "INSERT INTO users ( username, password ) VALUES ( $1 , $2 ) RETURNING id",
         reg_data.username,
         hashed_password
     )
     .fetch_one(&mut con)
-    .await
-    .half_cast()?;
+    .await?;
+
     query!(
         "INSERT INTO owned_starting_cards
-        SELECT
-            $1 as user_id,
-            nextval('owned_starting_cards_id_seq') as id,
-            id as card_id
-        FROM cards
-        WHERE is_starting_card = true
-        ",
+            SELECT
+                $1 as user_id,
+                nextval('owned_starting_cards_id_seq') as id,
+                id as card_id
+            FROM cards
+            WHERE is_starting_card = true
+            ",
         v.id as i64
     )
     .execute(&mut con)
-    .await
-    .half_cast()?;
-    Ok("Account created")
+    .await?;
+    con.commit().await?;
+    Ok("Account created".to_string())
 }
 
 pub fn with_db(
@@ -172,12 +161,12 @@ pub fn user_route(
             path("login")
                 .and(json_body_login())
                 .and(with_db(db.clone()))
-                .and_then(login),
+                .and_then(|data, db| convert_error((data, db), |(data, db)| login(data, db))),
         )
         .or(path("register")
             .and(json_body_register())
             .and(with_db(db))
-            .and_then(register))
+            .and_then(|a, db| convert_error((a, db), |(a, db)| register(a, db))))
 }
 
 pub fn force_logged_in(

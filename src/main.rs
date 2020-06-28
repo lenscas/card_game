@@ -2,7 +2,7 @@ use crate::controllers::users::force_logged_in;
 use crate::util::CastRejection;
 use card_game_shared::ErrorMessage;
 use dotenv::{dotenv, var};
-use errors::ReturnErrors;
+use errors::ReturnError;
 use sqlx::{query, PgPool};
 use std::{convert::Infallible, net::SocketAddr};
 use warp::http::StatusCode;
@@ -28,6 +28,7 @@ async fn handle_from_db(
 }
 #[tokio::main]
 async fn main() {
+    pretty_env_logger::init();
     dotenv().unwrap();
     let db_url = var("DATABASE_URL").expect("DATABASE_URL is not set.");
     let binding_address = var("BINDING_ADDRESS")
@@ -102,7 +103,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     if err.is_not_found() {
         code = StatusCode::NOT_FOUND;
         message = "NOT_FOUND".into();
-    } else if let Some(error) = err.find::<ReturnErrors>() {
+    } else if let Some(error) = err.find::<ReturnError>() {
         let res = handle_custom_error(error);
         let res = match res {
             ReturnHandle::Custom(x) => return Ok(x),
@@ -143,26 +144,26 @@ impl<T: Reply + 'static> From<T> for ReturnHandle {
     }
 }
 
-fn handle_custom_error(error: &ReturnErrors) -> ReturnHandle {
+fn handle_custom_error(error: &ReturnError) -> ReturnHandle {
     match error {
-        ReturnErrors::Io(_) => {
+        ReturnError::Io(_) => {
             ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, "file not found".into())
         }
-        ReturnErrors::GenericError(x) => {
+        ReturnError::GenericError(x) => {
             ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, x.to_owned())
         }
 
-        ReturnErrors::NotFound => {
+        ReturnError::NotFound => {
             ReturnHandle::new(StatusCode::NOT_FOUND, "resource not found".into())
         }
-        ReturnErrors::HashError(_) => {
+        ReturnError::HashError(_) => {
             ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into())
         }
-        ReturnErrors::CustomError(message, code) => ReturnHandle::new(*code, message.to_string()),
-        ReturnErrors::BattleErrors(x) => serde_json::to_string(x)
+        ReturnError::CustomError(message, code) => ReturnHandle::new(*code, message.to_string()),
+        ReturnError::BattleErrors(x) => serde_json::to_string(x)
             .map(|v| warp::reply::with_status(v, StatusCode::CONFLICT).into())
-            .unwrap_or_else(|v| handle_custom_error(&ReturnErrors::from(v))),
-        ReturnErrors::DatabaseError(_) | ReturnErrors::LuaError(_) | ReturnErrors::JsonError(_) => {
+            .unwrap_or_else(|v| handle_custom_error(&ReturnError::from(v))),
+        ReturnError::DatabaseError(_) | ReturnError::LuaError(_) | ReturnError::JsonError(_) => {
             ReturnHandle::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "something wend wrong".into(),

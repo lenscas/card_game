@@ -4,7 +4,7 @@ use sqlx::{error::DatabaseError, Error as SqlError};
 use std::io::Error as ioError;
 
 #[derive(Debug)]
-pub(crate) enum ReturnErrors {
+pub(crate) enum ReturnError {
     Io(ioError),
     GenericError(String),
     DatabaseError(Box<dyn DatabaseError + 'static>),
@@ -16,8 +16,8 @@ pub(crate) enum ReturnErrors {
     LuaError(rlua::Error),
 }
 
-impl ReturnErrors {
-    pub fn map_not_found(self, run: impl Fn() -> ReturnErrors) -> ReturnErrors {
+impl ReturnError {
+    pub fn map_not_found(self, run: impl Fn() -> ReturnError) -> ReturnError {
         match self {
             Self::NotFound => run(),
             x => x,
@@ -25,64 +25,64 @@ impl ReturnErrors {
     }
 }
 
-impl warp::reject::Reject for ReturnErrors {}
+impl warp::reject::Reject for ReturnError {}
 
-impl From<SqlError> for ReturnErrors {
+impl From<SqlError> for ReturnError {
     fn from(x: SqlError) -> Self {
         match x {
-            SqlError::Io(a) => ReturnErrors::Io(a),
-            SqlError::UrlParse(_) => ReturnErrors::GenericError("Couldn't parse db string".into()),
-            SqlError::Database(x) => ReturnErrors::DatabaseError(x),
-            SqlError::RowNotFound => ReturnErrors::NotFound,
+            SqlError::Io(a) => ReturnError::Io(a),
+            SqlError::UrlParse(_) => ReturnError::GenericError("Couldn't parse db string".into()),
+            SqlError::Database(x) => ReturnError::DatabaseError(x),
+            SqlError::RowNotFound => ReturnError::NotFound,
             SqlError::ColumnNotFound(x) => {
-                ReturnErrors::GenericError(format!("Collumn {:0} not found", x))
+                ReturnError::GenericError(format!("Collumn {:0} not found", x))
             }
-            SqlError::Protocol(x) => ReturnErrors::GenericError(format!(
+            SqlError::Protocol(x) => ReturnError::GenericError(format!(
                 "Something wend wrong with the database connection\nContenxt:\n{:0}",
                 x
             )),
-            SqlError::PoolTimedOut(_) => ReturnErrors::GenericError("The pool timed out".into()),
-            SqlError::PoolClosed => ReturnErrors::GenericError("The pool got closed".into()),
-            SqlError::Decode(_) => ReturnErrors::GenericError("Couldn't decode something".into()),
-            SqlError::ColumnIndexOutOfBounds { index, len } => ReturnErrors::GenericError(format!(
+            SqlError::PoolTimedOut(_) => ReturnError::GenericError("The pool timed out".into()),
+            SqlError::PoolClosed => ReturnError::GenericError("The pool got closed".into()),
+            SqlError::Decode(_) => ReturnError::GenericError("Couldn't decode something".into()),
+            SqlError::ColumnIndexOutOfBounds { index, len } => ReturnError::GenericError(format!(
                 "collomn {} is out of bounds. Len {}",
                 index, len
             )),
-            SqlError::Tls(_) => ReturnErrors::GenericError("Couldn't upgrade the tls".into()),
-            _ => ReturnErrors::GenericError("Something wend wrong with the database".into()),
+            SqlError::Tls(_) => ReturnError::GenericError("Couldn't upgrade the tls".into()),
+            _ => ReturnError::GenericError("Something wend wrong with the database".into()),
         }
     }
 }
-impl From<HashError> for ReturnErrors {
+impl From<HashError> for ReturnError {
     fn from(error: HashError) -> Self {
-        ReturnErrors::HashError(error)
+        ReturnError::HashError(error)
     }
 }
-impl From<ReturnErrors> for warp::reject::Rejection {
-    fn from(error: ReturnErrors) -> Self {
+impl From<ReturnError> for warp::reject::Rejection {
+    fn from(error: ReturnError) -> Self {
         warp::reject::custom(error)
     }
 }
 
-impl From<std::io::Error> for ReturnErrors {
+impl From<std::io::Error> for ReturnError {
     fn from(error: std::io::Error) -> Self {
-        ReturnErrors::Io(error)
+        ReturnError::Io(error)
     }
 }
-impl From<serde_json::error::Error> for ReturnErrors {
+impl From<serde_json::error::Error> for ReturnError {
     fn from(error: serde_json::error::Error) -> Self {
-        ReturnErrors::JsonError(error)
+        ReturnError::JsonError(error)
     }
 }
 
-impl From<BattleErrors> for ReturnErrors {
+impl From<BattleErrors> for ReturnError {
     fn from(error: BattleErrors) -> Self {
-        ReturnErrors::BattleErrors(error)
+        ReturnError::BattleErrors(error)
     }
 }
 
-impl From<rlua::Error> for ReturnErrors {
+impl From<rlua::Error> for ReturnError {
     fn from(error: rlua::Error) -> Self {
-        ReturnErrors::LuaError(error)
+        ReturnError::LuaError(error)
     }
 }

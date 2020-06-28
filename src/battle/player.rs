@@ -1,5 +1,5 @@
 use super::{deck::Deck, Card, SimpleError, SmallRune};
-use crate::errors::ReturnErrors;
+use crate::errors::ReturnError;
 use card_game_shared::battle::BattleErrors;
 use rlua::{UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
@@ -18,10 +18,10 @@ impl Player {
     pub(crate) fn fill_hand(&mut self) {
         self.deck.fill_hand();
     }
-    pub(crate) fn get_casted_card(&mut self, index: usize) -> Result<Card, ReturnErrors> {
+    pub(crate) fn get_casted_card(&mut self, index: usize) -> Result<Card, ReturnError> {
         let card = self.deck.get_card_from_hand(index)?;
         if card.cost > self.mana {
-            return Err(ReturnErrors::BattleErrors(BattleErrors::CardCostsTooMuch {
+            return Err(ReturnError::BattleErrors(BattleErrors::CardCostsTooMuch {
                 chosen: index,
                 mana_available: self.mana,
                 mana_needed: card.cost,

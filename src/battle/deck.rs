@@ -1,5 +1,5 @@
 use super::Card;
-use crate::{errors::ReturnErrors, util::CastRejection};
+use crate::{errors::ReturnError, util::CastRejection};
 use card_game_shared::battle::BattleErrors;
 use serde::{Deserialize, Serialize};
 use sqlx::{pool::PoolConnection, query, PgConnection};
@@ -15,7 +15,7 @@ impl Deck {
     pub(crate) async fn create_deck_for_player(
         player_id: i64,
         con: &mut PoolConnection<PgConnection>,
-    ) -> Result<Self, ReturnErrors> {
+    ) -> Result<Self, ReturnError> {
         let v = query!(
             r#"
                 SELECT cards.id,cards.json_file_path
