@@ -17,6 +17,9 @@ pub(crate) enum ReturnError {
 }
 
 impl ReturnError {
+    pub(crate) fn custom(message: impl ToString, error: warp::http::StatusCode) -> Self {
+        Self::CustomError(message.to_string(), error)
+    }
     pub fn map_not_found(self, run: impl Fn() -> ReturnError) -> ReturnError {
         match self {
             Self::NotFound => run(),

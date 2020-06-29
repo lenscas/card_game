@@ -21,7 +21,8 @@ sha2 = "*"
 base64 = "*"
 http = "0.2.0"
 rlua = "*"
-card_game_shared = {git="https://github.com/lenscas/card_game_shared.git", features=["server"]}
+card_game_shared = {path="../card_game_shared", features=["server"]}
+#card_game_shared = {git="https://github.com/lenscas/card_game_shared.git", features=["server"]}
 pretty_env_logger = "*"
 #card_game_shared = {path="../card_game_shared", features=["server"]}
 
