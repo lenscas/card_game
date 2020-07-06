@@ -3,7 +3,7 @@ pub(crate) use client::Client;
 use quicksilver::input::Event::{PointerMoved, Resized};
 use quicksilver::{
     geom::{Rectangle, Transform, Vector},
-    graphics::{Graphics, ResizeHandler},
+    graphics::{Graphics, Image, ResizeHandler, VectorFont},
     input::Input,
     load_file, run,
     saving::Location,
@@ -11,7 +11,7 @@ use quicksilver::{
 };
 use std::error::Error as TError;
 
-use mergui::Context;
+use mergui::{Context, MFont};
 
 mod animations;
 mod client;
@@ -42,6 +42,8 @@ pub(crate) struct Wrapper {
     pub events: Input,
     pub context: Context,
     pub client: Client,
+    pub font: VectorFont,
+    pub button_image: Image,
     cursor_at: Vector,
 }
 impl Wrapper {
@@ -61,7 +63,8 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
         Ok(x) => x,
         Err(_) => String::from_utf8(load_file("default_server.txt").await?).unwrap(),
     };
-
+    let font = VectorFont::load("font.ttf").await?;
+    let button_image = Image::load(&gfx, "./button.png").await?;
     let mut wrapper = Wrapper {
         window,
         gfx,
@@ -69,6 +72,8 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
         context,
         client: Client::new(last_used_url),
         cursor_at: Vector::new(0., 0.),
+        font,
+        button_image,
     };
     let mut v: Box<dyn Screen> = Box::new(screens::Login::new(&mut wrapper).await?);
     v.draw(&mut wrapper).await?;

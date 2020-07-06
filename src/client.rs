@@ -5,6 +5,7 @@ use crate::{
 
 use card_game_shared::{
     battle::{BattleErrors, ReturnBattle, TakeAction, TurnResponse},
+    characters::{CharacterCreationResponse, CharacterList},
     users::LoginData,
 };
 use quicksilver::{graphics::Image, Graphics};
@@ -150,5 +151,25 @@ impl Client {
             battle: res,
             images: cards,
         }))
+    }
+    pub(crate) async fn get_characters(&self) -> Result<CharacterList> {
+        call(Config::<()> {
+            url: self.set_url("characters"),
+            method: Method::Get,
+            body: None,
+            headers: self.set_headers(),
+        })?
+        .json()
+        .await
+    }
+    pub(crate) async fn create_character(&self) -> Result<CharacterCreationResponse> {
+        call(Config::<()> {
+            url: self.set_url("characters"),
+            method: Method::Post,
+            body: None,
+            headers: self.set_headers(),
+        })?
+        .json()
+        .await
     }
 }

@@ -1,4 +1,4 @@
-use super::{Battle, Screen};
+use super::{Battle, CharacterSelect, Screen};
 use crate::{Result as CResult, Wrapper, APP_NAME};
 use async_trait::async_trait;
 use mergui::{
@@ -168,7 +168,7 @@ impl Screen for Login {
                 )
                 .await
             {
-                Ok(_) => Ok(Some(Box::new(Battle::new(wrapper).await?))),
+                Ok(_) => Ok(Some(Box::new(CharacterSelect::new(wrapper).await?))),
                 Err(_) => Ok(None),
             };
         }
