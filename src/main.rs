@@ -81,6 +81,7 @@ async fn main() {
             .and(
                 controllers::users::user_route(pool.clone())
                     .or(warp::path("assets").and(warp::fs::dir("assets")))
+                    .or(controllers::characters::character_routes(pool.clone()))
                     .or(controllers::battle::battle_route(pool.clone()))
                     .or(warp::get().and(from_db).or(hello))
                     .or(warp::get()

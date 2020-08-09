@@ -4,15 +4,23 @@ use card_game_shared::battle::{ReturnBattle, TakeAction, TurnResponse};
 use sqlx::{query, PgPool};
 use warp::{Filter, Reply};
 
-async fn create_battle(db: PgPool, user_id: i32) -> Result<Box<dyn Reply>, ReturnError> {
+async fn create_battle(
+    db: PgPool,
+    user_id: i32,
+    character_id: i64,
+) -> Result<Box<dyn Reply>, ReturnError> {
     println!("???");
     let user_id = i64::from(user_id);
 
     let mut con = db.begin().await?;
 
     query!(
-        "UPDATE characters SET current_battle = NULL WHERE user_id = $1",
-        user_id
+        "UPDATE characters
+        SET current_battle = NULL 
+        WHERE user_id = $1
+        AND characters.id = $2",
+        user_id,
+        character_id
     )
     .execute(&mut con)
     .await?;
@@ -83,8 +91,13 @@ async fn do_turn(
     let user_id = i64::from(user_id);
     let mut con = db.begin().await?;
     let v = query!(
-        "SELECT current_battle FROM characters WHERE user_id = $1 AND current_battle IS NOT NULL",
-        user_id
+        "SELECT current_battle 
+        FROM characters 
+        WHERE user_id = $1 
+        AND current_battle IS NOT NULL
+        AND characters.id = $2",
+        user_id,
+        action.character_id
     )
     .fetch_one(&mut con)
     .await?;
@@ -152,7 +165,13 @@ pub fn battle_route(
             post()
                 .and(with_db(db.clone()))
                 .and(force_logged_in(db.clone()))
-                .and_then(|db, id| convert_error((db, id), |(db, id)| create_battle(db, id))),
+                .and(warp::path::param::<i64>())
+                .and_then(|db, user_id: i32, character_id: i64| {
+                    convert_error(
+                        (db, user_id, character_id),
+                        |(db, user_id, character_id)| create_battle(db, user_id, character_id),
+                    )
+                }),
         )
         .or(put()
             .and(warp::body::content_length_limit(1024 * 16).and(warp::body::json()))

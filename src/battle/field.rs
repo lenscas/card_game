@@ -127,7 +127,7 @@ impl UserData for Field {
                     };
                 }
                 let (key, _) = first.unwrap();
-                std::mem::replace(&mut me.runes[key], Some(rune));
+                me.runes[key] = Some(rune)
             }
             Ok(())
         })
