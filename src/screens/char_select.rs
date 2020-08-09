@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{Battle, Screen};
 use crate::{Result, Wrapper};
 use async_trait::async_trait;
 use mergui::{channels::BasicClickable, widgets::ButtonConfig, FontStyle, MFont, Response};
@@ -6,13 +6,15 @@ use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::Color,
 };
+use card_game_shared::characters::CharacterList;
 
 enum ButtonType {
-    Old,
+    Old(i64),
     New,
 }
 pub(crate) struct CharacterSelect {
     button: (ButtonType, Response<BasicClickable>),
+    characters : CharacterList
 }
 
 impl CharacterSelect {
@@ -25,7 +27,7 @@ impl CharacterSelect {
             .get(0)
             .map(|v| {
                 Result::<_>::Ok((
-                    ButtonType::Old,
+                    ButtonType::Old(*v),
                     layer.add_widget(ButtonConfig {
                         text: "Current character".into(),
                         font_style: FontStyle {
@@ -64,7 +66,7 @@ impl CharacterSelect {
                 ))
             })?;
         //layer.add_widget(widget_config)
-        Ok(Self { button: v })
+        Ok(Self { button: v, characters })
     }
 }
 
@@ -76,8 +78,18 @@ impl Screen for CharacterSelect {
     }
     async fn update(&mut self, wrapper: &mut Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
         if self.button.1.channel.has_clicked() {
-            //code here
+            let char_id = match self.button.0 {
+                ButtonType::Old(x) => {
+                    x
+                }
+                ButtonType::New => {
+                    wrapper.client.create_character().await?.id
+                }
+            };
+            let battle = Battle::new(char_id, wrapper).await?;
+            Ok(Some(Box::new(battle)))
+        } else {
+            Ok(None)
         }
-        Ok(None)
     }
 }

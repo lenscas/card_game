@@ -91,9 +91,9 @@ impl Client {
         })
     }
 
-    pub(crate) async fn new_battle(&mut self, gfx: &Graphics) -> Result<ReturnBattleWithImages> {
+    pub(crate) async fn new_battle(&mut self, char_id : i64, gfx: &Graphics) -> Result<ReturnBattleWithImages> {
         let res = call(Config::<()> {
-            url: self.set_url("battle"),
+            url: self.set_url(&format!("battle/{}",char_id)),
             method: Method::Post,
             body: None,
             headers: self.set_headers(),
@@ -113,11 +113,11 @@ impl Client {
             images: cards,
         })
     }
-    pub(crate) async fn do_turn(&mut self, card: usize, gfx: &Graphics) -> Result<AfterTurn> {
+    pub(crate) async fn do_turn(&mut self, card: usize, character_id : i64, gfx: &Graphics) -> Result<AfterTurn> {
         let res = call(Config {
             url: self.set_url("battle/"),
             method: Method::Put,
-            body: Some(TakeAction { play_card: card }),
+            body: Some(TakeAction { play_card: card, character_id}),
             headers: self.set_headers(),
         })?
         .json::<CustomResult<TurnResponse>>()
