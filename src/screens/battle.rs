@@ -24,6 +24,7 @@ fn has_rune<'a>(
 }
 
 pub struct Battle {
+    character_id : i64,
     outer_points: Vec<Circle>,
     hexa_runes: RuneAnimation,
     player_runes: Vec<String>,
@@ -38,14 +39,14 @@ pub struct Battle {
 }
 
 impl Battle {
-    pub(crate) async fn new(wrapper: &mut Wrapper) -> crate::Result<Battle> {
+    pub(crate) async fn new(char_id : i64, wrapper: &mut Wrapper) -> crate::Result<Battle> {
         let outer_radius = 307.200_000_000_000_05;
         let outer_points = calc_points(outer_radius, 8, 10.0, |x: f64, y: f64, _| {
             (x + 683.85375, y + 384.639_997_44 /*300.5f64*/)
         });
         let mut hand = Hand::new();
 
-        let current = wrapper.client.new_battle(&wrapper.gfx).await?;
+        let current = wrapper.client.new_battle(char_id,&wrapper.gfx).await?;
         let (current, cards) = (current.battle, current.images);
         hand.update_hand(cards, wrapper);
 
@@ -63,6 +64,7 @@ impl Battle {
             stat_font: font.to_renderer(&wrapper.gfx, 25.0)?,
             hexa_runes: RuneAnimation::new(179.2),
             hand_2: hand,
+            character_id : char_id
         })
     }
     async fn play_card(
@@ -70,7 +72,7 @@ impl Battle {
         wrapper: &mut Wrapper,
         chosen: usize,
     ) -> crate::Result<Option<Box<dyn Screen>>> {
-        let battle = wrapper.client.do_turn(chosen, &wrapper.gfx).await?;
+        let battle = wrapper.client.do_turn(chosen,self.character_id, &wrapper.gfx).await?;
         let battle = match battle {
             crate::client::AfterTurn::Over => {
                 return Ok(Some(Box::new(BattleOver::new(wrapper).await?)))

@@ -5,6 +5,7 @@ use crate::{
 
 use card_game_shared::{
     battle::{BattleErrors, ReturnBattle, TakeAction, TurnResponse},
+    characters::{CharacterCreationResponse, CharacterList},
     users::LoginData,
 };
 use quicksilver::{graphics::Image, Graphics};
@@ -90,9 +91,9 @@ impl Client {
         })
     }
 
-    pub(crate) async fn new_battle(&mut self, gfx: &Graphics) -> Result<ReturnBattleWithImages> {
+    pub(crate) async fn new_battle(&mut self, char_id : i64, gfx: &Graphics) -> Result<ReturnBattleWithImages> {
         let res = call(Config::<()> {
-            url: self.set_url("battle"),
+            url: self.set_url(&format!("battle/{}",char_id)),
             method: Method::Post,
             body: None,
             headers: self.set_headers(),
@@ -112,11 +113,11 @@ impl Client {
             images: cards,
         })
     }
-    pub(crate) async fn do_turn(&mut self, card: usize, gfx: &Graphics) -> Result<AfterTurn> {
+    pub(crate) async fn do_turn(&mut self, card: usize, character_id : i64, gfx: &Graphics) -> Result<AfterTurn> {
         let res = call(Config {
             url: self.set_url("battle/"),
             method: Method::Put,
-            body: Some(TakeAction { play_card: card }),
+            body: Some(TakeAction { play_card: card, character_id}),
             headers: self.set_headers(),
         })?
         .json::<CustomResult<TurnResponse>>()
@@ -150,5 +151,25 @@ impl Client {
             battle: res,
             images: cards,
         }))
+    }
+    pub(crate) async fn get_characters(&self) -> Result<CharacterList> {
+        call(Config::<()> {
+            url: self.set_url("characters"),
+            method: Method::Get,
+            body: None,
+            headers: self.set_headers(),
+        })?
+        .json()
+        .await
+    }
+    pub(crate) async fn create_character(&self) -> Result<CharacterCreationResponse> {
+        call(Config::<()> {
+            url: self.set_url("characters"),
+            method: Method::Post,
+            body: None,
+            headers: self.set_headers(),
+        })?
+        .json()
+        .await
     }
 }
