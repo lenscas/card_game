@@ -11,7 +11,7 @@ use quicksilver::{
 };
 use std::error::Error as TError;
 
-use mergui::{Context, MFont};
+use mergui::{Context};
 
 mod animations;
 mod client;

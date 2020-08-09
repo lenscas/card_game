@@ -6,7 +6,6 @@ use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::Color,
 };
-use card_game_shared::characters::CharacterList;
 
 enum ButtonType {
     Old(i64),
@@ -14,7 +13,6 @@ enum ButtonType {
 }
 pub(crate) struct CharacterSelect {
     button: (ButtonType, Response<BasicClickable>),
-    characters : CharacterList
 }
 
 impl CharacterSelect {
@@ -66,7 +64,7 @@ impl CharacterSelect {
                 ))
             })?;
         //layer.add_widget(widget_config)
-        Ok(Self { button: v, characters })
+        Ok(Self { button: v, })
     }
 }
 

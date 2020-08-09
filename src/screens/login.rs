@@ -1,4 +1,4 @@
-use super::{Battle, CharacterSelect, Screen};
+use super::{CharacterSelect, Screen};
 use crate::{Result as CResult, Wrapper, APP_NAME};
 use async_trait::async_trait;
 use mergui::{
