@@ -5,11 +5,14 @@ use sqlx::{query, PgPool};
 use tokio::stream::StreamExt;
 use warp::{Filter, Reply};
 
-pub(crate) async fn create_character(id: i32, db: PgPool) -> Result<Box<dyn Reply>, ReturnError> {
+pub(crate) async fn create_character(
+    user_id: i32,
+    db: PgPool,
+) -> Result<Box<dyn Reply>, ReturnError> {
     let mut con = db.begin().await?;
     let res = query!(
         "SELECT count(id) FROM characters WHERE user_id = $1",
-        id as i64
+        i64::from(user_id)
     )
     .fetch_one(&mut con)
     .await?;
@@ -21,12 +24,30 @@ pub(crate) async fn create_character(id: i32, db: PgPool) -> Result<Box<dyn Repl
     }
     let id = query!(
         "INSERT INTO characters (user_id) VALUES ($1) RETURNING id",
-        id as i64
+        i64::from(user_id)
     )
     .fetch_one(&mut con)
     .await?
     .id;
+    let deck_id = query!(
+        "INSERT INTO decks (character_id) VALUES ($1) RETURNING id",
+        id
+    )
+    .fetch_one(&mut con)
+    .await?
+    .id;
+    query!(
+        "INSERT INTO cards_in_deck (deck_id,card_id)
+        SELECT $1, card_id
+        FROM owned_starting_cards
+        WHERE owned_starting_cards.user_id = $2",
+        deck_id,
+        i64::from(user_id)
+    )
+    .execute(&mut con).await?;
+
     con.commit().await?;
+
     Ok(Box::new(serde_json::to_string(
         &CharacterCreationResponse { id },
     )?))
