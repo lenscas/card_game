@@ -375,6 +375,7 @@ dependencies = [
 [[package]]
 name = "card_game_shared"
 version = "0.1.0"
+source = "git+https://github.com/lenscas/card_game_shared.git#97d7e31784eaf903b0b099651da03d4c16798d74"
 dependencies = [
  "serde 1.0.112",
 ]
