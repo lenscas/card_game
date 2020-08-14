@@ -1,8 +1,8 @@
 use crate::screens::screen::Screen;
 pub(crate) use client::Client;
-use quicksilver::input::Event::{PointerMoved, Resized};
+use quicksilver::input::Event::{PointerMoved};
 use quicksilver::{
-    geom::{Rectangle, Transform, Vector},
+    geom::{Vector},
     graphics::{Graphics, Image, ResizeHandler, VectorFont},
     input::Input,
     load_file, run,
@@ -48,7 +48,7 @@ pub(crate) struct Wrapper {
 }
 impl Wrapper {
     pub(crate) fn cursor_at(&self) -> Vector {
-        self.cursor_at
+        self.gfx.screen_to_camera(&self.window, self.cursor_at)
     }
 }
 
@@ -84,22 +84,9 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
         aspect_width: 16.0,
         aspect_height: 9.0,
     };
-    let screen = Rectangle::new_sized(SIZE);
-    // If we want to handle resizes, we'll be setting the 'projection.' This is a transformation
-    // applied to eveyrthing we draw. By default, the projection is an 'orthographic' view of our
-    // window size. This means it takes a rectangle equal to the size of our window and transforms
-    // those coordinates to draw correctly on the screen.
-    let projection = Transform::orthographic(screen);
+    wrapper.gfx.set_resize_handler(resize_handler);
     loop {
         while let Some(e) = wrapper.events.next_event().await {
-            if let Resized(ev) = &e {
-                // Using our resize handler from above, create a transform that will correctly fit
-                // our content to the screen size
-                let letterbox = resize_handler.projection(ev.size());
-                // Apply our projection (convert content coordinates to screen coordinates) and
-                // then the letterbox (fit the content correctly on the screen)
-                wrapper.gfx.set_projection(letterbox * projection);
-            }
             if let PointerMoved(e) = &e {
                 wrapper.cursor_at = e.location();
             }
