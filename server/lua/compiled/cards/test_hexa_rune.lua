@@ -1,1 +1,0 @@
-{"name":"test hexa","cost":20,"code":"{\n\tid=\"hexa_rune\",\n\tname = \"test hexa\",\n\tdescription=\"+10 damage to all spells.\",\n\tcost = 20,\n\tspeed = 2,\n\tfunc = function(self, owner,oponent)\n\t\tlocal battle = require\"engine\/battle\"\n\t\tbattle.battle:add_rune(\"damage_buff\")\n\tend\n}\n","id":"hexa_rune","description":"+10 damage to all spells.","speed":2}
