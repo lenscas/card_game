@@ -1,0 +1,1 @@
+{"name":"damage over time","cost":0,"code":"{\n\tid=\"test_dop\",\n\tname = \"damage over time\",\n\tdescription = \"5 damage for 3 turns.\",\n\tcost = 0,\n\tspeed = 2,\n\tis_starting=true,\n\tfunc = function(self,owner,oponent)\n\t\towner:add_rune(\"damage_over_time\")\n\tend\n}\n","is_starting":true,"id":"test_dop","description":"5 damage for 3 turns.","speed":2}

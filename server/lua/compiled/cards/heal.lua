@@ -1,0 +1,1 @@
+{"name":"some healing","cost":0,"code":"{\n\tid=\"test_heal\",\n\tname = \"some healing\",\n\tdescription = \"Heal 10\",\n\tcost = 0,\n\tspeed = 2,\n\tis_starting=true,\n\tfunc = function(self, owner,oponent)\n\t\towner:heal(10)\n\tend\n}\n","is_starting":true,"id":"test_heal","description":"Heal 10","speed":2}
