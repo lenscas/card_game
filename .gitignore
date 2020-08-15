@@ -1,6 +1,6 @@
 /target
 **/*.rs.bk
 .env
-/lua/compiled/**/*.lua
-/assets/cards/*.png
-/assets/cards/*.svg
+/server/lua/compiled/**/*.lua
+/server/assets/cards/*.png
+/server/assets/cards/*.svg
