@@ -1,5 +1,5 @@
 ## Card game
-This is the server for my yet to be named roguelike card game. This is where the most magic happens. For example what encounters people get, deck storage and battlers are procesed here. The results are then shared with the [client](https://github.com/lenscas/card_game_client) so it can render it to the user.
+This is the server for my yet to be named roguelike card game. This is where the most magic happens. For example what encounters people get, deck storage and battlers are procesed here. The results are then shared with the client so it can render it to the user.
 
 
 ## file structure
