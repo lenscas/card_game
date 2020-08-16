@@ -1,7 +1,7 @@
 use super::users::force_logged_in;
 use crate::{battle::Field, controllers::users::with_db, errors::ReturnError, util::convert_error};
 use card_game_shared::battle::{ReturnBattle, TakeAction, TurnResponse};
-use sqlx::{query, PgPool};
+use sqlx::{query, Done, PgPool};
 use warp::{Filter, Reply};
 
 async fn create_battle(
@@ -45,7 +45,8 @@ async fn create_battle(
         user_id
     )
     .execute(&mut con)
-    .await?;
+    .await?
+    .rows_affected();
     if rows != 1 {
         return conflict_error;
     }

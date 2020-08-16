@@ -42,7 +42,7 @@ async fn main() {
     let addr = SocketAddr::new(binding_address, port);
     println!("Hello, world!");
 
-    let pool = PgPool::new(&db_url)
+    let pool = PgPool::connect(&db_url)
         .await
         .expect("Couldn't connect to database");
     let hello = warp::path!("hello" / String).map(|name| format!("Hello, {}!", name));

@@ -2,7 +2,7 @@ use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
 use rlua::{Lua, UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
-use sqlx::{pool::PoolConnection, PgConnection};
+use sqlx::{Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
@@ -17,7 +17,7 @@ pub(crate) struct Field {
 impl Field {
     pub(crate) async fn new(
         player_id: i64,
-        con: &mut PoolConnection<PgConnection>,
+        con: &mut Transaction<'_, Postgres>,
     ) -> Result<Field, ReturnError> {
         let deck = Deck::create_deck_for_player(player_id, con).await?;
         let player = Player {
