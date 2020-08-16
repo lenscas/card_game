@@ -16,7 +16,7 @@ pub struct ReturnBattle {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct TakeAction {
     pub play_card: usize,
-    pub character_id : i64
+    pub character_id: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -44,7 +44,8 @@ pub(crate) async fn create_character(
         deck_id,
         i64::from(user_id)
     )
-    .execute(&mut con).await?;
+    .execute(&mut con)
+    .await?;
 
     con.commit().await?;
 
