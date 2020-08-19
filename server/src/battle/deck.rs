@@ -58,12 +58,8 @@ impl Deck {
         if self.hand.len() > index {
             let card = self.hand.remove(index);
             return if card.should_reshuffle {
-                self.casted.push(card);
-                Ok(self
-                    .casted
-                    .last()
-                    .expect("Vec did not contain a last after push. Something broke BIG TIME")
-                    .clone())
+                self.casted.push(card.clone());
+                Ok(card)
             } else {
                 Ok(card)
             };
