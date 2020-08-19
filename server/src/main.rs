@@ -16,7 +16,7 @@ mod errors;
 mod util;
 
 async fn handle_from_db(
-    id: i32,
+    id: i64,
     pool: PgPool,
 ) -> Result<impl warp::Reply, warp::reject::Rejection> {
     let mut con = pool.acquire().await.unwrap();
@@ -47,7 +47,7 @@ async fn main() {
         .expect("Couldn't connect to database");
     let hello = warp::path!("hello" / String).map(|name| format!("Hello, {}!", name));
     let pool2 = pool.clone();
-    let from_db = warp::path!("hello" / i32)
+    let from_db = warp::path!("hello" / i64)
         .and(warp::any().map(move || pool2.clone()))
         .and_then(handle_from_db);
 

@@ -6,13 +6,13 @@ use tokio::stream::StreamExt;
 use warp::{Filter, Reply};
 
 pub(crate) async fn create_character(
-    user_id: i32,
+    user_id: i64,
     db: PgPool,
 ) -> Result<Box<dyn Reply>, ReturnError> {
     let mut con = db.begin().await?;
     let res = query!(
         "SELECT count(id) FROM characters WHERE user_id = $1",
-        i64::from(user_id)
+        user_id
     )
     .fetch_one(&mut con)
     .await?;
@@ -24,7 +24,7 @@ pub(crate) async fn create_character(
     }
     let id = query!(
         "INSERT INTO characters (user_id) VALUES ($1) RETURNING id",
-        i64::from(user_id)
+        user_id
     )
     .fetch_one(&mut con)
     .await?
@@ -54,9 +54,9 @@ pub(crate) async fn create_character(
     )?))
 }
 
-pub(crate) async fn get_characters(id: i32, db: PgPool) -> Result<Box<dyn Reply>, ReturnError> {
+pub(crate) async fn get_characters(id: i64, db: PgPool) -> Result<Box<dyn Reply>, ReturnError> {
     let mut con = db.begin().await?;
-    let res = query!("SELECT id FROM characters WHERE user_id = $1", id as i64)
+    let res = query!("SELECT id FROM characters WHERE user_id = $1", id)
         .fetch(&mut con)
         .map(|v| v.map(|v| v.id))
         .collect::<Result<_, _>>()

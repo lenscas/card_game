@@ -167,8 +167,8 @@ ALTER SEQUENCE public.owned_starting_cards_id_seq OWNED BY public.owned_starting
 --
 
 CREATE TABLE public.sessions (
-    hash text NOT NULL,
-    user_id integer NOT NULL,
+    hash char(44) NOT NULL,
+    user_id bigint NOT NULL,
     activated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -179,9 +179,9 @@ CREATE TABLE public.sessions (
 --
 
 CREATE TABLE public.users (
-    id integer NOT NULL,
-    username text NOT NULL,
-    password text NOT NULL
+    id bigint NOT NULL,
+    username varchar(255) NOT NULL,
+    password varchar(255) NOT NULL
 );
 
 
@@ -191,7 +191,6 @@ CREATE TABLE public.users (
 --
 
 CREATE SEQUENCE public.users_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
