@@ -171,7 +171,7 @@ pub fn user_route(
 
 pub fn force_logged_in(
     db: PgPool,
-) -> impl Filter<Extract = (i32,), Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = (i64,), Error = warp::Rejection> + Clone {
     warp::header::header("authorization_token")
         .and(with_db(db))
         .and_then(|token: String, db: PgPool| async move {

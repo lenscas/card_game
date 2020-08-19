@@ -34,17 +34,13 @@ impl From<SqlError> for ReturnError {
     fn from(x: SqlError) -> Self {
         match x {
             SqlError::Io(a) => ReturnError::Io(a),
-            SqlError::UrlParse(_) => ReturnError::GenericError("Couldn't parse db string".into()),
             SqlError::Database(x) => ReturnError::DatabaseError(x),
             SqlError::RowNotFound => ReturnError::NotFound,
             SqlError::ColumnNotFound(x) => {
                 ReturnError::GenericError(format!("Collumn {:0} not found", x))
             }
-            SqlError::Protocol(x) => ReturnError::GenericError(format!(
-                "Something wend wrong with the database connection\nContenxt:\n{:0}",
-                x
-            )),
-            SqlError::PoolTimedOut(_) => ReturnError::GenericError("The pool timed out".into()),
+            SqlError::Protocol(x) => ReturnError::GenericError(String::from(
+                "Something wend wrong with the database connection\nContenxt:\n") + &x),
             SqlError::PoolClosed => ReturnError::GenericError("The pool got closed".into()),
             SqlError::Decode(_) => ReturnError::GenericError("Couldn't decode something".into()),
             SqlError::ColumnIndexOutOfBounds { index, len } => ReturnError::GenericError(format!(

@@ -2,7 +2,7 @@ use super::Card;
 use crate::{errors::ReturnError, util::CastRejection};
 use card_game_shared::battle::BattleErrors;
 use serde::{Deserialize, Serialize};
-use sqlx::{pool::PoolConnection, query, PgConnection};
+use sqlx::{query, Postgres, Transaction};
 use tokio::fs::read_to_string;
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
@@ -14,7 +14,7 @@ pub struct Deck {
 impl Deck {
     pub(crate) async fn create_deck_for_player(
         player_id: i64,
-        con: &mut PoolConnection<PgConnection>,
+        con: &mut Transaction<'_, Postgres>,
     ) -> Result<Self, ReturnError> {
         let v = query!(
             r#"

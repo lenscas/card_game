@@ -1,16 +1,14 @@
 use super::users::force_logged_in;
 use crate::{battle::Field, controllers::users::with_db, errors::ReturnError, util::convert_error};
 use card_game_shared::battle::{ReturnBattle, TakeAction, TurnResponse};
-use sqlx::{query, PgPool};
+use sqlx::{query, Done, PgPool};
 use warp::{Filter, Reply};
 
 async fn create_battle(
     db: PgPool,
-    user_id: i32,
+    user_id: i64,
     character_id: i64,
 ) -> Result<Box<dyn Reply>, ReturnError> {
-    println!("???");
-    let user_id = i64::from(user_id);
 
     let mut con = db.begin().await?;
 
@@ -45,7 +43,8 @@ async fn create_battle(
         user_id
     )
     .execute(&mut con)
-    .await?;
+    .await?
+    .rows_affected();
     if rows != 1 {
         return conflict_error;
     }
@@ -85,10 +84,9 @@ async fn create_battle(
 async fn do_turn(
     action: TakeAction,
     db: PgPool,
-    user_id: i32,
+    user_id: i64,
 ) -> Result<Box<dyn Reply>, ReturnError> {
     let chosen_card = action.play_card;
-    let user_id = i64::from(user_id);
     let mut con = db.begin().await?;
     let v = query!(
         "SELECT current_battle 
@@ -166,7 +164,7 @@ pub fn battle_route(
                 .and(with_db(db.clone()))
                 .and(force_logged_in(db.clone()))
                 .and(warp::path::param::<i64>())
-                .and_then(|db, user_id: i32, character_id: i64| {
+                .and_then(|db, user_id: i64, character_id: i64| {
                     convert_error(
                         (db, user_id, character_id),
                         |(db, user_id, character_id)| create_battle(db, user_id, character_id),
