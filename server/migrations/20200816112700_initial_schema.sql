@@ -68,7 +68,9 @@ CREATE TABLE public.cards_in_deck (
 CREATE TABLE public.characters (
     id bigint NOT NULL,
     user_id bigint NOT NULL,
-    current_battle text
+    current_battle json,
+    dungeon json NOT NULL,
+    character_state json NOT NULL
 );
 
 
