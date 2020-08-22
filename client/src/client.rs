@@ -6,7 +6,7 @@ use crate::{
 use card_game_shared::{
     battle::{BattleErrors, ReturnBattle, TakeAction, TurnResponse},
     characters::{CharacterCreationResponse, CharacterList},
-    users::LoginData,
+    users::LoginData, dungeon::EventProcesed,
 };
 use quicksilver::{graphics::Image, Graphics};
 use silver_surf::{call, Config, Method};
@@ -36,11 +36,12 @@ impl Client {
         }
     }
 
-    fn set_url(&self, part: &str) -> String {
+    fn set_url(&self, parts: &[&str]) -> String {
+        let url = parts.join("/");
         if self.base_url.ends_with('/') {
-            format!("{}{}", self.base_url, part)
+            format!("{}{}", self.base_url, url)
         } else {
-            format!("{}/{}", self.base_url, part)
+            format!("{}/{}", self.base_url, url)
         }
     }
     fn set_headers(&self) -> Option<Vec<(&'static str, String)>> {
@@ -52,7 +53,7 @@ impl Client {
     }
     pub(crate) async fn log_in(&mut self, username: String, password: String) -> Result<()> {
         let v = call(Config {
-            url: self.set_url("login"),
+            url: self.set_url(&["login"]),
             method: Method::Post,
             body: Some(LoginData { username, password }),
             headers: None,
@@ -70,7 +71,7 @@ impl Client {
     }
     async fn load_image(&mut self, path: String, gfx: &Graphics) -> Result<Image> {
         let headers = self.set_headers();
-        let url = self.set_url(&(String::from("assets/") + &path));
+        let url = self.set_url(&["assets",&path]);
 
         let entry = self.cached_images.entry(path.clone());
         Ok(match entry {
@@ -93,7 +94,7 @@ impl Client {
 
     pub(crate) async fn new_battle(&mut self, char_id : i64, gfx: &Graphics) -> Result<ReturnBattleWithImages> {
         let res = call(Config::<()> {
-            url: self.set_url(&format!("battle/{}",char_id)),
+            url: self.set_url(&["battle",&char_id.to_string()]),
             method: Method::Post,
             body: None,
             headers: self.set_headers(),
@@ -115,7 +116,7 @@ impl Client {
     }
     pub(crate) async fn do_turn(&mut self, card: usize, character_id : i64, gfx: &Graphics) -> Result<AfterTurn> {
         let res = call(Config {
-            url: self.set_url("battle/"),
+            url: self.set_url(&["battle"]),
             method: Method::Put,
             body: Some(TakeAction { play_card: card, character_id}),
             headers: self.set_headers(),
@@ -154,7 +155,7 @@ impl Client {
     }
     pub(crate) async fn get_characters(&self) -> Result<CharacterList> {
         call(Config::<()> {
-            url: self.set_url("characters"),
+            url: self.set_url(&["characters"]),
             method: Method::Get,
             body: None,
             headers: self.set_headers(),
@@ -164,12 +165,52 @@ impl Client {
     }
     pub(crate) async fn create_character(&self) -> Result<CharacterCreationResponse> {
         call(Config::<()> {
-            url: self.set_url("characters"),
+            url: self.set_url(&["characters"]),
             method: Method::Post,
             body: None,
             headers: self.set_headers(),
         })?
         .json()
         .await
+    }
+    pub(crate) async fn is_chracter_in_battle(&self, char_id : i64) -> Result<bool> {
+        call(Config::<()> {
+            url: self.set_url(&["characters",&char_id.to_string()]),
+            method: Method::Get,
+            body :None,
+            headers: self.set_headers()
+        })?.json().await
+    }
+    pub(crate) async fn get_dungeon(&self, char_id : i64) -> Result<card_game_shared::dungeon::DungeonLayout> {
+        call(Config::<()> {
+            url: self.set_url(&["dungeon",&char_id.to_string()]),
+            method: Method::Get,
+            body: None,
+            headers: self.set_headers(),
+        })?.json().await
+    }
+    pub(crate) async fn move_in_dungeon(&self, char_id:i64, dir : card_game_shared::BasicVector<i64>) -> Result<card_game_shared::dungeon::EventProcesed> {
+        let x: CustomResult<EventProcesed> = call(Config {
+            url : self.set_url(&["dungeon",&char_id.to_string(),"move"]),
+            method: Method::Post,
+            body: Some(dir),
+            headers: self.set_headers()
+        })?.json().await?;
+        let res = dbg!(x);
+        match res {
+            CustomResult::Ok(x) => {Ok(x)}
+            CustomResult::Err(x) => {
+                match x {
+                    crate::responses::ErrorRes::Basic { message } => {
+                        let x = serde_json::from_str(&message);
+                        match x {
+                            Ok(x) => Ok(x),
+                            Err(_) => CustomResult::Err(crate::responses::ErrorRes::Basic{message}).into_dyn_res()
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 }

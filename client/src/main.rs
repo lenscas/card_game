@@ -1,17 +1,18 @@
 use crate::screens::screen::Screen;
 pub(crate) use client::Client;
-use quicksilver::input::Event::{PointerMoved};
+use quicksilver::input::Event::PointerMoved;
 use quicksilver::{
-    geom::{Vector},
+    blinds::Key,
+    geom::Vector,
     graphics::{Graphics, Image, ResizeHandler, VectorFont},
-    input::Input,
+    input::{Input, KeyboardEvent},
     load_file, run,
     saving::Location,
     Settings, Window,
 };
 use std::error::Error as TError;
 
-use mergui::{Context};
+use mergui::Context;
 
 mod animations;
 mod client;
@@ -34,6 +35,16 @@ fn main() {
         },
         app,
     );
+}
+
+pub(crate) fn check_multiple(event: &KeyboardEvent, to_check: &[Key]) -> bool {
+    let key = event.key();
+    event.is_down()
+        && to_check
+            .iter()
+            .find(|v| key == **v)
+            .and(Some(true))
+            .unwrap_or(false)
 }
 
 pub(crate) struct Wrapper {

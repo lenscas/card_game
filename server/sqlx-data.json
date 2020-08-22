@@ -1,13 +1,77 @@
 {
   "db": "PostgreSQL",
+  "13d19459227c9f1c0878d008da3ee9eb91bc02612140119b1a46214a1504ca6a": {
+    "query": "INSERT INTO characters (user_id, dungeon) VALUES ($1, $2) RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Json"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "22b2249ccc3d1e2d0c0b8b7c060ebd7deb0eb003531776e547ff8d7d688ee2af": {
+    "query": "INSERT INTO characters (user_id, dungeon, character_state) VALUES ($1, $2,$3) RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Json",
+          "Json"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "34eb381cbcba94ad70cd2a802040aff6956bfdb67b95f33d578fea7f356706b4": {
+    "query": "SELECT dungeon FROM characters WHERE user_id = $1 AND id=$2 AND characters.current_battle IS NULL",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "dungeon",
+          "type_info": "Json"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
   "3d44d3176cf40832756f493dc667b3ee56149fdcd293dfa867eedc7fab241271": {
     "query": "INSERT INTO sessions ( hash,user_id) VALUES ($1,$2)",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Int4"
+          "Bpchar",
+          "Int8"
         ]
       },
       "nullable": []
@@ -19,7 +83,7 @@
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
+          "Json",
           "Int8"
         ]
       },
@@ -44,7 +108,7 @@
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
+          "Json",
           "Int8"
         ]
       },
@@ -71,6 +135,20 @@
       ]
     }
   },
+  "48ef972bd9984fda391a8125531baf8853bd8a8a17f33f3dac999624125fe3fd": {
+    "query": "UPDATE characters \n            SET dungeon=$1 \n            WHERE user_id = $2 \n            AND id = $3",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Json",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "5249da089b58709a29759f9c7fc794cad2225c7b60b6d163df6998e2c2497559": {
     "query": "SELECT current_battle \n        FROM characters \n        WHERE user_id = $1 \n        AND current_battle IS NOT NULL\n        AND characters.id = $2",
     "describe": {
@@ -78,7 +156,7 @@
         {
           "ordinal": 0,
           "name": "current_battle",
-          "type_info": "Text"
+          "type_info": "Json"
         }
       ],
       "parameters": {
@@ -157,13 +235,13 @@
         {
           "ordinal": 0,
           "name": "id",
-          "type_info": "Int4"
+          "type_info": "Int8"
         }
       ],
       "parameters": {
         "Left": [
-          "Text",
-          "Text"
+          "Varchar",
+          "Varchar"
         ]
       },
       "nullable": [
@@ -198,12 +276,12 @@
         {
           "ordinal": 0,
           "name": "id",
-          "type_info": "Int4"
+          "type_info": "Int8"
         },
         {
           "ordinal": 1,
           "name": "password",
-          "type_info": "Text"
+          "type_info": "Varchar"
         }
       ],
       "parameters": {
@@ -263,6 +341,27 @@
       ]
     }
   },
+  "b92371c12a3bdc61d9678d8573077582362ef0b17a707236180e9ef5989118d7": {
+    "query": "\n        SELECT COUNT(*) as count \n        FROM characters \n        WHERE user_id=$1 \n        AND id=$2 \n        AND current_battle IS NULL",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
   "bb71c2af5a5435b86b1e0af564a14d9d3bcc810c7a3cbe861fbd7b57437756c2": {
     "query": "INSERT INTO decks (character_id) VALUES ($1) RETURNING id",
     "describe": {
@@ -283,6 +382,27 @@
       ]
     }
   },
+  "c020793cd47574d21e3db5cfa25d9ce808189e64959b979bdfe6b1097da231d3": {
+    "query": "SELECT dungeon FROM characters WHERE user_id = $1 AND id=$2",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "dungeon",
+          "type_info": "Json"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
   "c867bb9d7541c9dd382c6dd1394ad0fde68e99d17cd66ecaea25172e102f31a6": {
     "query": "SELECT user_id FROM sessions WHERE hash = $1",
     "describe": {
@@ -290,12 +410,12 @@
         {
           "ordinal": 0,
           "name": "user_id",
-          "type_info": "Int4"
+          "type_info": "Int8"
         }
       ],
       "parameters": {
         "Left": [
-          "Text"
+          "Bpchar"
         ]
       },
       "nullable": [
@@ -310,12 +430,12 @@
         {
           "ordinal": 0,
           "name": "username",
-          "type_info": "Text"
+          "type_info": "Varchar"
         }
       ],
       "parameters": {
         "Left": [
-          "Int4"
+          "Int8"
         ]
       },
       "nullable": [

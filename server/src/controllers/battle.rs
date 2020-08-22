@@ -36,10 +36,10 @@ async fn create_battle(
         return conflict_error;
     }
     let battle = Field::new(user_id, &mut con).await?;
-    let as_str = serde_json::to_string(&battle)?;
+    //let as_str = serde_json::to_string(&battle)?;
     let rows = query!(
         "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND current_battle IS NULL",
-        as_str,
+        serde_json::to_value(&battle)?,
         user_id
     )
     .execute(&mut con)
@@ -86,6 +86,7 @@ async fn do_turn(
     db: PgPool,
     user_id: i64,
 ) -> Result<Box<dyn Reply>, ReturnError> {
+    
     let chosen_card = action.play_card;
     let mut con = db.begin().await?;
     let v = query!(
@@ -99,7 +100,7 @@ async fn do_turn(
     )
     .fetch_one(&mut con)
     .await?;
-    let battle: Field = serde_json::from_str(&v.current_battle.unwrap())?;
+    let battle: Field = serde_json::from_value(v.current_battle.unwrap())?;
     let (battle, is_over) = battle.process_turn(chosen_card).await?;
     if is_over {
         query!(
@@ -110,7 +111,7 @@ async fn do_turn(
         .await?;
         return Ok(Box::new(serde_json::to_string(&TurnResponse::Done)?));
     } else {
-        let c = serde_json::to_string(&battle)?;
+        let c = serde_json::to_value(&battle)?;
         query!(
             "UPDATE characters SET current_battle = $1 WHERE user_id = $2",
             c,

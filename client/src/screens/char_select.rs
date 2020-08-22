@@ -1,4 +1,4 @@
-use super::{Battle, Screen};
+use super::{Battle, Screen, Dungeon};
 use crate::{Result, Wrapper};
 use async_trait::async_trait;
 use mergui::{channels::BasicClickable, widgets::ButtonConfig, FontStyle, MFont, Response};
@@ -84,8 +84,13 @@ impl Screen for CharacterSelect {
                     wrapper.client.create_character().await?.id
                 }
             };
-            let battle = Battle::new(char_id, wrapper).await?;
-            Ok(Some(Box::new(battle)))
+            let next_screen: Box<dyn Screen> = if wrapper.client.is_chracter_in_battle(char_id).await? {
+                Box::new(Dungeon::new(char_id, wrapper).await?)
+            } else {
+                Box::new(Battle::new(char_id, wrapper).await?)
+            };
+            
+            Ok(Some(next_screen))
         } else {
             Ok(None)
         }
