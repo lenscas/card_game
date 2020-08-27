@@ -1,6 +1,6 @@
 use super::users::{force_logged_in, with_db};
-use crate::{dungeon::Dungeon, errors::ReturnError, util::convert_error, battle::Field};
-use card_game_shared::{dungeon::EventProcesed};
+use crate::{battle::Field, dungeon::Dungeon, errors::ReturnError, util::convert_error};
+use card_game_shared::dungeon::EventProcesed;
 use sqlx::PgPool;
 use warp::{http::StatusCode, Filter, Reply};
 
@@ -23,7 +23,8 @@ pub(crate) async fn do_move(
     move_to: card_game_shared::BasicVector<isize>,
 ) -> Result<Box<dyn Reply>, ReturnError> {
     let mut transaction = db.begin().await?;
-    let dungeon = Dungeon::select_from_db_no_battle(user_id, character_id, &mut transaction).await?;
+    let dungeon =
+        Dungeon::select_from_db_no_battle(user_id, character_id, &mut transaction).await?;
     let mut dungeon = match dungeon {
         Some(x) => x,
         None => {
@@ -36,18 +37,22 @@ pub(crate) async fn do_move(
     let did_move = dungeon.try_move(move_to);
     match did_move {
         Some(entered_fight) => {
-            dungeon.save(user_id, character_id, &mut transaction).await?;
+            dungeon
+                .save(user_id, character_id, &mut transaction)
+                .await?;
             if entered_fight {
-                let field = Field::new(user_id,character_id,&mut transaction).await?;
+                let field = Field::new(user_id, character_id, &mut transaction).await?;
                 field.save(user_id, character_id, &mut transaction).await?;
             }
             transaction.commit().await?;
-            Ok(Box::new(warp::reply::json(&EventProcesed::Success(entered_fight))))
-        },
+            Ok(Box::new(warp::reply::json(&EventProcesed::Success(
+                entered_fight,
+            ))))
+        }
         None => Err(ReturnError::CustomError(
             serde_json::to_string(&EventProcesed::Error)?,
             StatusCode::BAD_REQUEST,
-        ))
+        )),
     }
 }
 

@@ -1,4 +1,4 @@
-use super::{Battle, Screen, Dungeon};
+use super::{Battle, Dungeon, Screen};
 use crate::{Result, Wrapper};
 use async_trait::async_trait;
 use mergui::{channels::BasicClickable, widgets::ButtonConfig, FontStyle, MFont, Response};
@@ -64,7 +64,7 @@ impl CharacterSelect {
                 ))
             })?;
         //layer.add_widget(widget_config)
-        Ok(Self { button: v, })
+        Ok(Self { button: v })
     }
 }
 
@@ -77,19 +77,16 @@ impl Screen for CharacterSelect {
     async fn update(&mut self, wrapper: &mut Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
         if self.button.1.channel.has_clicked() {
             let char_id = match self.button.0 {
-                ButtonType::Old(x) => {
-                    x
-                }
-                ButtonType::New => {
-                    wrapper.client.create_character().await?.id
-                }
+                ButtonType::Old(x) => x,
+                ButtonType::New => wrapper.client.create_character().await?.id,
             };
-            let next_screen: Box<dyn Screen> = if wrapper.client.is_chracter_in_battle(char_id).await? {
-                Box::new(Dungeon::new(char_id, wrapper).await?)
-            } else {
-                Box::new(Battle::new(char_id, wrapper).await?)
-            };
-            
+            let next_screen: Box<dyn Screen> =
+                if wrapper.client.is_chracter_in_battle(char_id).await? {
+                    Box::new(Dungeon::new(char_id, wrapper).await?)
+                } else {
+                    Box::new(Battle::new(char_id, wrapper).await?)
+                };
+
             Ok(Some(next_screen))
         } else {
             Ok(None)

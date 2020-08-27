@@ -2,12 +2,12 @@ use super::users::force_logged_in;
 use crate::{battle::Field, controllers::users::with_db, errors::ReturnError, util::convert_error};
 use card_game_shared::battle::{TakeAction, TurnResponse};
 use sqlx::{query, PgPool};
-use warp::{Filter, Reply, path::param};
+use warp::{path::param, Filter, Reply};
 
 async fn get_battle(
     db: PgPool,
     user_id: i64,
-    character_id: i64
+    character_id: i64,
 ) -> Result<Box<dyn Reply>, ReturnError> {
     Ok(Box::new(warp::reply::json(
         &Field::get_from_db(user_id, character_id, &db)
@@ -64,11 +64,11 @@ pub fn battle_route(
             .and(path("battle"))
             .and(param::<i64>())
             .and(path::end())
-            .and_then(|db,user_id,character_id|{
-                convert_error((db,user_id,character_id),|(db,user_id,character_id)|{
-                    get_battle(db,user_id,character_id)
-                })
-            })
-        )
+            .and_then(|db, user_id, character_id| {
+                convert_error(
+                    (db, user_id, character_id),
+                    |(db, user_id, character_id)| get_battle(db, user_id, character_id),
+                )
+            }))
         .boxed()
 }

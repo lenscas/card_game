@@ -107,7 +107,11 @@ pub(crate) fn character_routes(
                 .and(force_logged_in(db.clone()))
                 .and(warp::path::param::<i64>())
                 .and(with_db(db.clone()))
-                .and_then(|user_id,char_id,conn|convert_error((user_id,char_id,conn), |(a,b,c)|get_character_in_battle(a,b,c))),
+                .and_then(|user_id, char_id, conn| {
+                    convert_error((user_id, char_id, conn), |(a, b, c)| {
+                        get_character_in_battle(a, b, c)
+                    })
+                }),
         ))
         .or(warp::get().and(
             warp::path("characters")

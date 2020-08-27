@@ -1,11 +1,13 @@
 use super::{Battle, Screen};
-use async_trait::async_trait;
-use card_game_shared::{BasicVector, dungeon};
-use quicksilver::{
-    geom::{Rectangle, Vector},
-    graphics::Color, input::Event, blinds::Key,
-};
 use crate::{check_multiple, Wrapper};
+use async_trait::async_trait;
+use card_game_shared::{dungeon, BasicVector};
+use quicksilver::{
+    blinds::Key,
+    geom::{Rectangle, Vector},
+    graphics::Color,
+    input::Event,
+};
 
 const BASE_DUNGEON_SIZE_X: u64 = 10;
 const BASE_DUNGEON_SIZE_Y: u64 = 10;
@@ -22,7 +24,7 @@ const MARGIN_DUNGEON_Y: f32 = 42.;
 const PLAYER_SIZE: f32 = 30.;
 pub struct Dungeon {
     state: dungeon::DungeonLayout,
-    char_id : i64
+    char_id: i64,
 }
 impl Dungeon {
     pub(crate) async fn new(char_id: i64, wrapper: &mut crate::Wrapper) -> crate::Result<Self> {
@@ -30,7 +32,7 @@ impl Dungeon {
             .client
             .get_dungeon(char_id)
             .await
-            .map(|state| Self { state,char_id })
+            .map(|state| Self { state, char_id })
     }
 }
 #[async_trait(?Send)]
@@ -67,9 +69,9 @@ impl Screen for Dungeon {
                 card_size,
             );
             let color = match state {
-                dungeon::TileState::Seen(_) => {Color::WHITE}
-                dungeon::TileState::Empty => {Color::BLUE}
-                dungeon::TileState::Hidden => {Color::BLACK}
+                dungeon::TileState::Seen(_) => Color::WHITE,
+                dungeon::TileState::Empty => Color::BLUE,
+                dungeon::TileState::Hidden => Color::BLACK,
             };
             wrapper.gfx.fill_rect(&card_rectangle, color);
             if draw_player {
@@ -89,20 +91,20 @@ impl Screen for Dungeon {
         Ok(None)
     }
     async fn event(
-            &mut self,
-            wrapper: &mut Wrapper,
-            event: &Event,
-        ) -> crate::Result<Option<Box<dyn Screen>>> {
+        &mut self,
+        wrapper: &mut Wrapper,
+        event: &Event,
+    ) -> crate::Result<Option<Box<dyn Screen>>> {
         match event {
             Event::KeyboardInput(x) => {
-                let dir = if check_multiple(x,&[Key::Up,Key::W]){
-                    BasicVector {x:0,y:-1}
-                } else if check_multiple(x, &[Key::A,Key::Left]) {
-                    BasicVector {x: -1,y:0}
-                } else if check_multiple(x, &[Key::S,Key::Down]) {
-                    BasicVector {x:0,y:1}
-                } else if check_multiple(x, &[Key::D,Key::Right]) {
-                    BasicVector {x:1,y:0}
+                let dir = if check_multiple(x, &[Key::Up, Key::W]) {
+                    BasicVector { x: 0, y: -1 }
+                } else if check_multiple(x, &[Key::A, Key::Left]) {
+                    BasicVector { x: -1, y: 0 }
+                } else if check_multiple(x, &[Key::S, Key::Down]) {
+                    BasicVector { x: 0, y: 1 }
+                } else if check_multiple(x, &[Key::D, Key::Right]) {
+                    BasicVector { x: 1, y: 0 }
                 } else {
                     return Ok(None);
                 };
@@ -110,20 +112,16 @@ impl Screen for Dungeon {
                 match wrapper.client.move_in_dungeon(self.char_id, dir).await? {
                     dungeon::EventProcesed::Success(x) => {
                         if x {
-                            return Ok(Some(Box::new(Battle::new(self.char_id,wrapper).await?)))
+                            return Ok(Some(Box::new(Battle::new(self.char_id, wrapper).await?)));
                         }
                         self.state = wrapper.client.get_dungeon(self.char_id).await?
                     }
-                    dungeon::EventProcesed::Error | dungeon::EventProcesed::CurrentlyInBattle => {
-
-                    }
+                    dungeon::EventProcesed::Error | dungeon::EventProcesed::CurrentlyInBattle => {}
                 }
             }
             //should be implemented so you can click on cards to move as well as use the keyboard
-            Event::PointerInput(_) => {
-                return Ok(None)
-            }
-            _ => ()
+            Event::PointerInput(_) => return Ok(None),
+            _ => (),
         }
         Ok(None)
     }

@@ -257,7 +257,7 @@ impl Dungeon {
                 &mut chosen_tiles,
                 &mut tiles,
                 size.clone(),
-                tile
+                tile,
             );
         }
 

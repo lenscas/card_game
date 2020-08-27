@@ -1,6 +1,7 @@
 use crate::{
+    image_loader::ImageLoader,
     responses::{CustomResult, LoginResponse},
-    Result, image_loader::ImageLoader,
+    Result,
 };
 
 use card_game_shared::{
@@ -9,10 +10,7 @@ use card_game_shared::{
     dungeon::EventProcesed,
     users::LoginData,
 };
-use quicksilver::{
-    graphics::Image,
-    Graphics,
-};
+use quicksilver::{graphics::Image, Graphics};
 use silver_surf::{call, Config, Method};
 
 pub enum AfterTurn {
@@ -26,13 +24,14 @@ pub struct ReturnBattleWithImages {
 }
 
 pub(crate) struct ClientConfig {
-    base_url : String,
+    base_url: String,
     authorization_code: Option<String>,
 }
 impl ClientConfig {
-    pub(crate) fn new(base_url : String) -> Self {
+    pub(crate) fn new(base_url: String) -> Self {
         Self {
-            base_url,authorization_code:None
+            base_url,
+            authorization_code: None,
         }
     }
     pub(crate) fn set_url(&self, parts: &[&str]) -> String {
@@ -56,21 +55,20 @@ impl ClientConfig {
 }
 
 pub struct Client {
-    pub(crate)config : ClientConfig,
-    image_loader :ImageLoader
+    pub(crate) config: ClientConfig,
+    image_loader: ImageLoader,
 }
 
 impl Client {
     pub(crate) async fn new(base_url: String) -> Result<Client> {
         let config = ClientConfig::new(base_url);
-        let image_loader =ImageLoader::new( &config).await?;
+        let image_loader = ImageLoader::new(&config).await?;
         Ok(Client {
-            config, 
-            image_loader
+            config,
+            image_loader,
         })
     }
 
-    
     pub(crate) async fn log_in(&mut self, username: String, password: String) -> Result<()> {
         let v = call(Config {
             url: self.config.set_url(&["login"]),
@@ -89,7 +87,7 @@ impl Client {
         self.config.authorization_code = Some(v.token);
         Ok(())
     }
-    pub(crate) async fn load_image(&mut self, path: String, gfx: &Graphics)  -> Result<Image>  {
+    pub(crate) async fn load_image(&mut self, path: String, gfx: &Graphics) -> Result<Image> {
         self.image_loader.load_image(&self.config, path, gfx).await
     }
 
@@ -119,7 +117,7 @@ impl Client {
         })
     }
 
-    pub(crate) async fn set_new_base_url(&mut self, url : String) -> Result<()> {
+    pub(crate) async fn set_new_base_url(&mut self, url: String) -> Result<()> {
         self.config.base_url = url;
         self.image_loader.invalidate_cache(&self.config).await?;
         Ok(())
@@ -221,7 +219,9 @@ impl Client {
         dir: card_game_shared::BasicVector<i64>,
     ) -> Result<card_game_shared::dungeon::EventProcesed> {
         let x: CustomResult<EventProcesed> = call(Config {
-            url: self.config.set_url(&["dungeon", &char_id.to_string(), "move"]),
+            url: self
+                .config
+                .set_url(&["dungeon", &char_id.to_string(), "move"]),
             method: Method::Post,
             body: Some(dir),
             headers: self.config.set_headers(),

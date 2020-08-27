@@ -16,10 +16,10 @@ use mergui::Context;
 
 mod animations;
 mod client;
+mod image_loader;
 mod responses;
 mod screen_parts;
 mod screens;
-mod image_loader;
 
 const SIZE: Vector = Vector { x: 1366., y: 768. };
 const APP_NAME: &str = "Card game";

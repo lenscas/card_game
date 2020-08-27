@@ -12,9 +12,9 @@ use warp::Reply;
 
 mod battle;
 mod controllers;
+mod dungeon;
 mod errors;
 mod util;
-mod dungeon;
 
 async fn handle_from_db(
     id: i64,

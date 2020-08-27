@@ -14,7 +14,7 @@ pub struct Deck {
 impl Deck {
     pub(crate) async fn create_deck_for_player(
         player_id: i64,
-        character_id : i64,
+        character_id: i64,
         con: &mut Transaction<'_, Postgres>,
     ) -> Result<Self, ReturnError> {
         let v = query!(

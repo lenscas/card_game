@@ -1,12 +1,12 @@
 pub(crate) mod battle;
 pub(crate) mod battle_over;
 pub(crate) mod char_select;
+pub(crate) mod dungeon;
 pub(crate) mod login;
 pub(crate) mod screen;
-pub(crate) mod dungeon;
 pub(crate) use battle::Battle;
 pub(crate) use battle_over::BattleOver;
 pub(crate) use char_select::CharacterSelect;
+pub(crate) use dungeon::Dungeon;
 pub(crate) use login::Login;
 pub(crate) use screen::Screen;
-pub(crate) use dungeon::Dungeon;
