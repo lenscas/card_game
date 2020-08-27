@@ -9,6 +9,7 @@ return {
 	PATH_COMPILED_HEXA_RUNES = "./compiled/hexa_runes",
 	PATH_BASIC_CARD_FRAME = "../assets/basic_card_frame.svg",
 	PATH_OUT_CARD_PICTURES = "../assets/cards",
+	FULL_PATH_CARD_GENERATION_TIME_ID_FILE = "../assets/cards/generation_time.txt",
 	CARD_FRAME_REPLACEMENTS = {
 		NAME = "{CARD_NAME}",
 		DESCRIPTION = "{CARD_DESCRIPTION}",

@@ -5,3 +5,4 @@
 /server/assets/cards/*.png
 /server/assets/cards/*.svg
 /client/static/default_server.txt
+**/generation_time.txt

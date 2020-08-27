@@ -16,7 +16,7 @@ pub struct DungeonLayout {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum EventProcesed {
-    Success,
+    Success(bool),
     Error,
     CurrentlyInBattle,
     

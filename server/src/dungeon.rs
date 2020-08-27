@@ -89,7 +89,11 @@ fn connect_tiles(
             let index = card_game_shared::funcs::get_index_matrix(size.x, &new_current);
             let old_tile = &tiles[index];
             if old_tile.tile_type == TileType::Empty {
-                tiles[index] = Tile::new(TileType::Basic);
+                tiles[index] = Tile::new(if rng.gen() {
+                    TileType::Basic
+                } else {
+                    TileType::Fight
+                });
                 filled_in_locations.insert(new_current.clone());
                 count += 1;
             }
@@ -109,12 +113,13 @@ pub(crate) enum TileType {
     End,
     Start,
     Basic,
+    Fight,
 }
 impl TileType {
     pub(crate) fn can_walk(&self) -> bool {
         match self {
             TileType::Empty => false,
-            TileType::End | TileType::Start | TileType::Basic => true,
+            TileType::End | TileType::Start | TileType::Basic | TileType::Fight => true,
         }
     }
 }
@@ -241,13 +246,18 @@ impl Dungeon {
             end_loc,
         );
         let total_space = length * height;
-        for _ in count + 2 .. total_space / 2 {
+        for _ in count + 2..total_space / 2 {
+            let tile = if rng.gen() {
+                TileType::Basic
+            } else {
+                TileType::Fight
+            };
             place_tile_at_random_location(
                 &mut rng,
                 &mut chosen_tiles,
                 &mut tiles,
                 size.clone(),
-                TileType::Basic,
+                tile
             );
         }
 
@@ -259,7 +269,7 @@ impl Dungeon {
         }
     }
     #[must_use]
-    pub(crate) fn try_move(&mut self, dir: BasicVector<isize>) -> bool {
+    pub(crate) fn try_move(&mut self, dir: BasicVector<isize>) -> Option<bool> {
         let old_character_location = self.character_at.clone();
         match (
             dir.x,
@@ -273,23 +283,22 @@ impl Dungeon {
             (-1, 0, false, _, _, _) => self.character_at.x -= 1,
             (0, 1, _, _, _, false) => self.character_at.y += 1,
             (0, -1, _, _, false, _) => self.character_at.y -= 1,
-            _ => return false,
+            _ => return None,
         }
         self.tiles
             .get_mut(card_game_shared::funcs::get_index_matrix(
                 self.length as usize,
                 &self.character_at,
             ))
+            .and_then(|v| if v.can_walk() { Some(v) } else { None })
             .map(|v| {
-                let can_walk = v.can_walk();
-                if can_walk {
-                    v.visited = true;
-                }
-                can_walk
+                let already_visited = v.visited;
+                v.visited = true;
+                Some((!already_visited) && v.tile_type == TileType::Fight)
             })
             .unwrap_or_else(|| {
                 self.character_at = old_character_location;
-                false
+                None
             })
     }
     pub(crate) async fn save<'c, E>(

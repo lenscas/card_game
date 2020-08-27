@@ -14,6 +14,7 @@ pub struct Deck {
 impl Deck {
     pub(crate) async fn create_deck_for_player(
         player_id: i64,
+        character_id : i64,
         con: &mut Transaction<'_, Postgres>,
     ) -> Result<Self, ReturnError> {
         let v = query!(
@@ -27,8 +28,10 @@ impl Deck {
                 INNER JOIN characters
                 ON characters.id = decks.character_id
                 WHERE characters.user_id = $1
+                AND character_id = $2
             "#,
-            player_id
+            player_id,
+            character_id
         )
         .fetch_all(con)
         .await?;

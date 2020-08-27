@@ -10,6 +10,20 @@ local function readFullUsingPath(fullPath)
 	return contents
 end
 
+local function writeToFileFullPath (path,str)
+	local handler, err = io.open(path, "w+")
+	if err then
+		print("path", path)
+		error(err)
+	end
+	print("writing:")
+	print(str)
+	print()
+	handler:write(str)
+	handler:close()
+	return path
+end
+
 return {
 	--returns a list of every file inside a path
 	getFilesInDir = function(path)
@@ -27,18 +41,10 @@ return {
 	--Writes an string to a file.
 	writeToFile = function(dir, fileName, str)
 		local path = dir .. "/" .. fileName
-		local handler, err = io.open(path, "w+")
-		if err then
-			print("path", path)
-			error(err)
-		end
-		print("writing:")
-		print(str)
-		print()
-		handler:write(str)
-		handler:close()
-		return path
+		return writeToFileFullPath(path,str)
+		
 	end,
+	writeToFileFullPath = writeToFileFullPath,
 
 	--run Func over every line inside a file
 	openAndReadLines = function(path,func)

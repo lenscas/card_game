@@ -19,6 +19,7 @@ mod client;
 mod responses;
 mod screen_parts;
 mod screens;
+mod image_loader;
 
 const SIZE: Vector = Vector { x: 1366., y: 768. };
 const APP_NAME: &str = "Card game";
@@ -81,7 +82,7 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
         gfx,
         events,
         context,
-        client: Client::new(last_used_url),
+        client: Client::new(last_used_url).await?,
         cursor_at: Vector::new(0., 0.),
         font,
         button_image,

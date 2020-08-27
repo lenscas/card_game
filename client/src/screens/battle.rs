@@ -1,4 +1,4 @@
-use super::{BattleOver, Screen};
+use super::{ Screen, Dungeon};
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Vector};
 use quicksilver::graphics::{Color, FontRenderer, VectorFont};
@@ -46,7 +46,7 @@ impl Battle {
         });
         let mut hand = Hand::new();
 
-        let current = wrapper.client.new_battle(char_id,&wrapper.gfx).await?;
+        let current = wrapper.client.get_battle(char_id,&wrapper.gfx).await?;
         let (current, cards) = (current.battle, current.images);
         hand.update_hand(cards, wrapper);
 
@@ -75,7 +75,7 @@ impl Battle {
         let battle = wrapper.client.do_turn(chosen,self.character_id, &wrapper.gfx).await?;
         let battle = match battle {
             crate::client::AfterTurn::Over => {
-                return Ok(Some(Box::new(BattleOver::new(wrapper).await?)))
+                return Ok(Some(Box::new(Dungeon::new(self.character_id, wrapper).await?)))
             }
             crate::client::AfterTurn::NewTurn(x) => x,
             crate::client::AfterTurn::NoTurnHappened => return Ok(None),

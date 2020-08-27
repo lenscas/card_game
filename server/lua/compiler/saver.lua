@@ -48,6 +48,7 @@ Collides with : ]] .. (saved[cardId] or "no collision")
 	end,
 	--commits the changes to the database.
 	doSave = function()
+		files.writeToFileFullPath(constants.FULL_PATH_CARD_GENERATION_TIME_ID_FILE,os.time())
 		sql.commit()
 	end
 }

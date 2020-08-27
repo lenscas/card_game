@@ -95,7 +95,7 @@ impl Login {
             font: input_font.clone(),
             placeholder: None,
             location: Rectangle::new(Vector::new(200., 295.), Vector::new(300., 25.)),
-            start_value: Some(wrapper.client.base_url.clone()),
+            start_value: Some(wrapper.client.config.base_url().to_owned()),
             cursor_config: Default::default(),
         };
         let server_address = secret_layer.add_widget(server_address);
@@ -151,14 +151,14 @@ impl Screen for Login {
             && self.server_address.channel.get() != ""
         {
             let new_address = self.server_address.channel.get();
-            if new_address != wrapper.client.base_url {
+            if new_address != wrapper.client.config.base_url() {
                 save(
                     Location::Config,
                     APP_NAME,
                     "last_connected_server",
                     &new_address,
                 )?;
-                wrapper.client.base_url = new_address;
+                wrapper.client.set_new_base_url(new_address).await?;
             }
             return match wrapper
                 .client

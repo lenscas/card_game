@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{Battle, Screen};
 use async_trait::async_trait;
 use card_game_shared::{BasicVector, dungeon};
 use quicksilver::{
@@ -108,7 +108,12 @@ impl Screen for Dungeon {
                 };
 
                 match wrapper.client.move_in_dungeon(self.char_id, dir).await? {
-                    dungeon::EventProcesed::Success => {self.state = wrapper.client.get_dungeon(self.char_id).await?}
+                    dungeon::EventProcesed::Success(x) => {
+                        if x {
+                            return Ok(Some(Box::new(Battle::new(self.char_id,wrapper).await?)))
+                        }
+                        self.state = wrapper.client.get_dungeon(self.char_id).await?
+                    }
                     dungeon::EventProcesed::Error | dungeon::EventProcesed::CurrentlyInBattle => {
 
                     }

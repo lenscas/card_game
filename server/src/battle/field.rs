@@ -1,8 +1,9 @@
 use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
+use card_game_shared::battle::ReturnBattle;
 use rlua::{Lua, UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
-use sqlx::{Postgres, Transaction};
+use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
@@ -15,11 +16,64 @@ pub(crate) struct Field {
 }
 
 impl Field {
+    pub(crate) async fn get_from_db<'c, E: Executor<'c, Database = Postgres>>(
+        user_id: i64,
+        character_id: i64,
+        con: E,
+    ) -> Result<Self, ReturnError> {
+        let v = query!(
+            "SELECT current_battle 
+            FROM characters 
+            WHERE user_id = $1 
+            AND current_battle IS NOT NULL
+            AND characters.id = $2",
+            user_id,
+            character_id
+        )
+        .fetch_one(con)
+        .await?;
+        Ok(serde_json::from_value(v.current_battle.unwrap())?)
+    }
+
+    pub(crate) fn to_shared(self) -> ReturnBattle {
+        let hand = self.player.deck.get_ids_from_hand();
+        ReturnBattle {
+            player_hp: self.player.life,
+            enemy_hp: self.ai.life,
+            enemy_hand_size: self.ai.deck.hand.len(),
+            success: true,
+            hand,
+            enemy_mana: self.ai.mana,
+            mana: self.player.mana,
+            hexa_runes: self
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            small_runes: self
+                .player
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+            enemy_small_runes: self
+                .ai
+                .runes
+                .iter()
+                .filter_map(|v| v.as_ref())
+                .map(|v| v.name.clone())
+                .collect(),
+        }
+    }
+
     pub(crate) async fn new(
         player_id: i64,
+        character_id: i64,
         con: &mut Transaction<'_, Postgres>,
     ) -> Result<Field, ReturnError> {
-        let deck = Deck::create_deck_for_player(player_id, con).await?;
+        let deck = Deck::create_deck_for_player(player_id, character_id, con).await?;
         let player = Player {
             life: 20,
             deck,
@@ -34,6 +88,25 @@ impl Field {
             rune_count: 0,
         })
     }
+
+    pub async fn save(
+        &self,
+        user_id: i64,
+        character_id: i64,
+        con: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ReturnError> {
+        query!(
+            "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND id=$3",
+            serde_json::to_value(self)?,
+            user_id,
+            character_id
+        )
+        .execute(con)
+        .await
+        .map(|v| ())
+        .map_err(Into::into)
+    }
+
     pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
