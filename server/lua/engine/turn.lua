@@ -3,27 +3,17 @@ local maths = require"engine/math"
 local runes = require"engine/runes"
 
 local function createRunCardFunc(card, owner, oponent)
-	print(card,battle.battle,owner,oponent)
 	return function()
-		print("cardname",card:get_name())
 		local code = card:get_code()
-		print("code",code)
 		local asFunc = load("return " .. code)()
-		print("as func", asFunc)
 		asFunc.func(card, owner, oponent)
-		print("after as func")
 		owner:sub_mana(card:get_cost())
-		print("after sub manae")
 		battle.battle:save_ai(battle.ai)
-		print("save ai")
 		battle.battle:save_player(battle.player)
-		print("save player")
 		return function()
 			local ownedRunes = owner:get_runes()
-			print"after getting runes"
 			for k, v in pairs(ownedRunes) do
 				runes.run_rune_code(owner, k, v, "end_of_turn_effect", {v,owner, oponent})
-				print"ran rune code"
 			end
 		end
 	end
@@ -34,9 +24,7 @@ local function decideTurnOrder()
 	local aiSpeed = battle.aiCard:get_speed()
 	local playerSpeed = battle.playerCard:get_speed()
 
-	print("before player", battle.playerSpeed)
 	playerSpeed = maths.addPercentage(playerSpeed, runes.process_speed_runes(battle.player, battle.ai, battle.playerCard))
-	print("after player", playerSpeed)
 	aiSpeed = maths.addPercentage(aiSpeed, runes.process_speed_runes(battle.ai, battle.player, battle.aiCard))
 	--TODO better selection on who goes first
 
@@ -50,8 +38,15 @@ local function decideTurnOrder()
 		end
 	end
 
-	local aiCardAsFunc = createRunCardFunc(battle.aiCard, battle.ai, battle.player)
-	local playerCardAsFunc = createRunCardFunc(battle.playerCard, battle.player, battle.ai)
+	local aiCardAsFunc = {
+		func = createRunCardFunc(battle.aiCard, battle.ai, battle.player), 
+		card = battle.aiCard
+	}
+	local playerCardAsFunc = {
+		func = createRunCardFunc(battle.playerCard, battle.player, battle.ai),
+		card = battle.aiCard
+	}
+
 
 	if aiSpeed > playerSpeed then
 		table.insert(inOrder, aiCardAsFunc)
@@ -66,9 +61,21 @@ end
 local function procTurn()
 	local cardsInOrder = decideTurnOrder()
 	local atEndOfTurnRunes = {}
-
+	print(cardsInOrder[1].card:get_id())
+	local event_list = battle.battle.create_event_list(
+		battle.battle.create_action_events(
+			battle.battle.create_action(
+				cardsInOrder[1].card:get_id()
+			)
+		),
+		battle.battle.create_action_events(
+			battle.battle.create_action(
+				cardsInOrder[2].card:get_id()
+			)
+		)	
+	)
 	for _, card in ipairs(cardsInOrder) do
-		table.insert(atEndOfTurnRunes, card())
+		table.insert(atEndOfTurnRunes, card.func())
 		if battle.battle:has_ended() then
 			return true
 		end
@@ -80,12 +87,12 @@ local function procTurn()
 			return true
 		end
 	end
-	return battle.battle:has_ended()
+	return battle.battle:has_ended(),event_list
 end
 
 local function doTurn()
-	local has_ended = procTurn()
-	return battle.end_turn(),has_ended
+	local has_ended,turn_events = procTurn()
+	return battle.end_turn(),turn_events,has_ended
 end
 
 return doTurn

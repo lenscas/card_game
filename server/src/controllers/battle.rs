@@ -24,7 +24,7 @@ async fn do_turn(
     let chosen_card = action.play_card;
     let mut con = db.begin().await?;
     let battle = Field::get_from_db(user_id, action.character_id, &mut con).await?;
-    let (battle, is_over) = battle.process_turn(chosen_card).await?;
+    let (battle, _,is_over) = battle.process_turn(chosen_card).await?;
     if is_over {
         query!(
             "UPDATE characters SET current_battle = null WHERE user_id = $1 and id=$2",

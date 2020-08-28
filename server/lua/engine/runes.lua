@@ -12,10 +12,8 @@ end
 
 local function run_rune_code(owner, index, rune, rune_func, params)
 	index = index - 1
-	print(rune)
 	local code = load_small_rune_code(rune)
 	if code[rune_func] then
-		print("has func")
 		local ret_value = {code[rune_func](code,table.unpack(params))}
 		owner:save_rune(rune,index)
 		return table.unpack(ret_value)
@@ -24,10 +22,8 @@ end
 
 local function run_hexa_code(battle,index,rune, rune_func, params)
 	index = index - 1
-	print(rune)
 	local code = load_hexa_rune_code(rune)
 	if code[rune_func] then
-		print"has func"
 		local ret_value = {code[rune_func](code,table.unpack(params))}
 		battle:save_rune(rune,index)
 		return table.unpack(ret_value)

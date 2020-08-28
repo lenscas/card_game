@@ -1,7 +1,7 @@
-use super::{deck::Deck, HexaRune, Player};
+use super::{deck::Deck, Action, ActionsDuringTurn, HexaRune, Player, PossibleActions};
 use crate::{errors::ReturnError, util::CastRejection};
 use card_game_shared::battle::ReturnBattle;
-use rlua::{Lua, UserData, UserDataMethods};
+use rlua::{Lua, UserData, UserDataMethods, MetaMethod};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
@@ -107,18 +107,22 @@ impl Field {
         .map_err(Into::into)
     }
 
-    pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnError> {
+    pub async fn process_turn(
+        mut self,
+        chosen_card: usize,
+    ) -> Result<(Self, ActionsDuringTurn, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
         let engine = read_to_string("./lua/engine.lua").await?;
-        let (battle, is_over) = lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
-            let globals = lua_ctx.globals();
-            globals.set("battle", self).half_cast()?;
-            globals.set("chosenCard", card).half_cast()?;
-            let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
-            Ok(v)
-        })?;
-        Ok((battle, is_over))
+        let (battle, events, is_over) =
+            lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
+                let globals = lua_ctx.globals();
+                globals.set("battle", self).half_cast()?;
+                globals.set("chosenCard", card).half_cast()?;
+                let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
+                Ok(v)
+            })?;
+        Ok((battle, events, is_over))
     }
 }
 impl UserData for Field {
@@ -128,7 +132,25 @@ impl UserData for Field {
             let item = me.ai.deck.get_card_from_hand(index)?;
             Ok(item)
         });
-
+        methods.add_function("create_action", |_, x| {
+            Ok(match x {
+                Some(x) => PossibleActions::Card(x),
+                None => PossibleActions::Nothing,
+            })
+        });
+        methods.add_function("create_action_events", |_, x| {
+            Ok(Action {
+                triggered_before: Default::default(),
+                taken_action: x,
+                triggered_after: Default::default(),
+            })
+        });
+        methods.add_function(
+            "create_event_list",
+            |_, (action_first, action_second): _| {
+                Ok(ActionsDuringTurn::new(action_first, action_second))
+            },
+        );
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
         methods.add_method("get_player", |_, me, _: ()| Ok(me.player.clone()));
         methods.add_method("has_ended", |_, me, _: ()| {
@@ -203,6 +225,9 @@ impl UserData for Field {
                 me.runes[key] = Some(rune)
             }
             Ok(())
+        });
+        methods.add_meta_method(MetaMethod::ToString, |_,me,_ :()|{
+            Ok(format!("{:?}",me))
         })
     }
 }

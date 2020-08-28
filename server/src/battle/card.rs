@@ -1,4 +1,4 @@
-use rlua::{UserData, UserDataMethods};
+use rlua::{UserData, UserDataMethods, MetaMethod};
 use serde::{Deserialize, Serialize};
 
 fn default_true() -> bool {
@@ -21,5 +21,9 @@ impl UserData for Card {
         methods.add_method("get_speed", |_, me, _: ()| Ok(me.speed));
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_code", |_, me, _: ()| Ok(me.code.clone()));
+        methods.add_method("get_id", |_, me, _: ()| Ok(me.id.clone()));
+        methods.add_meta_method(MetaMethod::ToString, |_,me,_ :()|{
+            Ok(format!("{:?}",me))
+        })
     }
 }
