@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use crate::battle_log::ActionsDuringTurn;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReturnBattle {
     pub success: bool,
@@ -55,7 +56,7 @@ impl From<BattleErrors> for rlua::Error {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum TurnResponse {
-    NextTurn(ReturnBattle),
+    NextTurn(ActionsDuringTurn),
     Error(BattleErrors),
     Done,
 }

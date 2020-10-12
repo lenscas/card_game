@@ -5,6 +5,7 @@ pub mod characters;
 pub mod dungeon;
 pub mod funcs;
 pub mod users;
+pub mod battle_log;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ErrorMessage {

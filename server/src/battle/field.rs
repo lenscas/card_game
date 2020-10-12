@@ -1,7 +1,7 @@
-use super::{deck::Deck, Action, ActionsDuringTurn, HexaRune, Player, PossibleActions};
+use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
-use card_game_shared::battle::ReturnBattle;
-use rlua::{Lua, UserData, UserDataMethods, MetaMethod};
+use card_game_shared::{battle_log::{Action, PossibleActions, ActionsDuringTurn}, battle::ReturnBattle};
+use rlua::{Lua, MetaMethod, UserData, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
@@ -179,13 +179,16 @@ impl UserData for Field {
             Ok(())
         });
         methods.add_method_mut("clean_up_runes", |_, me, _: ()| {
+            let mut removed =0;
             for v in &mut me.runes {
                 if let Some(rune) = v {
                     if rune.config.turns_left == 0 {
                         *v = None;
+                        removed += 1;
                     }
                 }
             }
+            me.rune_count -= removed;
             Ok(())
         });
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
@@ -226,9 +229,7 @@ impl UserData for Field {
             }
             Ok(())
         });
-        methods.add_meta_method(MetaMethod::ToString, |_,me,_ :()|{
-            Ok(format!("{:?}",me))
-        })
+        methods.add_meta_method(MetaMethod::ToString, |_, me, _: ()| Ok(format!("{:?}", me)))
     }
 }
 

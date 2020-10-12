@@ -36,25 +36,48 @@ return {
 	process_speed_runes = function(caster, oponent, card)
 		local casterRunes = caster:get_runes()
 		local extraSpeed = 0
-		for k, v in pairs(casterRunes) do
-			extraSpeed = extraSpeed + (run_rune_code(
-					caster,
-					k,
-					v,
-					"owner_modify_speed",
-					{v, card, caster}
-				) or 0)
+		local triggered_runes = {
+			owner = {},
+			hexa = {},
+			oponent = {}
+		}
+		--[[
+		for k,v in pairs(casterRunes) do
+			print(k,v)
+		end
+		--]]
+		for k, v in ipairs(casterRunes) do
+			print(k,v)
+			local speed, register_anyway = run_rune_code(
+				caster,
+				k,
+				v,
+				"owner_modify_speed",
+				{v, card, caster}
+			)
+			speed = speed or 0
+			extraSpeed = extraSpeed + speed
+			print(speed, register_anyway)
+			if speed ~=0 or register_anyway then
+				print("got here????")
+				table.insert(triggered_runes.owner, k)
+			end
 		end
 		local oponentRunes = oponent:get_runes()
-		for k, v in pairs(oponentRunes) do
-			extraSpeed = extraSpeed - (run_rune_code(
-					caster,
-					k,
-					v,
-					"oponent_modify_speed",
-					{v, card, caster}
-				) or 0)
+		for k, v in ipairs(oponentRunes) do
+			local speed, register_anyway = run_rune_code(
+				caster,
+				k,
+				v,
+				"oponent_modify_speed",
+				{v, card, caster}
+			)
+			speed = speed or 0
+			extraSpeed = extraSpeed - speed
+			if extraSpeed ~=0 or register_anyway then
+				table.insert(triggered_runes.oponent,k)
+			end
 		end
-		return extraSpeed
+		return extraSpeed,triggered_runes
 	end
 }

@@ -9,6 +9,6 @@
 		print("got here two?")
 		local battle = require"engine/battle"
 		print("got here?")
-		battle.deal_damage(10,owner,oponent)
+		battle.deal_damage(3,owner,oponent)
 	end
 }

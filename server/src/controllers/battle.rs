@@ -24,7 +24,7 @@ async fn do_turn(
     let chosen_card = action.play_card;
     let mut con = db.begin().await?;
     let battle = Field::get_from_db(user_id, action.character_id, &mut con).await?;
-    let (battle, _,is_over) = battle.process_turn(chosen_card).await?;
+    let (battle, event_list,is_over) = battle.process_turn(chosen_card).await?;
     if is_over {
         query!(
             "UPDATE characters SET current_battle = null WHERE user_id = $1 and id=$2",
@@ -39,7 +39,7 @@ async fn do_turn(
         battle.save(user_id, action.character_id, &mut con).await?;
     }
     con.commit().await?;
-    Ok(Box::new(warp::reply::json(&battle.to_shared())))
+    Ok(Box::new(warp::reply::json(&event_list)))
 }
 
 pub fn battle_route(
