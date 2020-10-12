@@ -31,7 +31,15 @@ impl Screen for BattleOver {
         )?;
         Ok(())
     }
-    async fn update(&mut self, _: &mut Wrapper) -> CResult<Option<Box<dyn Screen>>> {
-        Ok(None)
+    async fn update(self : Box<Self>, _: &mut Wrapper) -> CResult<Box<dyn Screen>> {
+        Ok(self)
+    }
+
+    async fn event(
+        self : Box<Self>,
+        _wrapper: &mut crate::Wrapper,
+        _event: &quicksilver::input::Event,
+    ) -> crate::Result<Box<dyn Screen>> {
+        Ok(self)
     }
 }

@@ -137,14 +137,14 @@ impl Screen for Login {
         wrapper.gfx.clear(Color::WHITE);
         Ok(())
     }
-    async fn update(&mut self, _: &mut Wrapper) -> CResult<Option<Box<dyn Screen>>> {
-        Ok(None)
+    async fn update(self : Box<Self>, _: &mut Wrapper) -> CResult<Box<dyn Screen>>{
+        Ok(self)
     }
     async fn event(
-        &mut self,
+        mut self : Box<Self>,
         wrapper: &mut Wrapper,
         _: &quicksilver::input::Event,
-    ) -> CResult<Option<Box<dyn Screen>>> {
+    ) -> CResult<Box<dyn Screen>> {
         if self.login_button.channel.has_clicked()
             && self.password_input.channel.get() != ""
             && self.name_input.channel.get() != ""
@@ -168,10 +168,10 @@ impl Screen for Login {
                 )
                 .await
             {
-                Ok(_) => Ok(Some(Box::new(CharacterSelect::new(wrapper).await?))),
-                Err(_) => Ok(None),
+                Ok(_) => Ok(Box::new(CharacterSelect::new(wrapper).await?)),
+                Err(_) => Ok(self),
             };
         }
-        Ok(None)
+        Ok(self)
     }
 }

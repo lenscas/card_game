@@ -103,13 +103,9 @@ async fn app(window: Window, gfx: Graphics, events: Input) -> Result<()> {
                 wrapper.cursor_at = e.location();
             }
             wrapper.context.event(&e, &wrapper.window);
-            if let Some(x) = v.event(&mut wrapper, &e).await? {
-                v = x;
-            }
+            v = v.event(&mut wrapper, &e).await?;
         }
-        if let Some(x) = v.update(&mut wrapper).await? {
-            v = x;
-        }
+        v = v.update(&mut wrapper).await?;
         v.draw(&mut wrapper).await?;
         wrapper.context.render(&mut wrapper.gfx, &wrapper.window)?;
         wrapper.gfx.present(&wrapper.window)?;

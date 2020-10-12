@@ -13,11 +13,6 @@ use card_game_shared::{
 use quicksilver::{graphics::Image, Graphics};
 use silver_surf::{call, Config, Method};
 
-pub enum AfterTurn {
-    Over,
-    NewTurn(ReturnBattleWithImages),
-    NoTurnHappened,
-}
 pub struct ReturnBattleWithImages {
     pub(crate) images: Vec<Image>,
     pub(crate) battle: ReturnBattle,
@@ -128,7 +123,7 @@ impl Client {
         card: usize,
         character_id: i64,
         gfx: &Graphics,
-    ) -> Result<AfterTurn> {
+    ) -> Result<TurnResponse> {
         let res = call(Config {
             url: self.config.set_url(&["battle"]),
             method: Method::Post,
@@ -141,34 +136,7 @@ impl Client {
         .json::<CustomResult<TurnResponse>>()
         .await;
         let res = dbg!(res);
-        let res = res?.into_dyn_res()?;
-        let res = match res {
-            TurnResponse::NextTurn(b) => b,
-            TurnResponse::Error(x) => match x {
-                BattleErrors::ChosenCardNotInHand(_) => {
-                    todo!("We should try to reget the state here. However there is no endpoint to do this yet so instead lets crash")
-                },
-                BattleErrors::CardCostsTooMuch {..} => {
-                    return Ok(AfterTurn::NoTurnHappened)
-                }
-            },
-            //we should return something else to let the caller know the battle is over
-            //however, at this point the server doesn't even know when a battle is over (nor who won/lost)
-            //until that is added this should be decent enough.
-            TurnResponse::Done => return Ok(AfterTurn::Over),
-        };
-
-        let mut cards = Vec::new();
-        for id in &res.hand {
-            cards.push(
-                self.load_image(String::from("cards/") + &id + ".png", gfx)
-                    .await?,
-            );
-        }
-        Ok(AfterTurn::NewTurn(ReturnBattleWithImages {
-            battle: res,
-            images: cards,
-        }))
+        res?.into_dyn_res()
     }
     pub(crate) async fn get_characters(&self) -> Result<CharacterList> {
         call(Config::<()> {
