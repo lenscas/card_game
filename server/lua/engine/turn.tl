@@ -2,7 +2,9 @@ local battle = require"engine/battle"
 local maths = require"engine/math"
 local runes = require"engine/runes"
 
+
 local function createRunCardFunc(card, owner, oponent)
+	
 	return function(card_list, event_list)
 		local code = card:get_code()
 		local asFunc = load("return " .. code)()
