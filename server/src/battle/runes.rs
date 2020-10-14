@@ -25,6 +25,9 @@ impl UserData for HexaRune {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
+        methods.add_method("id", |_,me,_ : ()| {
+            Ok(me.id)
+        });
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
@@ -50,10 +53,14 @@ impl UserData for SmallRune {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
+        methods.add_method("id", |_,me,_ : ()|{
+            Ok(me.id)
+        });
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
             Ok(me.config.turns_left)
         });
+        
     }
 }

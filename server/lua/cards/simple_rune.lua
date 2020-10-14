@@ -5,8 +5,8 @@
 	cost = 0,
 	speed = 2,
 	is_starting=true,
-	func = function(self, owner,oponent)
-		owner:add_rune("speed")
-		owner:add_rune("damage")
+	func = function(params)
+		params.owner:add_rune("speed")
+		params.owner:add_rune("damage")
 	end
 }

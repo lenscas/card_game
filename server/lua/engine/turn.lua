@@ -3,10 +3,18 @@ local maths = require"engine/math"
 local runes = require"engine/runes"
 
 local function createRunCardFunc(card, owner, oponent)
-	return function()
+	return function(card_list, event_list)
 		local code = card:get_code()
 		local asFunc = load("return " .. code)()
-		asFunc.func(card, owner, oponent)
+		
+		asFunc.func{
+			card = card,
+			owner = owner,
+			oponent = oponent,
+			card_list = card_list,
+			event_list = event_list
+		}
+	
 		owner:sub_mana(card:get_cost())
 		battle.battle:save_ai(battle.ai)
 		battle.battle:save_player(battle.player)
@@ -16,7 +24,6 @@ local function createRunCardFunc(card, owner, oponent)
 				if runes.run_rune_code(owner, k, v, "end_of_turn_effect", {v,owner, oponent}) then
 					print(k,v)
 					local a = event_list.create_trigger_small_rune_user(k);
-					print(a)
 					event_list:add_after(a)
 				end
 			end
@@ -88,9 +95,7 @@ local function procTurn()
 	)
 	local event_list = battle.battle.create_event_list(cardsInOrder[1].event,cardsInOrder[2].event)
 	for key, card in ipairs(cardsInOrder) do
-		print("line 88", card.triggered_runes.owner)
 		for _ , id in pairs(card.triggered_runes.owner) do
-			print("line : 93",key)
 			card.event:add_trigger_before(event_list.create_trigger_small_rune_user(id))
 		end
 		for _,id in ipairs(card.triggered_runes.hexa) do
@@ -99,14 +104,13 @@ local function procTurn()
 		for _,id in ipairs(card.triggered_runes.oponent) do
 			card.event:add_trigger_before(event_list.create_trigger_small_rune_oponent(id))
 		end
-		print("the key is: ", key)
+		table.insert(atEndOfTurnRunes, card.func(card.event,event_list))
 		if key == 1 then
 			print("got here?")
 			event_list:add_first_action(card.event);
 		else 
 			event_list:add_second_action(card.event);
 		end
-		table.insert(atEndOfTurnRunes, card.func(event_list))
 		if battle.battle:has_ended() then
 			return true, event_list
 		end

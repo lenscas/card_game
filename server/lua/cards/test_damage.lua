@@ -5,10 +5,14 @@
 	cost = 0,
 	speed = 2,
 	is_starting=true,
-	func = function(self, owner,oponent)
-		print("got here two?")
+	func = function(params)
 		local battle = require"engine/battle"
-		print("got here?")
-		battle.deal_damage(3,owner,oponent)
+		battle.deal_damage{
+			amount = 3,
+			owner = params.owner,
+			oponent = params.oponent,
+			event_list = params.event_list,
+			card_list = params.card_list
+		}
 	end
 }

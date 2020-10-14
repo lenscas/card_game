@@ -29,7 +29,6 @@ pub struct Action {
 impl UserData for Action {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method_mut("add_trigger_before", |_, me, x| {
-            println!("time to push something");
             me.triggered_before.push(x);
             Ok(())
         });

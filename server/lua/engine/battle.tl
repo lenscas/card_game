@@ -19,23 +19,28 @@ local runes = require"engine/runes"
 --hexa runes that decrease damage
 --runes from the target that increase damage
 --runes from the target that decrease damage
-local function deal_damage(amount, from, to)
-	local fromRunes = from:get_runes()
+local function deal_damage(params)
+	print(params)
+	local fromRunes = params.from:get_runes()
 	--deal with the caster runes first
 	local negatives = {}
-	for k, v in pairs(fromRunes) do
-		local buff =
+	local amount = params.amount
+	for k, rune in pairs(fromRunes) do
+		local buff, register_anyway =
 			runes.run_rune_code(
 				from,
 				k,
-				v,
+				rune,
 				"owner_modify_damage",
-				{v, amount, from, to}
+				{rune, amount, params.from, params.to}
 			) or 0
 		if buff > 0 then
 			amount = amount + (amount / 100 * buff)
 		elseif buff < 0 then
 			negatives[#negatives] = buff
+		end
+		if buff ~= 0 or register_anyway then
+			params.card_list.event:add_trigger_before(params.event_list.create_trigger_small_rune_user(rune:id()))
 		end
 	end
 	for _, v in ipairs(negatives) do
@@ -46,11 +51,14 @@ local function deal_damage(amount, from, to)
 	local hexaRunes = battle.battle:get_runes()
 	negatives = {}
 	for key, rune in ipairs(hexaRunes) do
-		local value = runes.run_hexa_code(battle.battle,key,rune,"modify_damage",{rune,from,to})
+		local value, register_anyway = runes.run_hexa_code(battle.battle,key,rune,"modify_damage",{rune,params.from,params.to})
 		if value > 0 then
 			amount = amount + (amount / 100 * value)
 		elseif value <0 then
 			table.insert(negatives,value)
+		end
+		if value ~= 0 or register_anyway then
+			card.event:add_trigger_before(event_list.create_trigger_hexa_rune(rune:id()))
 		end
 	end
 	for _,v in ipairs(negatives) do
@@ -61,17 +69,20 @@ local function deal_damage(amount, from, to)
 	local positives = {}
 	local toRunes = to:get_runes()
 	for k, v in ipairs(toRunes) do
-		local reduction = runes.run_rune_code(
+		local reduction, register_anyway = runes.run_rune_code(
 				from,
 				k,
 				v,
 				"receiver_modify_damage",
-				{v, amount, from, to}
+				{v, amount, params.from, params.to}
 			) or 0
 		if reduction > 0 then
 			amount = amount - (amount / 100 * reduction)
 		elseif reduction < 0 then
 			positives[#positives] = reduction
+		end
+		if value ~= 0 or register_anyway then
+			card.event:add_trigger_before(event_list.create_trigger_small_rune_defender(rune:id()))
 		end
 	end
 	for _, v in pairs(positives) do
@@ -83,9 +94,10 @@ end
 
 local function makeSaveRun(func)
 	return function(...)
-		print("????")
-		assert(battle.battle, "an function in enviroment got called before it got initialized")
+		assert(battle.battle, "a function in enviroment got called before it got initialized")
 		local params = {...}
+		print(params)
+		print(table.unpack(params))
 		return func(table.unpack(params))
 	end
 end

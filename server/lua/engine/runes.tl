@@ -1,16 +1,18 @@
 local constants = require"engine/constants"
+local Rune = require("types/rune")
+local RuneWrapper = require("types/runeWrapper")
 
-local function load_small_rune_code (rune)
+local function load_small_rune_code (rune : RuneWrapper): Rune.Rune
 	local name = rune:get_name()
-	return dofile(constants.SMALL_RUNE_BASE_FOLDER .. name .. ".lua")
+	return dofile(constants.SMALL_RUNE_BASE_FOLDER .. name .. ".lua") as Rune.Rune
 end
 
-local function load_hexa_rune_code(rune)
+local function load_hexa_rune_code(rune : RuneWrapper): Rune.Rune
 	local name = rune:get_name()
-	return dofile(constants.HEXA_RUNE_BASE_FOLDER .. name .. ".lua")
+	return dofile(constants.HEXA_RUNE_BASE_FOLDER .. name .. ".lua") as Rune.Rune
 end
 
-local function run_rune_code(owner, index, rune, rune_func, params)
+local function run_rune_code<X>(owner, index, rune : RuneWrapper, rune_func : Rune.RuneMethodNames, params : X)
 	index = index - 1
 	local code = load_small_rune_code(rune)
 	if code[rune_func] then
@@ -59,7 +61,6 @@ return {
 			extraSpeed = extraSpeed + speed
 			print(speed, register_anyway)
 			if speed ~=0 or register_anyway then
-				print("got here????")
 				table.insert(triggered_runes.owner, k)
 			end
 		end
