@@ -113,6 +113,7 @@ dependencies = [
  "quicksilver",
  "rlua",
  "serde",
+ "tealr",
 ]
 
 [[package]]
@@ -1080,6 +1081,25 @@ dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
  "unicode-xid 0.2.1",
+]
+
+[[package]]
+name = "tealr"
+version = "0.2.0"
+source = "git+https://github.com/lenscas/tealr#69d89e5eafa019b5ab52f601d1d5c7d311c20996"
+dependencies = [
+ "bstr",
+ "rlua",
+ "tealr_derive",
+]
+
+[[package]]
+name = "tealr_derive"
+version = "0.2.0"
+source = "git+https://github.com/lenscas/tealr#69d89e5eafa019b5ab52f601d1d5c7d311c20996"
+dependencies = [
+ "quote 1.0.7",
+ "syn",
 ]
 
 [[package]]

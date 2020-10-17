@@ -1,14 +1,16 @@
 use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
 use card_game_shared::{battle_log::{Action, PossibleActions, ActionsDuringTurn}, battle::ReturnBattle};
-use rlua::{Lua, MetaMethod, UserData, UserDataMethods};
+use rlua::{Lua, MetaMethod, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub(crate) struct Field {
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
+
+#[derive(Deserialize, Serialize, Clone, Debug,UserData,TypeRepresentation)]
+pub struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
     pub(crate) runes: [Option<HexaRune>; 5],
@@ -125,8 +127,8 @@ impl Field {
         Ok((battle, events, is_over))
     }
 }
-impl UserData for Field {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+impl TealData for Field {
+    fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("get_ai_card", |_, me, _: ()| {
             let index = 0;
             let item = me.ai.deck.get_card_from_hand(index)?;
@@ -234,7 +236,7 @@ impl UserData for Field {
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct SimpleError(pub String);
+pub struct SimpleError(pub String);
 impl SimpleError {
     pub fn new_lua_error(str: String) -> rlua::Error {
         rlua::Error::ExternalError(Arc::new(Self(str)))

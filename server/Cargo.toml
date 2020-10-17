@@ -4,6 +4,12 @@ version = "0.1.0"
 authors = ["lenscas <lenscas@gmail.com>"]
 edition = "2018"
 
+[[bin]]
+name = "teal_generator"
+test = false
+bench = false
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -23,6 +29,7 @@ http = "0.2.0"
 rlua = "*"
 card_game_shared = {path="../shared", features=["server"]}
 pretty_env_logger = "*"
+tealr = {version = "0.2.0",git = "https://github.com/lenscas/tealr"}
 #card_game_shared = {path="../card_game_shared", features=["server"]}
 
 [profile.dev.package."*"]

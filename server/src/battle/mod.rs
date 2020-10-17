@@ -4,7 +4,7 @@ pub(crate) mod field;
 pub(crate) mod player;
 pub(crate) mod runes;
 
-pub(crate) use card::Card;
-pub(crate) use field::{Field, SimpleError};
-pub(crate) use player::Player;
-pub(crate) use runes::{HexaRune, SmallRune};
+pub use card::Card;
+pub use field::{Field, SimpleError};
+pub use player::Player;
+pub use runes::{HexaRune, SmallRune};

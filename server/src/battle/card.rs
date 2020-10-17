@@ -1,12 +1,13 @@
-use rlua::{UserData, UserDataMethods, MetaMethod};
+use rlua::{UserDataMethods,MetaMethod};
 use serde::{Deserialize, Serialize};
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
 
 fn default_true() -> bool {
     true
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub(crate) struct Card {
+#[derive(Deserialize, Serialize, Clone, Debug,UserData,TypeRepresentation)]
+pub struct Card {
     pub(crate) id: String,
     pub(crate) name: String,
     pub(crate) speed: u8,
@@ -15,8 +16,8 @@ pub(crate) struct Card {
     #[serde(default = "default_true")]
     pub(crate) should_reshuffle: bool,
 }
-impl UserData for Card {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+impl TealData for Card {
+    fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("get_cost", |_, me, _: ()| Ok(me.cost));
         methods.add_method("get_speed", |_, me, _: ()| Ok(me.speed));
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));

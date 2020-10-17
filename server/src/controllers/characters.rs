@@ -91,7 +91,7 @@ pub(crate) async fn get_character_in_battle(
     Ok(Box::new(warp::reply::json(&(count > 0))))
 }
 
-pub(crate) fn character_routes(
+pub fn character_routes(
     db: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::any()

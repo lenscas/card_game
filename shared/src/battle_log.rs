@@ -1,14 +1,23 @@
 #[cfg(feature = "server")]
-use rlua::{UserData, UserDataMethods, MetaMethod};
+use rlua::{UserDataMethods, MetaMethod};
+#[cfg(feature = "server")]
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation,TealDerive};
+
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "server")]
+#[derive(TealDerive)]
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PossibleActions {
     Card(String),
     Nothing,
 }
 #[cfg(feature = "server")]
-impl UserData for PossibleActions {}
+impl TealData for PossibleActions {}
 
+#[cfg(feature = "server")]
+#[derive(TealDerive)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TriggerTypes {
     SmallRuneUser(usize),
@@ -16,8 +25,10 @@ pub enum TriggerTypes {
     SmallRuneDefender(usize),
 }
 #[cfg(feature = "server")]
-impl UserData for TriggerTypes {}
+impl TealData for TriggerTypes {}
 
+#[cfg(feature = "server")]
+#[derive(TealDerive)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
     pub triggered_before: Vec<TriggerTypes>,
@@ -26,8 +37,8 @@ pub struct Action {
 }
 
 #[cfg(feature = "server")]
-impl UserData for Action {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+impl TealData for Action {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method_mut("add_trigger_before", |_, me, x| {
             me.triggered_before.push(x);
             Ok(())
@@ -38,6 +49,8 @@ impl UserData for Action {
         });
     }
 }
+#[cfg(feature = "server")]
+#[derive(TealDerive)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActionsDuringTurn {
     before_turn: Vec<TriggerTypes>,
@@ -58,8 +71,8 @@ impl ActionsDuringTurn {
 }
 
 #[cfg(feature = "server")]
-impl UserData for ActionsDuringTurn {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+impl TealData for ActionsDuringTurn {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_function("create_trigger_small_rune_user", |_, x| {
             Ok(TriggerTypes::SmallRuneUser(x))
         });

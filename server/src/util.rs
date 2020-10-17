@@ -9,7 +9,7 @@ pub(crate) fn cast_result<T>(data: Result<T, impl Into<ReturnError>>) -> Result<
     }
 }
 
-pub(crate) trait CastRejection {
+pub trait CastRejection {
     type ToCast;
     fn half_cast(self) -> Result<Self::ToCast, ReturnError>;
     fn cast(self) -> Result<Self::ToCast, Rejection>;

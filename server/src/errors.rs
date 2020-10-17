@@ -4,7 +4,7 @@ use sqlx::{error::DatabaseError, Error as SqlError};
 use std::io::Error as ioError;
 
 #[derive(Debug)]
-pub(crate) enum ReturnError {
+pub enum ReturnError {
     Io(ioError),
     GenericError(String),
     DatabaseError(Box<dyn DatabaseError + 'static>),
