@@ -2,7 +2,7 @@ local battle = require"engine/battle"
 local maths = require"engine/math"
 local runes = require"engine/runes"
 
-local Rust =require"types/rust"
+local Rust =require"types/Rust"
 local Runes = require("types/rune")
 
 local record Test

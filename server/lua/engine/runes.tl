@@ -1,6 +1,6 @@
 local constants = require"engine/constants"
 local Rune = require("types/rune")
-local Rust = require("types/rust")
+local Rust = require("types/Rust")
 
 local function load_small_rune_code (rune : Rust.SmallRune): Rune.Rune
 	local name = rune:get_name()
@@ -54,7 +54,7 @@ return {
 	TriggeredRunes=Rune.TriggeredRunes,
 	run_hexa_code = run_hexa_code,
 	run_rune_code = run_rune_code,
-	process_speed_runes = function(caster:Rust.Player, oponent : Rust.Player, card): (number,Rune.TriggeredRunes)
+	process_speed_runes = function(caster:Rust.Player, oponent : Rust.Player, card: Rust.Card): (number,Rune.TriggeredRunes)
 		local casterRunes = caster:get_runes()
 		local extraSpeed = 0
 		local triggered_runes: Rune.TriggeredRunes = {

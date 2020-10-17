@@ -87,7 +87,7 @@ local function deal_damage(params: DamageParameters)
 	end
 
 	--and finally, the runes from the target
-	local positives = {}
+	local positives:{number} = {}
 	local toRunes = params.to:get_runes()
 	for k, v in ipairs(toRunes) do
 		local reduction, register_anyway = runes.run_rune_code(
@@ -107,7 +107,7 @@ local function deal_damage(params: DamageParameters)
 			params.card_list:add_trigger_before(params.event_list.create_trigger_small_rune_defender(v:id()))
 		end
 	end
-	for _, v in pairs(positives) do
+	for _, v in ipairs(positives) do
 		amount = amount - (amount / 100 * v)
 	end
 

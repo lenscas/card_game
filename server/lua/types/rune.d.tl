@@ -5,6 +5,8 @@ global record RuneTypes
         "owner_modify_damage"
         "owner_modify_speed"
         "oponent_modify_speed"
+        "modify_damage"
+        "receiver_modify_damage"
      end
 
      type Rune = {RuneMethodNames:function(Rune,any,any,any)}
