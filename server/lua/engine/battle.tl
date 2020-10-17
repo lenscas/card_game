@@ -1,3 +1,4 @@
+local Rust = require("types/Rust")
 local battle = {
 	battle = nil,
 	chosenCard = nil,
@@ -10,6 +11,11 @@ local battle = {
 }
 
 local runes = require"engine/runes"
+local record DamageParameters 
+	amount: number
+	from: Rust.Player
+	to: Rust.Player
+end
 
 --this function allows cards to deal damage and allow runes to interact with it
 --the order of how damage interactions is calculated is
@@ -19,21 +25,22 @@ local runes = require"engine/runes"
 --hexa runes that decrease damage
 --runes from the target that increase damage
 --runes from the target that decrease damage
-local function deal_damage(params)
+local function deal_damage(params: DamageParameters)
 	print(params)
 	local fromRunes = params.from:get_runes()
 	--deal with the caster runes first
 	local negatives = {}
 	local amount = params.amount
-	for k, rune in pairs(fromRunes) do
+	for k, rune in ipairs(fromRunes) do
 		local buff, register_anyway =
 			runes.run_rune_code(
-				from,
+				params.from,
 				k,
 				rune,
 				"owner_modify_damage",
 				{rune, amount, params.from, params.to}
-			) or 0
+			)
+		buff = buff or 0
 		if buff > 0 then
 			amount = amount + (amount / 100 * buff)
 		elseif buff < 0 then

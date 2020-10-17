@@ -2,12 +2,20 @@ local battle = require"engine/battle"
 local maths = require"engine/math"
 local runes = require"engine/runes"
 
+local Card = require("types/Card")
+local Player = require("types/Player")
+local record Test
+	func : function(any)
+end
 
-local function createRunCardFunc(card, owner, oponent)
-	
-	return function(card_list, event_list)
+
+local type EndOfTurnEffectsFunc = function(any)
+local type CardFunction = function(any,any):EndOfTurnEffectsFunc
+
+local function createRunCardFunc(card : Card, owner: Player, oponent:Player):CardFunction
+	return function(card_list, event_list) :EndOfTurnEffectsFunc
 		local code = card:get_code()
-		local asFunc = load("return " .. code)()
+		local asFunc = load("return " .. code)() as Test
 		
 		asFunc.func{
 			card = card,
