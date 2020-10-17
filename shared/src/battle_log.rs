@@ -5,9 +5,8 @@ use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation,TealDerive};
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "server")]
-#[derive(TealDerive)]
 
+#[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PossibleActions {
     Card(String),
@@ -16,8 +15,7 @@ pub enum PossibleActions {
 #[cfg(feature = "server")]
 impl TealData for PossibleActions {}
 
-#[cfg(feature = "server")]
-#[derive(TealDerive)]
+#[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TriggerTypes {
     SmallRuneUser(usize),
@@ -27,8 +25,8 @@ pub enum TriggerTypes {
 #[cfg(feature = "server")]
 impl TealData for TriggerTypes {}
 
-#[cfg(feature = "server")]
-#[derive(TealDerive)]
+
+#[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
     pub triggered_before: Vec<TriggerTypes>,
@@ -49,8 +47,8 @@ impl TealData for Action {
         });
     }
 }
-#[cfg(feature = "server")]
-#[derive(TealDerive)]
+
+#[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActionsDuringTurn {
     before_turn: Vec<TriggerTypes>,
