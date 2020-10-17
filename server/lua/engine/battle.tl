@@ -1,5 +1,17 @@
 local Rust = require("types/Rust")
-local battle = {
+
+local record InnerBattle 
+	battle: Rust.Field
+	chosenCard: Rust.Card
+	aiCard: Rust.Card
+	ai: Rust.Player
+	player: Rust.Player
+	aiCardIndex:number
+	playerCard:Rust.Card
+	playerCardIndex:number
+end
+
+local battle:InnerBattle = {
 	battle = nil,
 	chosenCard = nil,
 	ai = nil,
@@ -15,6 +27,8 @@ local record DamageParameters
 	amount: number
 	from: Rust.Player
 	to: Rust.Player
+	card_list:Rust.Action
+	event_list : Rust.ActionsDuringTurn
 end
 
 --this function allows cards to deal damage and allow runes to interact with it
@@ -47,7 +61,7 @@ local function deal_damage(params: DamageParameters)
 			negatives[#negatives] = buff
 		end
 		if buff ~= 0 or register_anyway then
-			params.card_list.event:add_trigger_before(params.event_list.create_trigger_small_rune_user(rune:id()))
+			params.card_list:add_trigger_before(params.event_list.create_trigger_small_rune_user(rune:id()))
 		end
 	end
 	for _, v in ipairs(negatives) do
@@ -65,7 +79,7 @@ local function deal_damage(params: DamageParameters)
 			table.insert(negatives,value)
 		end
 		if value ~= 0 or register_anyway then
-			card.event:add_trigger_before(event_list.create_trigger_hexa_rune(rune:id()))
+			params.card_list:add_trigger_before(params.event_list.create_trigger_hexa_rune(rune:id()))
 		end
 	end
 	for _,v in ipairs(negatives) do
@@ -74,33 +88,34 @@ local function deal_damage(params: DamageParameters)
 
 	--and finally, the runes from the target
 	local positives = {}
-	local toRunes = to:get_runes()
+	local toRunes = params.to:get_runes()
 	for k, v in ipairs(toRunes) do
 		local reduction, register_anyway = runes.run_rune_code(
-				from,
+				params.from,
 				k,
 				v,
 				"receiver_modify_damage",
 				{v, amount, params.from, params.to}
-			) or 0
+			)
+		reduction = reduction or 0
 		if reduction > 0 then
 			amount = amount - (amount / 100 * reduction)
 		elseif reduction < 0 then
 			positives[#positives] = reduction
 		end
-		if value ~= 0 or register_anyway then
-			card.event:add_trigger_before(event_list.create_trigger_small_rune_defender(rune:id()))
+		if reduction ~= 0 or register_anyway then
+			params.card_list:add_trigger_before(params.event_list.create_trigger_small_rune_defender(v:id()))
 		end
 	end
 	for _, v in pairs(positives) do
 		amount = amount - (amount / 100 * v)
 	end
 
-	to:deal_damage(amount)
+	params.to:deal_damage(amount)
 end
 
-local function makeSaveRun(func)
-	return function(...)
+local function makeSaveRun(func:function(any):any...):function(any):any
+	return function(...):any
 		assert(battle.battle, "a function in enviroment got called before it got initialized")
 		local params = {...}
 		print(params)
@@ -109,7 +124,7 @@ local function makeSaveRun(func)
 	end
 end
 
-local function end_turn()
+local function end_turn():Rust.Field
 	battle.player:clean_up_runes()
 	battle.ai:clean_up_runes()
 	battle.player:add_mana(1)
@@ -121,10 +136,33 @@ local function end_turn()
 	return battle.battle
 end
 
-local returnData = {
-	deal_damage = makeSaveRun(deal_damage),
-	end_turn = makeSaveRun(end_turn),
-	init = function(self,battleInjected,chosenCardInjected)
+local record ReturnBattle 
+	deal_damage:function(DamageParameters)
+	end_turn: function():Rust.Field
+	init: function(ReturnBattle,Rust.Field,Rust.Card):ReturnBattle
+	battle: Rust.Field
+	chosenCard: Rust.Card
+	aiCard: Rust.Card
+	ai: Rust.Player
+	player: Rust.Player
+	aiCardIndex:number
+	playerCard:Rust.Card
+	playerCardIndex:number
+end
+
+local record BaseReturnData 
+	deal_damage:function(DamageParameters)
+	end_turn: function():Rust.Field
+	init: function(ReturnBattle,Rust.Field,Rust.Card):ReturnBattle
+end
+
+local deal_damage_save = makeSaveRun(deal_damage) as function(DamageParameters)
+local end_turn_save = makeSaveRun(end_turn) as function():Rust.Field
+
+local returnData:BaseReturnData = {
+	deal_damage = deal_damage_save,
+	end_turn = end_turn_save,
+	init = function(self:ReturnBattle,battleInjected:Rust.Field,chosenCardInjected:Rust.Card):ReturnBattle
 		battle.battle = battleInjected
 		battle.ai =  battleInjected:get_ai()
 		battle.player =  battleInjected:get_player()
@@ -132,8 +170,11 @@ local returnData = {
 		battle.playerCard = chosenCardInjected
 		return self
 	end
+	
 }
 
 setmetatable(returnData, {__index = battle})
 
-return returnData
+
+
+return returnData as ReturnBattle

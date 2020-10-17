@@ -2,18 +2,19 @@ local battle = require"engine/battle"
 local maths = require"engine/math"
 local runes = require"engine/runes"
 
-local Card = require("types/Card")
-local Player = require("types/Player")
+local Rust =require"types/rust"
+local Runes = require("types/rune")
+
 local record Test
 	func : function(any)
 end
 
 
-local type EndOfTurnEffectsFunc = function(any)
-local type CardFunction = function(any,any):EndOfTurnEffectsFunc
+local type EndOfTurnEffectsFunc = function(Rust.ActionsDuringTurn)
+local type CardFunction = function(any,Rust.ActionsDuringTurn):EndOfTurnEffectsFunc
 
-local function createRunCardFunc(card : Card, owner: Player, oponent:Player):CardFunction
-	return function(card_list, event_list) :EndOfTurnEffectsFunc
+local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:Rust.Player):CardFunction
+	return function(card_list:Rust.Action, event_list:Rust.ActionsDuringTurn) :EndOfTurnEffectsFunc
 		local code = card:get_code()
 		local asFunc = load("return " .. code)() as Test
 		
@@ -28,7 +29,7 @@ local function createRunCardFunc(card : Card, owner: Player, oponent:Player):Car
 		owner:sub_mana(card:get_cost())
 		battle.battle:save_ai(battle.ai)
 		battle.battle:save_player(battle.player)
-		return function(event_list)
+		return function(event_list:Rust.ActionsDuringTurn)
 			local ownedRunes = owner:get_runes()
 			for k, v in ipairs(ownedRunes) do
 				if runes.run_rune_code(owner, k, v, "end_of_turn_effect", {v,owner, oponent}) then
@@ -41,7 +42,14 @@ local function createRunCardFunc(card : Card, owner: Player, oponent:Player):Car
 	end
 end
 
-local function decideTurnOrder()
+local record ExecutableCard
+	func:function(any,Rust.ActionsDuringTurn)
+	triggered_runes:Runes.TriggeredRunes
+	card:Rust.Card
+	event:Rust.Action
+end
+
+local function decideTurnOrder():{ExecutableCard}
 	local aiSpeed = battle.aiCard:get_speed()
 	local playerSpeed = battle.playerCard:get_speed()
 	local raw_extra_speed_player, triggered_runes_player = runes.process_speed_runes(battle.player, battle.ai, battle.playerCard)
@@ -50,18 +58,18 @@ local function decideTurnOrder()
 	playerSpeed = maths.addPercentage(playerSpeed, raw_extra_speed_player)
 	aiSpeed = maths.addPercentage(aiSpeed, raw_extra_speed_ai)
 	
-	local aiCardAsFunc = {
+	local aiCardAsFunc:ExecutableCard = {
 		func = createRunCardFunc(battle.aiCard, battle.ai, battle.player),
 		triggered_runes =  triggered_runes_ai,
 		card = battle.aiCard
 	}
-	local playerCardAsFunc = {
+	local playerCardAsFunc:ExecutableCard = {
 		func = createRunCardFunc(battle.playerCard, battle.player, battle.ai),
 		triggered_runes = triggered_runes_player,
 		card = battle.playerCard
 	}
 
-	local inOrder = {}
+	local inOrder:{ExecutableCard} = {}
 
 	--TODO : This if is to randomly select between the AI/Player if there speeds are equal
 	--This is done SUPER UGLY!
@@ -88,9 +96,9 @@ local function decideTurnOrder()
 	return inOrder
 end
 
-local function procTurn()
+local function procTurn(): boolean, Rust.ActionsDuringTurn
 	local cardsInOrder = decideTurnOrder()
-	local atEndOfTurnRunes = {}
+	local atEndOfTurnRunes:{function(Rust.ActionsDuringTurn)} = {}
 	print(cardsInOrder[1].card:get_id())
 	print(cardsInOrder[2].card:get_id())
 	cardsInOrder[1].event = battle.battle.create_action_events(
@@ -105,14 +113,14 @@ local function procTurn()
 	)
 	local event_list = battle.battle.create_event_list(cardsInOrder[1].event,cardsInOrder[2].event)
 	for key, card in ipairs(cardsInOrder) do
-		for _ , id in pairs(card.triggered_runes.owner) do
+		for _ , id in ipairs(card.triggered_runes.owner) do
 			card.event:add_trigger_before(event_list.create_trigger_small_rune_user(id))
 		end
 		for _,id in ipairs(card.triggered_runes.hexa) do
 			card.event:add_trigger_before(event_list.create_trigger_hexa_rune(id))
 		end
 		for _,id in ipairs(card.triggered_runes.oponent) do
-			card.event:add_trigger_before(event_list.create_trigger_small_rune_oponent(id))
+			card.event:add_trigger_before(event_list.create_trigger_small_rune_defender(id))
 		end
 		table.insert(atEndOfTurnRunes, card.func(card.event,event_list))
 		if key == 1 then
@@ -135,7 +143,7 @@ local function procTurn()
 	return battle.battle:has_ended(),event_list
 end
 
-local function doTurn()
+local function doTurn():Rust.Field,Rust.ActionsDuringTurn,boolean
 	local has_ended,turn_events = procTurn()
 	return battle.end_turn(),turn_events,has_ended
 end

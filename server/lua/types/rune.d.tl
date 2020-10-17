@@ -13,6 +13,12 @@ global record RuneTypes
         value: number
         register_anyway : boolean
      end
+     record TriggeredRunes 
+         owner: {number}
+         hexa: {number}
+         oponent:{number}
+      end
+   
 
 end
 

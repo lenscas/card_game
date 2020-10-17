@@ -31,7 +31,7 @@ local function run_rune_code(
 end
 
 local function run_hexa_code<X>(
-	battle,
+	battle: Rust.Field,
 	index : number,
 	rune: Rust.HexaRune, 
 	rune_func : Rune.RuneMethodNames, 
@@ -49,19 +49,15 @@ local function run_hexa_code<X>(
 end
 
 
-local record TriggeredRunes 
-	owner: {number}
-	hexa: {number}
-	oponent:{number}
-end
 
 return {
+	TriggeredRunes=Rune.TriggeredRunes,
 	run_hexa_code = run_hexa_code,
 	run_rune_code = run_rune_code,
-	process_speed_runes = function(caster:Rust.Player, oponent : Rust.Player, card): (number,TriggeredRunes)
+	process_speed_runes = function(caster:Rust.Player, oponent : Rust.Player, card): (number,Rune.TriggeredRunes)
 		local casterRunes = caster:get_runes()
 		local extraSpeed = 0
-		local triggered_runes: TriggeredRunes = {
+		local triggered_runes: Rune.TriggeredRunes = {
 			owner = {},
 			hexa = {},
 			oponent = {}
