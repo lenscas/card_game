@@ -1,12 +1,12 @@
 use super::{deck::Deck, Card, SimpleError, SmallRune};
 use crate::errors::ReturnError;
 use card_game_shared::battle::BattleErrors;
-use rlua::{UserData, UserDataMethods};
+use rlua::{UserDataMethods};
 use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};
-
-#[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct Player {
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
+#[derive(Clone, Deserialize, Serialize, Debug,UserData,TypeRepresentation)]
+pub struct Player {
     pub(crate) life: u64,
     pub(crate) deck: Deck,
     pub(crate) mana: u64,
@@ -31,8 +31,8 @@ impl Player {
     }
 }
 
-impl UserData for Player {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+impl TealData for Player {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method_mut("fill_hand", |_, me, _: ()| {
             me.fill_hand();
             Ok(())
@@ -97,7 +97,7 @@ impl UserData for Player {
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
             let as_str = read_to_string_sync(format!(
-                "./lua/compiled/small_runes/config/{}.lua",
+                "./lua/compiled/small_runes/config/{}.json",
                 rune_name
             ))
             .map_err(|v| {

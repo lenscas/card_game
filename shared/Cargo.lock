@@ -113,6 +113,7 @@ dependencies = [
  "quicksilver",
  "rlua",
  "serde",
+ "tealr",
 ]
 
 [[package]]
@@ -1080,6 +1081,27 @@ dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
  "unicode-xid 0.2.1",
+]
+
+[[package]]
+name = "tealr"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f249b9f49be43a55b700235b6f01ce435581cb4681719063f178683897f4ddc"
+dependencies = [
+ "bstr",
+ "rlua",
+ "tealr_derive",
+]
+
+[[package]]
+name = "tealr_derive"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c9bb0d08f2eeacc4940002ddc98809a329fb532449fa688ca3bf35fd85f2980"
+dependencies = [
+ "quote 1.0.7",
+ "syn",
 ]
 
 [[package]]

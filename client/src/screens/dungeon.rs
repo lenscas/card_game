@@ -87,14 +87,14 @@ impl Screen for Dungeon {
         }
         Ok(())
     }
-    async fn update(&mut self, _: &mut crate::Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
-        Ok(None)
+    async fn update(self : Box<Self>, _: &mut crate::Wrapper) -> crate::Result<Box<dyn Screen>> {
+        Ok(self)
     }
     async fn event(
-        &mut self,
+        mut self : Box<Self>,
         wrapper: &mut Wrapper,
         event: &Event,
-    ) -> crate::Result<Option<Box<dyn Screen>>> {
+    ) -> crate::Result<Box<dyn Screen>> {
         match event {
             Event::KeyboardInput(x) => {
                 let dir = if check_multiple(x, &[Key::Up, Key::W]) {
@@ -106,13 +106,13 @@ impl Screen for Dungeon {
                 } else if check_multiple(x, &[Key::D, Key::Right]) {
                     BasicVector { x: 1, y: 0 }
                 } else {
-                    return Ok(None);
+                    return Ok(self);
                 };
 
                 match wrapper.client.move_in_dungeon(self.char_id, dir).await? {
                     dungeon::EventProcesed::Success(x) => {
                         if x {
-                            return Ok(Some(Box::new(Battle::new(self.char_id, wrapper).await?)));
+                            return Ok(Box::new(Battle::new(self.char_id, wrapper).await?));
                         }
                         self.state = wrapper.client.get_dungeon(self.char_id).await?
                     }
@@ -120,9 +120,9 @@ impl Screen for Dungeon {
                 }
             }
             //should be implemented so you can click on cards to move as well as use the keyboard
-            Event::PointerInput(_) => return Ok(None),
+            Event::PointerInput(_) => return Ok(self),
             _ => (),
         }
-        Ok(None)
+        Ok(self)
     }
 }

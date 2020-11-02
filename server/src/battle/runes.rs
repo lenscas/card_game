@@ -1,15 +1,17 @@
-use rlua::{UserData, UserDataMethods};
+use rlua::{UserDataMethods};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct RawRune {
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation,TealDerive};
+
+#[derive(Clone, Deserialize, Serialize, Debug,TealDerive)]
+pub struct RawRune {
     pub(crate) turns_left: u64,
 }
 
-impl UserData for RawRune {}
+impl TealData for RawRune {}
 
-#[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct HexaRune {
+#[derive(Clone, Deserialize, Serialize, Debug,TealDerive)]
+pub struct HexaRune {
     pub(crate) config: RawRune,
     pub(crate) name: String,
     pub(crate) id: u64,
@@ -21,10 +23,13 @@ impl HexaRune {
     }
 }
 
-impl UserData for HexaRune {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+impl TealData for HexaRune {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
+        methods.add_method("id", |_,me,_ : ()| {
+            Ok(me.id)
+        });
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
@@ -33,8 +38,8 @@ impl UserData for HexaRune {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct SmallRune {
+#[derive(Clone, Deserialize, Serialize, Debug, TealDerive)]
+pub struct SmallRune {
     pub(crate) config: RawRune,
     pub(crate) name: String,
     pub(crate) id: u64,
@@ -46,14 +51,18 @@ impl SmallRune {
     }
 }
 
-impl UserData for SmallRune {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+impl TealData for SmallRune {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
+        methods.add_method("id", |_,me,_ : ()|{
+            Ok(me.id)
+        });
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
             Ok(me.config.turns_left)
         });
+        
     }
 }

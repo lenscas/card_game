@@ -1,14 +1,16 @@
 use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
-use card_game_shared::battle::ReturnBattle;
-use rlua::{Lua, UserData, UserDataMethods};
+use card_game_shared::{battle_log::{Action, PossibleActions, ActionsDuringTurn}, battle::ReturnBattle};
+use rlua::{Lua, MetaMethod, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub(crate) struct Field {
+use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
+
+#[derive(Deserialize, Serialize, Clone, Debug,UserData,TypeRepresentation)]
+pub struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
     pub(crate) runes: [Option<HexaRune>; 5],
@@ -107,28 +109,50 @@ impl Field {
         .map_err(Into::into)
     }
 
-    pub async fn process_turn(mut self, chosen_card: usize) -> Result<(Self, bool), ReturnError> {
+    pub async fn process_turn(
+        mut self,
+        chosen_card: usize,
+    ) -> Result<(Self, ActionsDuringTurn, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
-        let engine = read_to_string("./lua/engine.lua").await?;
-        let (battle, is_over) = lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
-            let globals = lua_ctx.globals();
-            globals.set("battle", self).half_cast()?;
-            globals.set("chosenCard", card).half_cast()?;
-            let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
-            Ok(v)
-        })?;
-        Ok((battle, is_over))
+        let engine = read_to_string("./lua/preload.lua").await?;
+        let (battle, events, is_over) =
+            lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
+                let globals = lua_ctx.globals();
+                globals.set("battle", self).half_cast()?;
+                globals.set("chosenCard", card).half_cast()?;
+                let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
+                Ok(v)
+            })?;
+        Ok((battle, events, is_over))
     }
 }
-impl UserData for Field {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+impl TealData for Field {
+    fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("get_ai_card", |_, me, _: ()| {
             let index = 0;
             let item = me.ai.deck.get_card_from_hand(index)?;
             Ok(item)
         });
-
+        methods.add_function("create_action", |_, x| {
+            Ok(match x {
+                Some(x) => PossibleActions::Card(x),
+                None => PossibleActions::Nothing,
+            })
+        });
+        methods.add_function("create_action_events", |_, x| {
+            Ok(Action {
+                triggered_before: Default::default(),
+                taken_action: x,
+                triggered_after: Default::default(),
+            })
+        });
+        methods.add_function(
+            "create_event_list",
+            |_, (action_first, action_second,did_player_go_first): _| {
+                Ok(ActionsDuringTurn::new(action_first, action_second,did_player_go_first))
+            },
+        );
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
         methods.add_method("get_player", |_, me, _: ()| Ok(me.player.clone()));
         methods.add_method("has_ended", |_, me, _: ()| {
@@ -157,19 +181,22 @@ impl UserData for Field {
             Ok(())
         });
         methods.add_method_mut("clean_up_runes", |_, me, _: ()| {
+            let mut removed =0;
             for v in &mut me.runes {
                 if let Some(rune) = v {
                     if rune.config.turns_left == 0 {
                         *v = None;
+                        removed += 1;
                     }
                 }
             }
+            me.rune_count -= removed;
             Ok(())
         });
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
             let as_str = read_to_string_sync(format!(
-                "./lua/compiled/hexa_runes/config/{}.lua",
+                "./lua/compiled/hexa_runes/config/{}.json",
                 rune_name
             ))
             .map_err(|v| {
@@ -203,12 +230,13 @@ impl UserData for Field {
                 me.runes[key] = Some(rune)
             }
             Ok(())
-        })
+        });
+        methods.add_meta_method(MetaMethod::ToString, |_, me, _: ()| Ok(format!("{:?}", me)))
     }
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
-pub(crate) struct SimpleError(pub String);
+pub struct SimpleError(pub String);
 impl SimpleError {
     pub fn new_lua_error(str: String) -> rlua::Error {
         rlua::Error::ExternalError(Arc::new(Self(str)))

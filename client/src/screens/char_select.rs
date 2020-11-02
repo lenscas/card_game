@@ -74,7 +74,7 @@ impl Screen for CharacterSelect {
         wrapper.gfx.clear(Color::ORANGE);
         Ok(())
     }
-    async fn update(&mut self, wrapper: &mut Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
+    async fn update(mut self : Box<Self>, wrapper: &mut Wrapper) -> crate::Result<Box<dyn Screen>> {
         if self.button.1.channel.has_clicked() {
             let char_id = match self.button.0 {
                 ButtonType::Old(x) => x,
@@ -87,9 +87,17 @@ impl Screen for CharacterSelect {
                     Box::new(Battle::new(char_id, wrapper).await?)
                 };
 
-            Ok(Some(next_screen))
+            Ok(next_screen)
         } else {
-            Ok(None)
+            Ok(self)
         }
+    }
+
+    async fn event(
+        self : Box<Self>,
+        _wrapper: &mut crate::Wrapper,
+        _event: &quicksilver::input::Event,
+    ) -> crate::Result<Box<dyn Screen>> {
+        Ok(self)
     }
 }

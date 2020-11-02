@@ -1,4 +1,4 @@
-use super::{Dungeon, Screen};
+use super::{BattleAnimation, Dungeon, Screen};
 use async_trait::async_trait;
 use quicksilver::geom::{Circle, Vector};
 use quicksilver::graphics::{Color, FontRenderer, VectorFont};
@@ -8,6 +8,7 @@ use crate::{
     screen_parts::Hand,
     Wrapper, SIZE,
 };
+use card_game_shared::battle::TurnResponse;
 
 fn has_rune<'a>(
     index: usize,
@@ -67,24 +68,46 @@ impl Battle {
             character_id: char_id,
         })
     }
+
+    pub(crate) async fn update(&mut self, wrapper : &mut Wrapper) -> crate::Result<()> {
+        let current = wrapper.client.get_battle(self.character_id, &wrapper.gfx).await?;
+        let (battle, cards) = (current.battle, current.images);
+        self.hand_2.update_hand(cards, wrapper);
+        self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
+        self.enemy_hp = format!("HP: {}", battle.enemy_hp);
+        self.player_hp = format!("HP: {}", battle.player_hp);
+        self.enemy_runes = battle.enemy_small_runes;
+        self.player_runes = battle.small_runes;
+        self.enemy_mana = battle.enemy_mana.to_string();
+        self.player_mana = battle.mana.to_string();
+        self.hexa_runes.set_state(battle.hexa_runes);
+        Ok(())
+
+    }
+
     async fn play_card(
-        &mut self,
+        self: Box<Self>,
         wrapper: &mut Wrapper,
         chosen: usize,
-    ) -> crate::Result<Option<Box<dyn Screen>>> {
+    ) -> crate::Result<Box<dyn Screen>> {
         let battle = wrapper
             .client
             .do_turn(chosen, self.character_id, &wrapper.gfx)
             .await?;
-        let battle = match battle {
+        let next_screen = match battle {
+            /*
             crate::client::AfterTurn::Over => {
-                return Ok(Some(Box::new(
-                    Dungeon::new(self.character_id, wrapper).await?,
-                )))
+                return
             }
             crate::client::AfterTurn::NewTurn(x) => x,
-            crate::client::AfterTurn::NoTurnHappened => return Ok(None),
+            crate::client::AfterTurn::NoTurnHappened => return Ok(None),*/
+            TurnResponse::NextTurn(x) => {
+                Box::new(BattleAnimation::new(*self, x)) as Box<dyn Screen>
+            }
+            TurnResponse::Error(_) => self,
+            TurnResponse::Done => Box::new(Dungeon::new(self.character_id, wrapper).await?),
         };
+        /*
         let (battle, hand) = (battle.battle, battle.images);
         self.hand_2.update_hand(hand, &wrapper);
         self.enemy_hand_size = format!("S: {}", battle.enemy_hand_size);
@@ -94,8 +117,8 @@ impl Battle {
         self.player_runes = battle.small_runes;
         self.enemy_mana = battle.enemy_mana.to_string();
         self.player_mana = battle.mana.to_string();
-        self.hexa_runes.set_state(battle.hexa_runes);
-        Ok(None)
+        self.hexa_runes.set_state(battle.hexa_runes);*/
+        Ok(next_screen)
     }
 }
 
@@ -148,18 +171,18 @@ impl Screen for Battle {
         renderer.draw(&mut wrapper.gfx, &self.enemy_mana, Color::RED, offset)?;
         Ok(())
     }
-    async fn update(&mut self, _: &mut crate::Wrapper) -> crate::Result<Option<Box<dyn Screen>>> {
-        Ok(None)
+    async fn update(self: Box<Self>, _: &mut crate::Wrapper) -> crate::Result<Box<dyn Screen>> {
+        Ok(self)
     }
 
     async fn event(
-        &mut self,
+        mut self : Box<Self>,
         wrapper: &mut Wrapper,
         event: &quicksilver::input::Event,
-    ) -> crate::Result<Option<Box<dyn Screen>>> {
+    ) -> crate::Result<Box<dyn Screen>> {
         match self.hand_2.event(event, wrapper) {
             Some(x) => self.play_card(wrapper, x).await,
-            None => Ok(None),
+            None => Ok(self),
         }
     }
 }
