@@ -1,16 +1,16 @@
-use rlua::{UserDataMethods};
+use rlua::UserDataMethods;
 use serde::{Deserialize, Serialize};
 
-use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation,TealDerive};
+use tealr::{TealData, TealDataMethods, TealDerive, TypeRepresentation, UserData};
 
-#[derive(Clone, Deserialize, Serialize, Debug,TealDerive)]
+#[derive(Clone, Deserialize, Serialize, Debug, TealDerive)]
 pub struct RawRune {
     pub(crate) turns_left: u64,
 }
 
 impl TealData for RawRune {}
 
-#[derive(Clone, Deserialize, Serialize, Debug,TealDerive)]
+#[derive(Clone, Deserialize, Serialize, Debug, TealDerive)]
 pub struct HexaRune {
     pub(crate) config: RawRune,
     pub(crate) name: String,
@@ -27,9 +27,7 @@ impl TealData for HexaRune {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
-        methods.add_method("id", |_,me,_ : ()| {
-            Ok(me.id)
-        });
+        methods.add_method("id", |_, me, _: ()| Ok(me.id));
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
@@ -55,14 +53,11 @@ impl TealData for SmallRune {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_turns_left", |_, me, _: ()| Ok(me.config.turns_left));
-        methods.add_method("id", |_,me,_ : ()|{
-            Ok(me.id)
-        });
+        methods.add_method("id", |_, me, _: ()| Ok(me.id));
 
         methods.add_method_mut("dec_turns_left", |_, me, _: ()| {
             me.config.turns_left -= 1;
             Ok(me.config.turns_left)
         });
-        
     }
 }

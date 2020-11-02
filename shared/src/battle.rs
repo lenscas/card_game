@@ -1,6 +1,6 @@
+use crate::battle_log::ActionsDuringTurn;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use crate::battle_log::ActionsDuringTurn;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReturnBattle {
     pub success: bool,

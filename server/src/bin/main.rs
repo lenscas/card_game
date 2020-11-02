@@ -1,15 +1,14 @@
 use card_game::controllers::{self, users::force_logged_in};
+use card_game::errors::ReturnError;
 use card_game::util::CastRejection;
 use card_game_shared::ErrorMessage;
 use dotenv::{dotenv, var};
-use card_game::errors::ReturnError;
 use sqlx::{query, PgPool};
 use std::{convert::Infallible, net::SocketAddr};
 use warp::http::StatusCode;
 use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
-
 
 async fn handle_from_db(
     id: i64,

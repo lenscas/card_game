@@ -1,10 +1,9 @@
 #[cfg(feature = "server")]
-use rlua::{UserDataMethods, MetaMethod};
+use rlua::{MetaMethod, UserDataMethods};
 #[cfg(feature = "server")]
-use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation,TealDerive};
+use tealr::{TealData, TealDataMethods, TealDerive, TypeRepresentation, UserData};
 
 use serde::{Deserialize, Serialize};
-
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -24,7 +23,6 @@ pub enum TriggerTypes {
 }
 #[cfg(feature = "server")]
 impl TealData for TriggerTypes {}
-
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,17 +53,17 @@ pub struct ActionsDuringTurn {
     first_action: Action,
     second_action: Action,
     after_turn: Vec<TriggerTypes>,
-    did_player_go_first:bool
+    did_player_go_first: bool,
 }
 
 impl ActionsDuringTurn {
-    pub fn new(first_action: Action, second_action: Action, did_player_go_first:bool) -> Self {
+    pub fn new(first_action: Action, second_action: Action, did_player_go_first: bool) -> Self {
         Self {
             before_turn: Default::default(),
             first_action,
             second_action,
             after_turn: Default::default(),
-            did_player_go_first
+            did_player_go_first,
         }
     }
 }
@@ -76,7 +74,7 @@ impl TealData for ActionsDuringTurn {
         methods.add_function("create_trigger_small_rune_user", |_, x| {
             Ok(TriggerTypes::SmallRuneUser(x))
         });
-        
+
         methods.add_function("create_trigger_hexa_rune", |_, x| {
             Ok(TriggerTypes::HexaRune(x))
         });
@@ -101,8 +99,6 @@ impl TealData for ActionsDuringTurn {
             me.second_action = x;
             Ok(())
         });
-        methods.add_meta_method(MetaMethod::ToString, |_,me,_ :()|{
-            Ok(format!("{:?}",me))
-        });
+        methods.add_meta_method(MetaMethod::ToString, |_, me, _: ()| Ok(format!("{:?}", me)));
     }
 }

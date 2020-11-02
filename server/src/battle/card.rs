@@ -1,12 +1,12 @@
-use rlua::{UserDataMethods,MetaMethod};
+use rlua::{MetaMethod, UserDataMethods};
 use serde::{Deserialize, Serialize};
-use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
+use tealr::{TealData, TealDataMethods, TypeRepresentation, UserData};
 
 fn default_true() -> bool {
     true
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug,UserData,TypeRepresentation)]
+#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeRepresentation)]
 pub struct Card {
     pub(crate) id: String,
     pub(crate) name: String,
@@ -23,8 +23,6 @@ impl TealData for Card {
         methods.add_method("get_name", |_, me, _: ()| Ok(me.name.clone()));
         methods.add_method("get_code", |_, me, _: ()| Ok(me.code.clone()));
         methods.add_method("get_id", |_, me, _: ()| Ok(me.id.clone()));
-        methods.add_meta_method(MetaMethod::ToString, |_,me,_ :()|{
-            Ok(format!("{:?}",me))
-        })
+        methods.add_meta_method(MetaMethod::ToString, |_, me, _: ()| Ok(format!("{:?}", me)))
     }
 }

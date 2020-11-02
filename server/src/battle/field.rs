@@ -1,15 +1,18 @@
 use super::{deck::Deck, HexaRune, Player};
 use crate::{errors::ReturnError, util::CastRejection};
-use card_game_shared::{battle_log::{Action, PossibleActions, ActionsDuringTurn}, battle::ReturnBattle};
+use card_game_shared::{
+    battle::ReturnBattle,
+    battle_log::{Action, ActionsDuringTurn, PossibleActions},
+};
 use rlua::{Lua, MetaMethod, UserDataMethods};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
 use tokio::fs::read_to_string;
 
-use tealr::{TealData, TealDataMethods,UserData,TypeRepresentation};
+use tealr::{TealData, TealDataMethods, TypeRepresentation, UserData};
 
-#[derive(Deserialize, Serialize, Clone, Debug,UserData,TypeRepresentation)]
+#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeRepresentation)]
 pub struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
@@ -149,8 +152,12 @@ impl TealData for Field {
         });
         methods.add_function(
             "create_event_list",
-            |_, (action_first, action_second,did_player_go_first): _| {
-                Ok(ActionsDuringTurn::new(action_first, action_second,did_player_go_first))
+            |_, (action_first, action_second, did_player_go_first): _| {
+                Ok(ActionsDuringTurn::new(
+                    action_first,
+                    action_second,
+                    did_player_go_first,
+                ))
             },
         );
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
@@ -181,7 +188,7 @@ impl TealData for Field {
             Ok(())
         });
         methods.add_method_mut("clean_up_runes", |_, me, _: ()| {
-            let mut removed =0;
+            let mut removed = 0;
             for v in &mut me.runes {
                 if let Some(rune) = v {
                     if rune.config.turns_left == 0 {
