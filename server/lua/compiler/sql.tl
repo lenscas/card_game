@@ -8,9 +8,9 @@ local sql = require("luasql.postgres").postgres()
 
 local envReader = require "compiler/envReader"
 
-local con = nil
+local con :Sql.Connection = nil
 
-local function getConnection()
+local function getConnection():Sql.Connection
 	if con == nil then
 		local conectionString = envReader("DATABASE_URL")
 		con = assert(
@@ -24,7 +24,7 @@ local function getConnection()
 end
 
 return {
-	saveCard = function(card,fileName)
+	saveCard = function(card:CardTemplate,fileName:string)
 		local con = getConnection()
 		local textId = con:escape(card.id)
 		local isObtainable = tostring(

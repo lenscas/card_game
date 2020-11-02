@@ -5,19 +5,19 @@ local constants = require "compiler/constants"
 local files = require "compiler/fileSystem"
 
 --we load the template lazily and cache it
-local template;
+local template: string;
 
-local function escape (spec)
+local function escape (spec:any):string
 	local x = tostring(spec):gsub('[%-%.%+%[%]%(%)%^%%%?%*]','%%%1'):gsub('%$%%(%S)','%$%1')
 	return x
 end
-local function escape2 (spec)
+local function escape2 (spec:any):string
 	local x = tostring(spec):gsub('%%','%%%%')
 	return x
 end
 
 return {
-	imageifyCard = function(card)
+	imageifyCard = function(card: CardTemplate)
 		assert(card.name,"The card " .. card.id .. " does not have a name")
 		assert(card.description,"The card " .. card.id .. " does not have a description")
 		assert(card.cost,"The card " .. card.id .. " does not have a cost")

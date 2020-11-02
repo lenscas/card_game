@@ -1,8 +1,8 @@
-{
+local x:Rune.Rune = {
     turns_left= 3,
-    owner_modify_damage = function(self, config, owner,oponent)
+    owner_modify_speed = function(self:Rune.Rune, config:Rust.SmallRune, card:Rust.Card, owner:Rust.Player):(number,boolean)
         config:dec_turns_left()
-        return 100
+        return 10, true
     end
     --[[
     oponent_modify_speed = function(self,config, card, oponent)
@@ -30,3 +30,4 @@
     on_targeted = function() print("and I do something when my owner gets targeted") end,
     --]]
 }
+return x

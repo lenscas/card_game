@@ -2,21 +2,14 @@ local battle = require"engine/battle"
 local maths = require"engine/math"
 local runes = require"engine/runes"
 
-local Rust =require"types/Rust"
-local Runes = require("types/rune")
-
-local record Test
-	func : function(any)
-end
-
-
 local type EndOfTurnEffectsFunc = function(Rust.ActionsDuringTurn)
 local type CardFunction = function(any,Rust.ActionsDuringTurn):EndOfTurnEffectsFunc
 
 local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:Rust.Player):CardFunction
 	return function(card_list:Rust.Action, event_list:Rust.ActionsDuringTurn) :EndOfTurnEffectsFunc
 		local code = card:get_code()
-		local asFunc = load("return " .. code)() as Test
+		print("card code:",code)
+		local asFunc = load(code)() as CardTemplate
 		
 		asFunc.func{
 			card = card,
@@ -32,7 +25,7 @@ local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:R
 		return function(event_list:Rust.ActionsDuringTurn)
 			local ownedRunes = owner:get_runes()
 			for k, v in ipairs(ownedRunes) do
-				if runes.run_rune_code(owner, k, v, "end_of_turn_effect", {v,owner, oponent}) then
+				if runes.run_turn_trigger_rune(battle.battle,owner, k, v, "end_of_turn_effect", {v,battle.battle,owner, oponent}) then
 					print(k,v)
 					local a = event_list.create_trigger_small_rune_user(k);
 					event_list:add_after(a)
@@ -44,7 +37,7 @@ end
 
 local record ExecutableCard
 	func:function(any,Rust.ActionsDuringTurn)
-	triggered_runes:Runes.TriggeredRunes
+	triggered_runes:Rune.TriggeredRunes
 	card:Rust.Card
 	event:Rust.Action
 end
@@ -52,8 +45,8 @@ end
 local function decideTurnOrder():{ExecutableCard}
 	local aiSpeed = battle.aiCard:get_speed()
 	local playerSpeed = battle.playerCard:get_speed()
-	local raw_extra_speed_player, triggered_runes_player = runes.process_speed_runes(battle.player, battle.ai, battle.playerCard)
-	local raw_extra_speed_ai, triggered_runes_ai = runes.process_speed_runes(battle.ai, battle.player, battle.aiCard)
+	local raw_extra_speed_player, triggered_runes_player = runes.process_speed_runes(battle.battle,battle.player, battle.ai, battle.playerCard)
+	local raw_extra_speed_ai, triggered_runes_ai = runes.process_speed_runes(battle.battle,battle.ai, battle.player, battle.aiCard)
 	
 	playerSpeed = maths.addPercentage(playerSpeed, raw_extra_speed_player)
 	aiSpeed = maths.addPercentage(aiSpeed, raw_extra_speed_ai)

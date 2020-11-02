@@ -97,7 +97,7 @@ impl TealData for Player {
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
             let as_str = read_to_string_sync(format!(
-                "./lua/compiled/small_runes/config/{}.lua",
+                "./lua/compiled/small_runes/config/{}.json",
                 rune_name
             ))
             .map_err(|v| {

@@ -1,5 +1,3 @@
-local Rust = require("types/Rust")
-
 local record InnerBattle 
 	battle: Rust.Field
 	chosenCard: Rust.Card
@@ -23,12 +21,14 @@ local battle:InnerBattle = {
 }
 
 local runes = require"engine/runes"
+
 local record DamageParameters 
 	amount: number
 	from: Rust.Player
 	to: Rust.Player
 	card_list:Rust.Action
 	event_list : Rust.ActionsDuringTurn
+	battle: Rust.Field
 end
 
 --this function allows cards to deal damage and allow runes to interact with it
@@ -48,6 +48,7 @@ local function deal_damage(params: DamageParameters)
 	for k, rune in ipairs(fromRunes) do
 		local buff, register_anyway =
 			runes.run_rune_code(
+				params.battle,
 				params.from,
 				k,
 				rune,
@@ -91,12 +92,13 @@ local function deal_damage(params: DamageParameters)
 	local toRunes = params.to:get_runes()
 	for k, v in ipairs(toRunes) do
 		local reduction, register_anyway = runes.run_rune_code(
-				params.from,
-				k,
-				v,
-				"receiver_modify_damage",
-				{v, amount, params.from, params.to}
-			)
+			params.battle,
+			params.from,
+			k,
+			v,
+			"receiver_modify_damage",
+			{v, amount, params.from, params.to}
+		)
 		reduction = reduction or 0
 		if reduction > 0 then
 			amount = amount - (amount / 100 * reduction)

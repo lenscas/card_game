@@ -8,11 +8,12 @@ local files = require"compiler/fileSystem"
 local constants = require "compiler/constants"
 
 
-local saved = {}
+local saved : {string:string} = {}
 
-local function saveRune(basePath,fileName, rune, codeStr)
-	files.writeToFile(basePath, "config/" .. fileName, json.encode(rune))
-	files.writeToFile(basePath, "code/" .. fileName, "return " .. codeStr)
+local function saveRune(basePath:string,fileName:string, rune: Rune.Rune, codeStr:string)
+	fileName = files.removeExtension(fileName)
+	files.writeToFile(basePath, "config/" .. fileName..".json", json.encode(rune))
+	files.writeToFile(basePath, "code/" .. fileName..".lua", codeStr)
 end
 
 return {
@@ -21,7 +22,8 @@ return {
 	--To commit, see doSave
 
 	--this means that if lua errors, the files and the database ARE NOT in sync any longer.
-	readySaveCard = function(card, fileName)
+	readySaveCard = function(card: CardTemplate, fileName:string)
+		fileName = files.removeExtension(fileName)..".json"
 		local cardId = card.id
 		assert(cardId, "No card Id found in: " .. fileName)
 		assert(not saved[cardId],
@@ -40,10 +42,10 @@ Collides with : ]] .. (saved[cardId] or "no collision")
 
 		saved[cardId] = fileName;
 	end,
-	saveSmallRune = function(fileName,rune,codeStr)
+	saveSmallRune = function(fileName:string,rune:Rune.Rune,codeStr:string)
 		saveRune(constants.PATH_COMPILED_SMALL_RUNES,fileName,rune,codeStr)
 	end,
-	saveHexaRune = function(fileName,rune,codeStr)
+	saveHexaRune = function(fileName:string,rune:Rune.Rune,codeStr:string)
 		saveRune(constants.PATH_COMPILED_HEXA_RUNES,fileName,rune,codeStr)
 	end,
 	--commits the changes to the database.

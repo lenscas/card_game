@@ -1,5 +1,3 @@
-local Rust = require("types/Rust")
-
 global battle : Rust.Field;
 global chosenCard : Rust.Card;
 

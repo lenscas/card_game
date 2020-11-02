@@ -13,5 +13,5 @@ client = ["quicksilver"]
 [dependencies]
 serde = {version = "1.0", features=["derive"]}
 rlua = {version="*", optional = true}
-tealr = {version = "0.2.0",git = "https://github.com/lenscas/tealr", optional =true}
+tealr = {version = "0.2.0", optional =true}
 quicksilver = {version="0.4.0-alpha0.6", features = ["serde"], default-features = false, optional = true}

@@ -1086,7 +1086,8 @@ dependencies = [
 [[package]]
 name = "tealr"
 version = "0.2.0"
-source = "git+https://github.com/lenscas/tealr#69d89e5eafa019b5ab52f601d1d5c7d311c20996"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f249b9f49be43a55b700235b6f01ce435581cb4681719063f178683897f4ddc"
 dependencies = [
  "bstr",
  "rlua",
@@ -1096,7 +1097,8 @@ dependencies = [
 [[package]]
 name = "tealr_derive"
 version = "0.2.0"
-source = "git+https://github.com/lenscas/tealr#69d89e5eafa019b5ab52f601d1d5c7d311c20996"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c9bb0d08f2eeacc4940002ddc98809a329fb532449fa688ca3bf35fd85f2980"
 dependencies = [
  "quote 1.0.7",
  "syn",

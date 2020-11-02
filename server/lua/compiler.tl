@@ -1,6 +1,5 @@
 --This script turns the lua code for cards and runes into a format that is easier to work with.
 --Every script needed to "compile" the cards are in the /compiler folder.
-
 local processor = require "compiler/processor"
 local constants = require "compiler/constants"
 local saver = require "compiler/saver"

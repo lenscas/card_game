@@ -115,7 +115,7 @@ impl Field {
     ) -> Result<(Self, ActionsDuringTurn, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
-        let engine = read_to_string("./lua/engine.lua").await?;
+        let engine = read_to_string("./lua/preload.lua").await?;
         let (battle, events, is_over) =
             lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
                 let globals = lua_ctx.globals();
@@ -196,7 +196,7 @@ impl TealData for Field {
         methods.add_method_mut("add_rune", |_, me, rune_name: String| {
             let mut found = false;
             let as_str = read_to_string_sync(format!(
-                "./lua/compiled/hexa_runes/config/{}.lua",
+                "./lua/compiled/hexa_runes/config/{}.json",
                 rune_name
             ))
             .map_err(|v| {
