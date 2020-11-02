@@ -3,6 +3,7 @@
 .env
 /server/lua/compiled/**/*.lua
 /server/lua/compiled/**/*.json
+/server/lua/types/Rust.d.tl
 /server/assets/cards/*.png
 /server/assets/cards/*.svg
 /client/static/default_server.txt

@@ -55,15 +55,17 @@ pub struct ActionsDuringTurn {
     first_action: Action,
     second_action: Action,
     after_turn: Vec<TriggerTypes>,
+    did_player_go_first:bool
 }
 
 impl ActionsDuringTurn {
-    pub fn new(first_action: Action, second_action: Action) -> Self {
+    pub fn new(first_action: Action, second_action: Action, did_player_go_first:bool) -> Self {
         Self {
             before_turn: Default::default(),
             first_action,
             second_action,
             after_turn: Default::default(),
+            did_player_go_first
         }
     }
 }

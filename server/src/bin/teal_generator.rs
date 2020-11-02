@@ -13,6 +13,6 @@ fn main() {
         .proccess_type::<ActionsDuringTurn>()
         .proccess_type::<PossibleActions>()
         .proccess_type::<TriggerTypes>();
-    let as_definition_string = types.generate_global("RustTypes").unwrap();
+    let as_definition_string = types.generate_global("Rust").unwrap();
     println!("{}",as_definition_string);
 }

@@ -25,6 +25,7 @@ local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:R
 		return function(event_list:Rust.ActionsDuringTurn)
 			local ownedRunes = owner:get_runes()
 			for k, v in ipairs(ownedRunes) do
+				print("looping over runes", event_list)
 				if runes.run_turn_trigger_rune(battle.battle,owner, k, v, "end_of_turn_effect", {v,battle.battle,owner, oponent}) then
 					print(k,v)
 					local a = event_list.create_trigger_small_rune_user(k);
@@ -36,13 +37,13 @@ local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:R
 end
 
 local record ExecutableCard
-	func:function(any,Rust.ActionsDuringTurn)
+	func:CardFunction
 	triggered_runes:Rune.TriggeredRunes
 	card:Rust.Card
 	event:Rust.Action
 end
 
-local function decideTurnOrder():{ExecutableCard}
+local function decideTurnOrder():{ExecutableCard},boolean
 	local aiSpeed = battle.aiCard:get_speed()
 	local playerSpeed = battle.playerCard:get_speed()
 	local raw_extra_speed_player, triggered_runes_player = runes.process_speed_runes(battle.battle,battle.player, battle.ai, battle.playerCard)
@@ -78,22 +79,25 @@ local function decideTurnOrder():{ExecutableCard}
 		end
 	end
 
-
+	local player_goes_first = false
 	if aiSpeed > playerSpeed then
 		table.insert(inOrder, aiCardAsFunc)
 		table.insert(inOrder, playerCardAsFunc)
 	else
 		table.insert(inOrder, playerCardAsFunc)
 		table.insert(inOrder, aiCardAsFunc)
+		player_goes_first = true
 	end
-	return inOrder
+	return inOrder,player_goes_first
 end
 
 local function procTurn(): boolean, Rust.ActionsDuringTurn
-	local cardsInOrder = decideTurnOrder()
-	local atEndOfTurnRunes:{function(Rust.ActionsDuringTurn)} = {}
+	local cardsInOrder,player_goes_first = decideTurnOrder()
+	local atEndOfTurnRunes:{EndOfTurnEffectsFunc} = {}
+	
 	print(cardsInOrder[1].card:get_id())
 	print(cardsInOrder[2].card:get_id())
+	
 	cardsInOrder[1].event = battle.battle.create_action_events(
 		battle.battle.create_action(
 			cardsInOrder[1].card:get_id()
@@ -104,7 +108,7 @@ local function procTurn(): boolean, Rust.ActionsDuringTurn
 			cardsInOrder[2].card:get_id()
 		)
 	)
-	local event_list = battle.battle.create_event_list(cardsInOrder[1].event,cardsInOrder[2].event)
+	local event_list = battle.battle.create_event_list(cardsInOrder[1].event,cardsInOrder[2].event,player_goes_first)
 	for key, card in ipairs(cardsInOrder) do
 		for _ , id in ipairs(card.triggered_runes.owner) do
 			card.event:add_trigger_before(event_list.create_trigger_small_rune_user(id))
@@ -117,7 +121,6 @@ local function procTurn(): boolean, Rust.ActionsDuringTurn
 		end
 		table.insert(atEndOfTurnRunes, card.func(card.event,event_list))
 		if key == 1 then
-			print("got here?")
 			event_list:add_first_action(card.event);
 		else 
 			event_list:add_second_action(card.event);
@@ -128,6 +131,7 @@ local function procTurn(): boolean, Rust.ActionsDuringTurn
 	end
 
 	for _, rune in ipairs(atEndOfTurnRunes) do
+		print("original list", event_list)
 		rune(event_list)
 		if battle.battle:has_ended() then
 			return true,event_list

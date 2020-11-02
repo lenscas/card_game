@@ -149,8 +149,8 @@ impl TealData for Field {
         });
         methods.add_function(
             "create_event_list",
-            |_, (action_first, action_second): _| {
-                Ok(ActionsDuringTurn::new(action_first, action_second))
+            |_, (action_first, action_second,did_player_go_first): _| {
+                Ok(ActionsDuringTurn::new(action_first, action_second,did_player_go_first))
             },
         );
         methods.add_method("get_ai", |_, me, _: ()| Ok(me.ai.clone()));
