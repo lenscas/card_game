@@ -47,9 +47,11 @@ This is the server for my yet to be named roguelike card game. This is where the
 
 3. run `sqlx database create` followed by `sqlx migrate run` to create and setup the database.
 
-4. run `tl run lua/compiler.tl` to process the cards and runes. This turns the teal files into json, prepares the images and updates the database to include the cards.
+4. run `cargo run --bin teal_generator > ./lua/types/Rust.d.tl`
 
-5. at this point you should be able to run `cargo run --bin main` to run the server.
+5. run `tl run lua/compiler.tl` to process the cards and runes. This turns the teal files into json, prepares the images and updates the database to include the cards.
+
+6. at this point you should be able to run `cargo run --bin main` to run the server.
 
 Now, you should have a working server that is ready to accept users.
 
@@ -61,7 +63,7 @@ Now, you should have a working server that is ready to accept users.
 
 3. run `sqlx migrate run` to update the database to the new schema
 
-4. run `cargo run --bin teal_generator > ./lua/types/Rust.d.tl` and save the output in `
+4. run `cargo run --bin teal_generator > ./lua/types/Rust.d.tl`
 
 5. run `tl run lua/compiler.lua` to update the cards.
 
