@@ -16,6 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Godot Client"
+run/main_scene="res://src/Control.tscn"
 config/icon="res://icon.png"
 
 [editor_plugins]

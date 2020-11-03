@@ -1,25 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Reference Include="GodotSharp">
-      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
   <ItemGroup>
     <Compile Include="blaFs.fs" />
     <Compile Include="ControlFs.fs" />
     <Compile Include="testFs.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <Reference Include="GodotSharp">
+      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
+    </Reference>
+      <Reference Include="netstandard" />
   </ItemGroup>
- <PropertyGroup>
+  <PropertyGroup>
   <!-- When compiling .NET SDK 2.0 projects targeting .NET 4.x on Mono using 'dotnet build' you -->
   <!-- have to teach MSBuild where the Mono copy of the reference asssemblies is -->
   <TargetIsMono Condition="$(TargetFramework.StartsWith('net4')) and '$(OS)' == 'Unix'">true</TargetIsMono>

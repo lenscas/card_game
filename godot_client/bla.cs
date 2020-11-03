@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-using card_gamefs.CardGame;
+using CardGame;
 
 public class bla : blaFs
 {
