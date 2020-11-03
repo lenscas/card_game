@@ -1,0 +1,9 @@
+<Project Sdk="Godot.NET.Sdk/3.2.3">
+  <ItemGroup>
+    <ProjectReference Include="fsharp\card_gamefs\card_gamefs.fsproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <RootNamespace>GodotClient</RootNamespace>
+  </PropertyGroup>
+</Project>
