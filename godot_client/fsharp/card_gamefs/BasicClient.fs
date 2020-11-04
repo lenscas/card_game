@@ -42,7 +42,8 @@ module BasicClient =
         let z = y []
         z
 
-    let private poll x y (wait: unit -> SignalAwaiter) =
+
+    let private poll x y (wait: unit -> SignalAwaiter2) =
         let rec pollInner z =
             task {
                 match httpClient.GetStatus() with
@@ -52,7 +53,7 @@ module BasicClient =
                     match httpClient.Poll() with
                     | Error.Ok ->
                         GD.Print "Connecting..."
-                        do! wait ()
+                        let! _ = wait ()
                         return! pollInner (z)
 
                     | x -> return Result.Error(x)
@@ -79,13 +80,11 @@ module BasicClient =
                 | x -> Result.Error(x))
 
         func2 wait
-    // match x with
-// | HTTPClient.Status.Connected -> Ok(Ok())
-// | x -> Ok(Result.Error(x)))
-//)
+
 
     let login username password wait =
         let x =
-            poll (fun () -> httpClient.Request(HTTPClient.Method.Get, "/anything", [||]))
+            poll (fun () -> httpClient.Request(HTTPClient.Method.Get, "/anything", [||])) (fun _ -> getRequestValue ())
+                wait
 
-        x (fun _ -> getRequestValue) wait
+        x
