@@ -2,8 +2,6 @@ using Godot;
 using System;
 
 using CardGame;
-
-public class Control : ControlFs
+public class LoginScreen : LoginScreenFs
 {
 }
-
