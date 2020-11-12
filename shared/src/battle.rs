@@ -1,7 +1,8 @@
 use crate::battle_log::ActionsDuringTurn;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct ReturnBattle {
     pub success: bool,
     pub hand: Vec<String>,
@@ -14,13 +15,13 @@ pub struct ReturnBattle {
     pub enemy_mana: u64,
     pub hexa_runes: Vec<String>,
 }
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug)]
 pub struct TakeAction {
     pub play_card: usize,
     pub character_id: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub enum BattleErrors {
     ChosenCardNotInHand(usize),
     CardCostsTooMuch {
@@ -53,7 +54,7 @@ impl From<BattleErrors> for rlua::Error {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, JsonSchema)]
 #[serde(untagged)]
 pub enum TurnResponse {
     NextTurn(ActionsDuringTurn),

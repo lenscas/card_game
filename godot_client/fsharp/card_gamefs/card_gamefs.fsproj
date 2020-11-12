@@ -20,17 +20,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <compile Include="schemas/LoginData.schema.fs"/>
+    <compile Include="schemas/LoginReply.schema.fs"/>
     <Compile Include="SignalAwaiter.fs"/>
     <Compile Include="BasicClient.fs" />
     <Compile Include="LoginScreenFs.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
-
     <Reference Include="GodotSharp">
       <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
     </Reference>
     <Reference Include="netstandard" />
     <PackageReference Include="Ply" Version="0.3.1" />
+    <PackageReference Include="FSharp.Json" Version="0.4.0" />
   </ItemGroup>
 </Project>

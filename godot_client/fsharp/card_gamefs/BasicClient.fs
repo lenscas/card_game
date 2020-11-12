@@ -1,7 +1,8 @@
 namespace CardGame
 
 module BasicClient =
-
+    open JsonData
+    open FSharp.Json
     open Godot
     open System
     open System.Collections.Generic
@@ -53,6 +54,8 @@ module BasicClient =
                     match httpClient.Poll() with
                     | Error.Ok ->
                         GD.Print "Connecting..."
+                        GD.Print "second?"
+                        GD.Print "third"
                         let! _ = wait ()
                         return! pollInner (z)
 
@@ -82,9 +85,48 @@ module BasicClient =
         func2 wait
 
 
-    let login username password wait =
-        let x =
-            poll (fun () -> httpClient.Request(HTTPClient.Method.Get, "/anything", [||])) (fun _ -> getRequestValue ())
-                wait
+    // type CustomError<'a> =
+    //     | GDError of Error
+    //     | Custom of 'a
 
-        x
+    // let asGDError err = CustomError.GDError(err)
+    // let asCustomError err = CustomError.Custom(err)
+
+    let login (loginData: LoginData) wait =
+        task {
+            let! x =
+                poll (fun () -> httpClient.Request(HTTPClient.Method.Post, "/login", [||], (Json.serialize loginData))) (fun _ ->
+                    getRequestValue ()) wait
+
+            match x with
+            | Ok (x) ->
+                GD.Print("Frist success!")
+                match x with
+                | Ok (x) ->
+                    GD.Print("Second success!")
+                    GD.Print(System.Text.Encoding.UTF8.GetString(List.toArray x))
+                | Result.Error (x) ->
+                    GD.PrintErr("Second error")
+                    GD.PrintErr(x)
+            | Result.Error (x) ->
+                GD.PrintErr("First error")
+                GD.PrintErr(x)
+
+            let y =
+                Result.bind id x
+                //|> Result.mapError asGDError
+                |> Result.map List.toArray
+                |> Result.map System.Text.Encoding.UTF8.GetString
+                |> Result.map (fun x -> Json.deserialize<LoginReply> x)
+
+            return match y with
+                   | Ok (x) ->
+                       Ok
+                           (if x.success then
+                               token <- Some(x.token)
+                               GD.Print(token)
+                               true
+                            else
+                                false)
+                   | Result.Error (x) -> Result.Error(x)
+        }
