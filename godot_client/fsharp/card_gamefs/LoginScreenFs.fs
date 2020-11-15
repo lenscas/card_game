@@ -2,7 +2,9 @@ namespace CardGame
 
 open Godot
 open JsonData
-open FSharp.Control.Tasks.Affine
+open System.Threading.Tasks
+open FSharp.Json
+open FSharp.Json.Json
 
 type LoginScreenFs() as this =
     inherit Control()
@@ -13,28 +15,29 @@ type LoginScreenFs() as this =
     let passwordNode =
         lazy (this.GetNode(new NodePath("Password")) :?> LineEdit)
 
+    let mutable alreadyRunning = false
+
     member this._OnLoginButtonpressed() =
-        let waiter =
-            fun () () -> SignalAwaiter2(this.ToSignal(this.GetTree(), "idle_frame"))
+        if alreadyRunning then
+            ()
+        else
+            alreadyRunning <- true
 
-        task {
-            let firstWaiter = waiter ()
-            let! y = BasicClient.connect "127.0.0.1" 3030 false firstWaiter
-            GD.Print(y)
-            let secondWaiter = waiter ()
+            let data: JsonData.LoginData =
+                { username = userNameNode.Value.Text
+                  password = passwordNode.Value.Text }
 
-            let data =
-                { password = passwordNode.Value.Text
-                  username = userNameNode.Value.Text }
+            async {
+                newBasicClient.connect "http://127.0.0.1:3030"
 
-            let! x = BasicClient.login data secondWaiter
 
-            match x with
-            | Ok (x) ->
-                GD.Print("success!")
-                GD.Print(x)
-            | Result.Error x ->
-                GD.Print("Error")
+                let! x = newBasicClient.login data
+
                 GD.Print(x)
 
-        }
+                alreadyRunning <- false
+
+                ()
+            }
+            |> Async.StartAsTask
+            |> ignore

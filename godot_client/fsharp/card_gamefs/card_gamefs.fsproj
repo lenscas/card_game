@@ -22,8 +22,7 @@
   <ItemGroup>
     <compile Include="schemas/LoginData.schema.fs"/>
     <compile Include="schemas/LoginReply.schema.fs"/>
-    <Compile Include="SignalAwaiter.fs"/>
-    <Compile Include="BasicClient.fs" />
+    <Compile Include="newBasicClient.fs" />
     <Compile Include="LoginScreenFs.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -32,7 +31,7 @@
       <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
     </Reference>
     <Reference Include="netstandard" />
-    <PackageReference Include="Ply" Version="0.3.1" />
+    <Reference Include="System.Net.Http" />
     <PackageReference Include="FSharp.Json" Version="0.4.0" />
   </ItemGroup>
 </Project>
