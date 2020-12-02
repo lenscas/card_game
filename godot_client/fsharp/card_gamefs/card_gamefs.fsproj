@@ -20,9 +20,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <compile Include="schemas/BattleErrors.schema.fs"/>
+    <compile Include="schemas/TileState.schema.fs"/>
+    <compile Include="schemas/ErrorMessage.schema.fs"/>
+    <compile Include="schemas/EventProcesed.schema.fs"/>
+    <compile Include="schemas/PossibleActions.schema.fs"/>
+    <compile Include="schemas/RegisterData.schema.fs"/>
+    <compile Include="schemas/ReturnBattle.schema.fs"/>
+    <compile Include="schemas/TakeAction.schema.fs"/>
+    <compile Include="schemas/TriggerTypes.schema.fs"/>
     <compile Include="schemas/LoginData.schema.fs"/>
     <compile Include="schemas/LoginReply.schema.fs"/>
+    <compile Include="schemas/CharacterList.schema.fs"/>
+    <compile Include="schemas/CharacterCreationResponse.schema.fs"/>
+    <compile Include="schemas/Action.schema.fs"/>
+    <compile Include="schemas/ActionsDuringTurn.schema.fs"/>
+    <compile Include="schemas/DungeonLayout.schema.fs"/>
+  </ItemGroup>
+  <ItemGroup>
+    <compile Include="globals.fs"/>
     <Compile Include="newBasicClient.fs" />
+    <Compile Include="SceneControllerFs.fs" />
+    <Compile Include="character_selectFs.fs" />
     <Compile Include="LoginScreenFs.fs" />
   </ItemGroup>
   <ItemGroup>

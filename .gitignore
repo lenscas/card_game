@@ -5,6 +5,7 @@
 /godot_client/obj
 /godot_client/fsharp/card_gamefs/bin
 /godot_client/fsharp/card_gamefs/obj
+/godot_client/fsharp/card_gamefs/schemas/*.fs
 **/*.rs.bk
 .env
 /server/lua/compiled/**/*.lua

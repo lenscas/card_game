@@ -55,7 +55,6 @@ impl From<BattleErrors> for rlua::Error {
 }
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
-#[serde(untagged)]
 pub enum TurnResponse {
     NextTurn(ActionsDuringTurn),
     Error(BattleErrors),
