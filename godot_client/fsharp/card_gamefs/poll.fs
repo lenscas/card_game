@@ -77,7 +77,7 @@ type Poll<'T>(func: unit -> PollResult<'T>) =
     static member Ready<'T> res =
         new Poll<'T>(fun () -> PollResult.Got(res))
 
-module poll =
+module Poll =
     let AndThen<'A, 'T> (func: 'A -> Poll<'T>) (poll1: Poll<'A>) =
         let mutable otherPoll: option<Poll<'T>> = None
 
@@ -169,30 +169,22 @@ module poll =
                     loop tail newState
                 | [] -> state
 
-            [] |> Got |> loop (polls |> Array.toList)
+            [] |> Got |> loop (polls |> Array.toList))
 
-            // let res = polls |> Array.map (fun x -> x.Poll())
+    type PollBuilder() =
+        member this.Bind(value, func) = AndThen func value
+        member this.Return(x) = Poll.Ready x
+        member this.ReturnFrom x = x
+        member this.Zero() = Poll.Ready()
 
-            // let rec loop (polls: PollResult<'T> list) (state: PollResult<'T list>): PollResult<'T list> =
-            //     match state with
-            //     | PollResult.NotYet -> NotYet
-            //     | PollResult.Got items ->
-            //         match polls with
-            //         | [] -> state
-            //         | top :: tail ->
-            //             match top with
-            //             | PollResult.NotYet -> loop [] PollResult.NotYet
-            //             | PollResult.Got x ->
-            //                 items
-            //                 |> List.append [ x ]
-            //                 |> PollResult.Got
-            //                 |> loop tail
+        member this.Combine<'a, 'b>(a: Poll<'a>, b: Poll<'b>) =
+            Poll(fun () ->
+                let resA = a.Poll()
+                let resB = b.Poll()
+                match (resA, resB) with
+                | PollResult.Got (a), PollResult.Got (b) -> PollResult.Got(a, b)
+                | _ -> PollResult.NotYet)
 
-            // match res |> Array.toList with
-            // | head :: tail ->
-            //     match head with
-            //     | PollResult.Got _ -> head |> loop tail
-            //     | PollResult.NotYet -> PollResult.NotYet
+        member this.Delay f = f ()
 
-            // | [] -> PollResult.NotYet
-            )
+    let poll = PollBuilder()

@@ -37,8 +37,8 @@ module PollingClient =
         client.ConnectToHost(host, port, ssl, false)
         |> fromGodotError (fun () -> Ok(Poll(fun () -> waitCheck client)))
         |> Poll.FromResult
-        |> poll.Flatten
-        |> poll.MapOk(fun _ -> client)
+        |> Poll.Flatten
+        |> Poll.MapOk(fun _ -> client)
 
     let private findConnection () =
         let found =
@@ -50,7 +50,7 @@ module PollingClient =
         | None ->
             let newClient = new HTTPClient()
             (getConnection newClient url.Value port.Value usessl.Value)
-            |> poll.AfterOk(fun x -> x.GetStatus() |> ignore)
+            |> Poll.AfterOk(fun x -> x.GetStatus() |> ignore)
 
     let createUrl parts =
         parts |> List.fold (fun r s -> r + "/" + s) ""
@@ -67,7 +67,7 @@ module PollingClient =
         port <- Some port1
         usessl <- Some ssl
         findConnection ()
-        |> poll.MapOk(fun x -> x.GetStatus())
+        |> Poll.MapOk(fun x -> x.GetStatus())
 
     // client.ConnectToHost(host, port1, ssl, false)
     // |> fromGodotError (fun () -> Ok(Poll waitCheck))
@@ -76,7 +76,7 @@ module PollingClient =
 
     let bareRequest urlPart method (data: option<string>) =
         findConnection ()
-        |> poll.AndThenOk(fun client ->
+        |> Poll.AndThenOk(fun client ->
             client.Request
                 (method,
                  urlPart,
@@ -87,8 +87,8 @@ module PollingClient =
                  data |> Option.toObj)
             |> fromGodotError (fun () -> Ok(Poll(fun () -> waitCheck client)))
             |> Poll.FromResult
-            |> poll.Flatten
-            |> poll.AndThenOk(fun _ ->
+            |> Poll.Flatten
+            |> Poll.AndThenOk(fun _ ->
                 let mutable res: byte list = []
                 Poll(fun () ->
                     match client.GetStatus() with
@@ -102,25 +102,25 @@ module PollingClient =
                             |> List.append res
                         NotYet
                     | _ -> Got(Ok(res))))
-            |> poll.MapOk List.toArray)
+            |> Poll.MapOk List.toArray)
 
     let requestSerialized<'T> urlPart method (data: option<string>) =
         (bareRequest urlPart method data)
-        |> poll.MapOk System.Text.Encoding.UTF8.GetString
-        |> poll.MapOk(fun x ->
+        |> Poll.MapOk System.Text.Encoding.UTF8.GetString
+        |> Poll.MapOk(fun x ->
             try
                 Some(Json.deserialize<'T> x)
             with _ -> None)
 
     let getImage url =
         (bareRequest url HTTPClient.Method.Get None)
-        |> poll.MapOk(fun x ->
+        |> Poll.MapOk(fun x ->
             let image = new Image()
             image.LoadPngFromBuffer(x)
             |> fromGodotError (fun _ -> Ok(image))
 
             )
-        |> poll.Flatten
+        |> Poll.Flatten
 
     let request<'T, 'A> urlPart method (data: Option<'A>) =
         data
@@ -146,7 +146,7 @@ module PollingClient =
         { username = username
           password = password }
         |> post<JsonData.LoginReply, JsonData.LoginData> "/login"
-        |> poll.Map(fun x ->
+        |> Poll.Map(fun x ->
             match x with
             | Ok (x) ->
                 match x with
@@ -160,13 +160,13 @@ module PollingClient =
 
     let createCharacter () =
         emptyPost<CharacterCreationResponse> "/characters"
-        |> poll.MapOk(fun x -> x |> Option.map (fun x -> x.id))
+        |> Poll.MapOk(fun x -> x |> Option.map (fun x -> x.id))
 
     let isCharacterInBattle (id: int) =
         [ "characters"; id.ToString() ]
         |> createUrl
         |> get<bool>
-        |> poll.MapOk(fun x -> x |> Option.defaultValue false)
+        |> Poll.MapOk(fun x -> x |> Option.defaultValue false)
 
     let getDungeon (charId: int) =
         [ "dungeon"; charId.ToString() ]
@@ -182,7 +182,7 @@ module PollingClient =
         [ "dungeon"; "tiles"; "list" ]
         |> createUrl
         |> get<JsonData.ImageUrlWithName []>
-        |> poll.AndThenOk(fun x ->
+        |> Poll.AndThenOk(fun x ->
             match x with
             | Some x ->
                 let getPictureList =
@@ -191,17 +191,17 @@ module PollingClient =
                 for y in x do
                     y.url
                     |> getImage
-                    |> poll.MapOk(fun x -> (x, y.name))
+                    |> Poll.MapOk(fun x -> (x, y.name))
                     |> getPictureList.Add
 
                 let p =
-                    getPictureList |> Seq.toArray |> poll.All
+                    getPictureList |> Seq.toArray |> Poll.All
 
                 p
 
             | None -> Poll.Ready([])
 
-            |> poll.Map Ok)
+            |> Poll.Map Ok)
 
 
 // getImage

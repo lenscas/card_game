@@ -18,26 +18,30 @@ type LoginScreenFs() as this =
         lazy (this.GetNode<LineEdit>(new NodePath("Password")))
 
 
-    let mutable currentlyProcessing: Option<Poll<bool>> = None
+    let mutable currentlyProcessing: Option<Poll<unit>> = None
 
     override this._Process(delta) =
-        currentlyProcessing
-        |> poll.TryPoll(fun x ->
-            if x then
-                this.GetTree().ChangeScene("res://src/character_select.tscn")
-                |> ignore
-            currentlyProcessing <- None)
-        |> ignore
+        currentlyProcessing |> Poll.TryIgnorePoll
 
     member this._OnLoginButtonpressed() =
         if currentlyProcessing.IsNone then
             currentlyProcessing <-
-                (PollingClient.connect "127.0.0.1" 3030 false)
-                |> poll.AndThenOk(fun _ ->
-                    (PollingClient.login userNameNode.Value.Text passwordNode.Value.Text)
-                    |> poll.Map(fun x -> Ok(x)))
-                |> poll.Map(fun x ->
-                    match x with
-                    | Ok (x) -> x
-                    | _ -> false)
+                Poll.poll {
+                    let! res = PollingClient.connect "127.0.0.1" 3030 false
+
+                    let! canLogin =
+                        match res with
+                        | Ok (_) -> PollingClient.login userNameNode.Value.Text passwordNode.Value.Text
+                        | Result.Error (x) ->
+                            GD.PrintErr(x)
+                            Poll.Ready(false)
+
+                    if canLogin then
+                        this.GetTree().ChangeScene("res://src/character_select.tscn")
+                        |> ignore
+
+                    currentlyProcessing <- None
+
+                }
+                |> Poll.IgnoreResult
                 |> Some

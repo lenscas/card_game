@@ -26,7 +26,7 @@ type DungeonTilesFs() =
 
         drawDungeon <-
             PollingClient.getDungeonTiles ()
-            |> poll.MapOk(fun x ->
+            |> Poll.MapOk(fun x ->
                 x
                 |> List.fold (fun y z ->
                     match y with
@@ -36,8 +36,8 @@ type DungeonTilesFs() =
                         | Error z -> Result.Error z
 
                     | Error x -> Result.Error x) (Ok []))
-            |> poll.Flatten
-            |> poll.AfterOk(fun x ->
+            |> Poll.Flatten
+            |> Poll.AfterOk(fun x ->
                 let rec loop (images: (Image * string) list) count =
                     match images with
                     | head :: tail ->
@@ -53,8 +53,8 @@ type DungeonTilesFs() =
                 loop x 0
 
                 )
-            |> poll.IgnoreResult
-            |> poll.After(fun _ ->
+            |> Poll.IgnoreResult
+            |> Poll.After(fun _ ->
                 this.Clear()
                 for tile in tiles do
                     let (pos, state) = tile
@@ -69,19 +69,19 @@ type DungeonTilesFs() =
                     | Some (x) -> this.SetCellv(pos, x)
                     | None -> ()
                 GD.Print "done")
-            |> poll.AndThen(fun _ ->
+            |> Poll.AndThen(fun _ ->
                 Globals.getCurrentId ()
                 |> PollingClient.getPlayerImage
-                |> poll.MapOk(fun x ->
+                |> Poll.MapOk(fun x ->
                     let location =
                         this.MapToWorld(Vector2((float32 dungeon.player_at.x), float32 dungeon.player_at.y), true)
                         + this.Position
                         + (this.CellSize / Vector2(float32 2.0, float32 2.0))
 
                     this.EmitSignal("SetPlayerPos", location, x)))
-            |> poll.IgnoreResult
+            |> Poll.IgnoreResult
             |> Some
 
         ()
 
-    override this._Process delta = drawDungeon |> poll.TryIgnorePoll
+    override this._Process delta = drawDungeon |> Poll.TryIgnorePoll

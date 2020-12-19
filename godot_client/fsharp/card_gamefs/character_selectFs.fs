@@ -17,7 +17,7 @@ type character_selectFs() as this =
 
     let getCharacterRequest =
         PollingClient.characeterSelect ()
-        |> poll.After(fun x ->
+        |> Poll.After(fun x ->
             match x with
             | Ok (x) ->
                 match x with
@@ -38,20 +38,20 @@ type character_selectFs() as this =
     override this._Ready() = charSelectButton.Value.Hide()
 
     override this._Process(delta) =
-        getCharacterRequest |> poll.ignorePoll
-        selectCharacter |> poll.TryIgnorePoll
+        getCharacterRequest |> Poll.ignorePoll
+        selectCharacter |> Poll.TryIgnorePoll
 
     member this.OnCharSelectButtonPressed() =
         selectCharacter <-
             match options |> Array.toList with
             | [] -> PollingClient.createCharacter ()
             | top :: _ -> Poll.Ready(Ok(Some(top)))
-            |> poll.After(fun x ->
+            |> Poll.After(fun x ->
                 match x with
                 | Ok (x) ->
                     match x with
                     | Some (x) -> this.EmitSignal("SelectedCharacter", x)
                     | None -> ()
                 | Result.Error (_) -> ())
-            |> poll.Map ignore
+            |> Poll.Map ignore
             |> Some
