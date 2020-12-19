@@ -5,6 +5,7 @@ use card_game_shared::{
     battle_log::{Action, ActionsDuringTurn, PossibleActions, TriggerTypes},
     characters::{CharacterCreationResponse, CharacterList},
     dungeon::{DungeonLayout, EventProcesed, TileState},
+    image_map::{ImageUrlWithName, SerializedSpriteSheet},
     users::{LoginData, LoginReply, RegisterData},
     ErrorMessage,
 };
@@ -32,6 +33,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (schema_for!(LoginData), "LoginData"),
         (schema_for!(LoginReply), "LoginReply"),
         (schema_for!(RegisterData), "RegisterData"),
+        (schema_for!(SerializedSpriteSheet), "SerializedSpriteSheet"),
+        (schema_for!(ImageUrlWithName), "ImageUrlWithName"),
     ];
 
     let mut collector = ExternalTypeCollector::new();

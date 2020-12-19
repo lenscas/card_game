@@ -6,6 +6,7 @@ pub mod battle_log;
 pub mod characters;
 pub mod dungeon;
 pub mod funcs;
+pub mod image_map;
 pub mod users;
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
