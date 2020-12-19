@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://src/character_select.cs" type="Script" id=1]
+[ext_resource path="res://src/SceneController.cs" type="Script" id=2]
+
+[node name="SceneController" type="Node"]
+script = ExtResource( 2 )
+
+[node name="CharacterSelect" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Button" type="Button" parent="CharacterSelect"]
+margin_left = 370.287
+margin_top = 215.593
+margin_right = 647.287
+margin_bottom = 235.593
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="SelectedCharacter" from="CharacterSelect" to="." method="_OnSelectedCharacter"]
+[connection signal="pressed" from="CharacterSelect/Button" to="CharacterSelect" method="OnCharSelectButtonPressed"]

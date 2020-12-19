@@ -183,7 +183,8 @@ CREATE TABLE public.sessions (
 CREATE TABLE public.users (
     id bigint NOT NULL,
     username varchar(255) NOT NULL,
-    password varchar(255) NOT NULL
+    password varchar(255) NOT NULL,
+    dungeon_tile_map json
 );
 
 
