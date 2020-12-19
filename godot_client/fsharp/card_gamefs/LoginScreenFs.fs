@@ -5,39 +5,39 @@ open JsonData
 open System.Threading.Tasks
 open FSharp.Json
 open FSharp.Json.Json
+open FSharp.Control.Tasks
+open FSharp.Control.Tasks.NonAffine
 
 type LoginScreenFs() as this =
     inherit Control()
 
     let userNameNode =
-        lazy (this.GetNode(new NodePath("UserName")) :?> LineEdit)
+        lazy (this.GetNode<LineEdit>(new NodePath("UserName")))
 
     let passwordNode =
-        lazy (this.GetNode(new NodePath("Password")) :?> LineEdit)
+        lazy (this.GetNode<LineEdit>(new NodePath("Password")))
 
-    let mutable alreadyRunning = false
+
+    let mutable currentlyProcessing: Option<Poll<bool>> = None
+
+    override this._Process(delta) =
+        currentlyProcessing
+        |> poll.TryPoll(fun x ->
+            if x then
+                this.GetTree().ChangeScene("res://src/character_select.tscn")
+                |> ignore
+            currentlyProcessing <- None)
+        |> ignore
 
     member this._OnLoginButtonpressed() =
-        if alreadyRunning then
-            ()
-        else
-            alreadyRunning <- true
-
-            let data: JsonData.LoginData =
-                { username = userNameNode.Value.Text
-                  password = passwordNode.Value.Text }
-
-            async {
-                newBasicClient.connect "http://127.0.0.1:3030"
-
-
-                let! x = newBasicClient.login data
-
-                GD.Print(x)
-
-                alreadyRunning <- false
-
-                ()
-            }
-            |> Async.StartAsTask
-            |> ignore
+        if currentlyProcessing.IsNone then
+            currentlyProcessing <-
+                (PollingClient.connect "127.0.0.1" 3030 false)
+                |> poll.AndThenOk(fun _ ->
+                    (PollingClient.login userNameNode.Value.Text passwordNode.Value.Text)
+                    |> poll.Map(fun x -> Ok(x)))
+                |> poll.Map(fun x ->
+                    match x with
+                    | Ok (x) -> x
+                    | _ -> false)
+                |> Some

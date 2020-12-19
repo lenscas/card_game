@@ -20,6 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <compile Include="schemas/ImageUrlWithName.schema.fs"/>
+    <compile Include="schemas/SerializedSpriteSheet.schema.fs"/>
     <compile Include="schemas/BattleErrors.schema.fs"/>
     <compile Include="schemas/TileState.schema.fs"/>
     <compile Include="schemas/ErrorMessage.schema.fs"/>
@@ -35,17 +37,27 @@
     <compile Include="schemas/CharacterCreationResponse.schema.fs"/>
     <compile Include="schemas/Action.schema.fs"/>
     <compile Include="schemas/ActionsDuringTurn.schema.fs"/>
+    <compile Include="schemas/TurnResponse.schema.fs"/>
     <compile Include="schemas/DungeonLayout.schema.fs"/>
   </ItemGroup>
   <ItemGroup>
+     <compile Include="SignalAwaiter.fs" />
+    <compile Include="poll.fs" />
+    <compile Include="basicClient.fs" />
     <compile Include="globals.fs"/>
     <Compile Include="newBasicClient.fs" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="SceneControllerFs.fs" />
+    <Compile Include="DungeonFs.fs" />
+    <Compile Include="DungeonTilesFs.fs" />
     <Compile Include="character_selectFs.fs" />
     <Compile Include="LoginScreenFs.fs" />
+    <Compile Include="PlayerDungeonFs.fs"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <PackageReference Include="Ply" Version="0.3.1" />
     <Reference Include="GodotSharp">
       <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
     </Reference>
