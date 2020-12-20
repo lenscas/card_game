@@ -32,6 +32,8 @@ module PollHelper =
 type Poll<'T>(func: unit -> PollResult<'T>) =
     let mutable funcResult: PollResult<'T> = NotYet
 
+    member this.Peek() = funcResult
+
     member this.Poll() =
         match funcResult with
         | Got (x) -> Got(x)
@@ -146,6 +148,16 @@ module Poll =
             | Got (x) -> Some(func (x))
             | NotYet -> None
         | None -> None
+
+    let TryPeek<'a, 't> (func: 'a -> 't) (poll: Poll<'a> option) =
+        match poll with
+        | Some (poll) ->
+            match poll.Peek() with
+            | Got (x) -> Some(func (x))
+            | NotYet -> None
+        | None -> None
+
+    let TryIgnorePeek<'a, 't> (func: 'a -> 't) (poll: Poll<'a> option) = (TryPeek func poll) |> ignore
 
     let ignorePoll<'T> (poll: Poll<'T>) = poll.Poll() |> ignore
     let TryIgnorePoll<'T> (poll: Option<Poll<'T>>) = poll |> TryPoll ignore |> ignore

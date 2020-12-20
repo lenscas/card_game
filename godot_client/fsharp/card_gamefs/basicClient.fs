@@ -125,7 +125,7 @@ module PollingClient =
     let request<'T, 'A> urlPart method (data: Option<'A>) =
         data
         |> Option.map (Json.serialize)
-        |> requestSerialized urlPart method
+        |> requestSerialized<'T> urlPart method
 
 
 
@@ -203,6 +203,13 @@ module PollingClient =
 
             |> Poll.Map Ok)
 
+    let MoveInDungeon (charId: int) (newLocation: JsonData.BasicVector_for_uint) =
+        let url =
+            createUrl [ "dungeon"
+                        charId.ToString()
+                        "move" ]
+
+        post<JsonData.EventProcesed, _> url newLocation
 
 // getImage
 // |> poll.AndThenOk(fun x ->
