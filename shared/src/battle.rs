@@ -21,7 +21,7 @@ pub struct TakeAction {
     pub character_id: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum BattleErrors {
     ChosenCardNotInHand(usize),
     CardCostsTooMuch {
