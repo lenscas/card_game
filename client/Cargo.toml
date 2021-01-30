@@ -15,5 +15,5 @@ serde_json =  "1.0"
 mergui = "0.1.0-alpha0.6"
 quicksilver= {version="0.4.0-alpha0.6", features=["stdweb"]}
 async-trait = "*"
-silver_animation= "0.1.0-alpha0.4"
+silver_animation= "0.1.0"
 #const-tweaker = "0.3.1"
