@@ -1,37 +1,36 @@
 [package]
-name = "card_game"
-version = "0.1.0"
 authors = ["lenscas <lenscas@gmail.com>"]
 edition = "2018"
+name = "card_game"
+version = "0.1.0"
 
 [[bin]]
+bench = false
 name = "teal_generator"
 test = false
-bench = false
-
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "0.2.21", features = ["macros","fs","stream"] }
-warp = "*"
-sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "runtime-tokio", "macros", "postgres", "offline", "json" ] }
+argonautica = "*"
+base64 = "*"
+card_game_shared = {path = "../shared", features = ["server"]}
 dotenv = "*"
 futures = "*"
-serde = {version="1.0", features=["derive"]}
-serde_json = "*"
-argonautica = "*"
-rand_core="*"
-rand = "*"
-sha2 = "*"
-base64 = "*"
 http = "0.2.0"
-rlua = "*"
-card_game_shared = {path="../shared", features=["server"]}
 pretty_env_logger = "*"
-tealr = {version = "0.2.0"}
+rand = "*"
+rand_core = "*"
+rlua = "*"
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "*"
+sha2 = "*"
+sqlx = {version = "0.4.0-beta.1", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "offline", "json"]}
+tealr = {version = "0.3.1"}
+tokio = {version = "0.2", features = ["macros", "fs", "stream"]}
+warp = "0.2.5"
 #card_game_shared = {path="../card_game_shared", features=["server"]}
-sheep = "*"
 image = "*"
+sheep = "*"
 [profile.dev.package."*"]
 opt-level = 3

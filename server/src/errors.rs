@@ -58,6 +58,7 @@ impl From<HashError> for ReturnError {
         ReturnError::HashError(error)
     }
 }
+
 impl From<ReturnError> for warp::reject::Rejection {
     fn from(error: ReturnError) -> Self {
         warp::reject::custom(error)

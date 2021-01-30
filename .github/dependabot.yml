@@ -1,16 +1,9 @@
 version: 2
 updates:
 - package-ecosystem: cargo
-  directory: "/client"
-  schedule:
-    interval: daily
-    time: "17:00"
-    timezone: Europe/Amsterdam
-  open-pull-requests-limit: 10
-- package-ecosystem: cargo
   directory: "/server"
   schedule:
     interval: daily
     time: "17:00"
     timezone: Europe/Amsterdam
-  open-pull-requests-limit: 10
+  open-pull-requests-limit: 20
