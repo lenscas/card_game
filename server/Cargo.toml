@@ -25,7 +25,7 @@ rand_core="*"
 rand = "*"
 sha2 = "*"
 base64 = "*"
-http = "0.2.0"
+http = "0.2.3"
 rlua = "*"
 card_game_shared = {path="../shared", features=["server"]}
 pretty_env_logger = "*"
