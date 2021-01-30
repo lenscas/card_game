@@ -37,8 +37,11 @@ type LoginScreenFs() as this =
                             Poll.Ready(false)
 
                     if canLogin then
-                        this.GetTree().ChangeScene("res://src/character_select.tscn")
+                        this
+                            .GetTree()
+                            .ChangeScene("res://src/character_select.tscn")
                         |> ignore
+
 
                     currentlyProcessing <- None
 

@@ -49,6 +49,7 @@ module PollingClient =
         | Some x -> x |> Ok |> Poll.Ready
         | None ->
             let newClient = new HTTPClient()
+
             (getConnection newClient url.Value port.Value usessl.Value)
             |> Poll.AfterOk(fun x -> x.GetStatus() |> ignore)
 
@@ -66,6 +67,7 @@ module PollingClient =
         url <- Some host
         port <- Some port1
         usessl <- Some ssl
+
         findConnection ()
         |> Poll.MapOk(fun x -> x.GetStatus())
 
@@ -76,50 +78,78 @@ module PollingClient =
 
     let bareRequest urlPart method (data: option<string>) =
         findConnection ()
-        |> Poll.AndThenOk(fun client ->
-            client.Request
-                (method,
-                 urlPart,
-                 [| if token.IsSome
-                    then yield "authorization_token: " + token.Value
-                    yield "Accept: application/json"
-                    yield "Content-Type: application/json" |],
-                 data |> Option.toObj)
-            |> fromGodotError (fun () -> Ok(Poll(fun () -> waitCheck client)))
-            |> Poll.FromResult
-            |> Poll.Flatten
-            |> Poll.AndThenOk(fun _ ->
-                let mutable res: byte list = []
-                Poll(fun () ->
-                    match client.GetStatus() with
-                    | HTTPClient.Status.Resolving
-                    | HTTPClient.Status.Requesting
-                    | HTTPClient.Status.Connecting -> NotYet
-                    | HTTPClient.Status.Body ->
-                        res <-
-                            client.ReadResponseBodyChunk()
-                            |> Array.toList
-                            |> List.append res
-                        NotYet
-                    | _ -> Got(Ok(res))))
-            |> Poll.MapOk List.toArray)
+        |> Poll.AndThenOk
+            (fun client ->
+                client.Request(
+                    method,
+                    urlPart,
+                    [| if token.IsSome then
+                           yield "authorization_token: " + token.Value
+                       yield "Accept: application/json"
+                       yield "Content-Type: application/json" |],
+                    data |> Option.toObj
+                )
+                |> fromGodotError (fun () -> Ok(Poll(fun () -> waitCheck client)))
+                |> Poll.FromResult
+                |> Poll.Flatten
+                |> Poll.AndThenOk
+                    (fun _ ->
+                        let mutable res: byte list = []
+
+                        Poll
+                            (fun () ->
+                                match client.GetStatus() with
+                                | HTTPClient.Status.Resolving
+                                | HTTPClient.Status.Requesting
+                                | HTTPClient.Status.Connecting -> NotYet
+                                | HTTPClient.Status.Body ->
+                                    res <-
+                                        client.ReadResponseBodyChunk()
+                                        |> Array.toList
+                                        |> List.append res
+
+                                    NotYet
+                                | _ -> Got(Ok(res))))
+                |> Poll.MapOk List.toArray)
 
     let requestSerialized<'T> urlPart method (data: option<string>) =
         (bareRequest urlPart method data)
         |> Poll.MapOk System.Text.Encoding.UTF8.GetString
-        |> Poll.MapOk(fun x ->
-            try
-                Some(Json.deserialize<'T> x)
-            with _ -> None)
+        |> Poll.MapOk
+            (fun x ->
+                try
+                    Some(Json.deserialize<'T> x)
+                with err ->
+                    GD.PrintErr("Problem during deserialization. Error:")
+                    GD.PrintErr(err)
+                    None
+
+                )
+
+    let getBool urlPart =
+        (bareRequest urlPart HTTPClient.Method.Get None)
+        |> Poll.MapOk System.Text.Encoding.UTF8.GetString
+        |> Poll.MapOk
+            (fun x ->
+                GD.Print("got back:")
+                GD.Print(x)
+
+                let trimmed = x.Trim().ToLower()
+
+                if trimmed = "false" then Some false
+                elif trimmed = "true" then Some true
+                else None)
 
     let getImage url =
         (bareRequest url HTTPClient.Method.Get None)
-        |> Poll.MapOk(fun x ->
-            let image = new Image()
-            image.LoadPngFromBuffer(x)
-            |> fromGodotError (fun _ -> Ok(image))
+        |> Poll.MapOk
+            (fun x ->
+                let image = new Image()
 
-            )
+                image.LoadPngFromBuffer(x)
+                |> fromGodotError (fun _ -> Ok(image))
+
+                )
         |> Poll.Flatten
 
     let request<'T, 'A> urlPart method (data: Option<'A>) =
@@ -146,15 +176,16 @@ module PollingClient =
         { username = username
           password = password }
         |> post<JsonData.LoginReply, JsonData.LoginData> "/login"
-        |> Poll.Map(fun x ->
-            match x with
-            | Ok (x) ->
+        |> Poll.Map
+            (fun x ->
                 match x with
-                | Some (x) ->
-                    if x.success then token <- Some(x.token)
-                    x.success
-                | None -> false
-            | x -> false)
+                | Ok (x) ->
+                    match x with
+                    | Some (x) ->
+                        if x.success then token <- Some(x.token)
+                        x.success
+                    | None -> false
+                | x -> false)
 
     let characeterSelect () = get<CharacterList> "/characters"
 
@@ -165,8 +196,8 @@ module PollingClient =
     let isCharacterInBattle (id: int) =
         [ "characters"; id.ToString() ]
         |> createUrl
-        |> get<bool>
-        |> Poll.MapOk(fun x -> x |> Option.defaultValue false)
+        |> getBool
+        |> Poll.MapOk(Option.defaultValue false >> not)
 
     let getDungeon (charId: int) =
         [ "dungeon"; charId.ToString() ]
@@ -182,26 +213,27 @@ module PollingClient =
         [ "dungeon"; "tiles"; "list" ]
         |> createUrl
         |> get<JsonData.ImageUrlWithName []>
-        |> Poll.AndThenOk(fun x ->
-            match x with
-            | Some x ->
-                let getPictureList =
-                    new List<Poll<Result<Image * string, Error>>>()
+        |> Poll.AndThenOk
+            (fun x ->
+                match x with
+                | Some x ->
+                    let getPictureList =
+                        new List<Poll<Result<Image * string, Error>>>()
 
-                for y in x do
-                    y.url
-                    |> getImage
-                    |> Poll.MapOk(fun x -> (x, y.name))
-                    |> getPictureList.Add
+                    for y in x do
+                        y.url
+                        |> getImage
+                        |> Poll.MapOk(fun x -> (x, y.name))
+                        |> getPictureList.Add
 
-                let p =
-                    getPictureList |> Seq.toArray |> Poll.All
+                    let p =
+                        getPictureList |> Seq.toArray |> Poll.All
 
-                p
+                    p
 
-            | None -> Poll.Ready([])
+                | None -> Poll.Ready([])
 
-            |> Poll.Map Ok)
+                |> Poll.Map Ok)
 
     let MoveInDungeon (charId: int) (newLocation: JsonData.BasicVector_for_uint) =
         let url =
@@ -211,13 +243,51 @@ module PollingClient =
 
         post<JsonData.EventProcesed, _> url newLocation
 
-// getImage
-// |> poll.AndThenOk(fun x ->
-//     [ "dungeon"; "tiles"; "map" ]
-//     |> createUrl
-//     |> get<JsonData.SerializedSpriteSheet>
-//     |> poll.MapOk(fun y ->
-//         let image = new Image()
-//         image.LoadPngFromBuffer(x)
-//         |> fromGodotError (fun _ -> Ok(image, y))))
-// |> poll.Flatten
+    let getBattle (characterId: int) =
+        [ "battle"; characterId.ToString() ]
+        |> createUrl
+        |> get<JsonData.ReturnBattle>
+        |> Poll.AndThenOk
+            (fun x ->
+                match x with
+                | Some (x) ->
+                    x.hand
+                    |> Array.mapi
+                        (fun i y ->
+
+                            [ "assets"; "cards"; y + ".png" ]
+                            |> createUrl
+                            |> getImage
+                            |> Poll.MapOk(fun x -> i, x))
+                    |> Poll.All
+                    |> Poll.Map
+                        (fun x ->
+                            let rec func
+                                (l: list<Result<int * Image, Error>>)
+                                (state: Option<list<int * Image>>)
+                                : Result<list<int * Image>, Error> =
+                                match l with
+                                | [] ->
+                                    match state with
+                                    | Some y -> Ok y
+                                    | None -> Ok []
+                                | head :: tail ->
+                                    match head with
+                                    | Result.Error y -> Result.Error y
+                                    | Ok y ->
+                                        match state with
+                                        | None -> [ y ] |> Some |> func tail
+                                        | Some z -> y :: z |> Some |> func tail
+
+                            func x None)
+                | None -> [] |> Ok |> Poll.Ready
+                |> Poll.MapOk(fun y -> (x, y)))
+
+    let castCard (card: int) (character: int) =
+        let url = [ "battle" ] |> createUrl
+
+        post<JsonData.TurnResponse, _>
+            url
+            { character_id = character
+              play_card = card }
+        |> Poll.MapOk(Option.defaultValue TurnResponse.Done >> Some)

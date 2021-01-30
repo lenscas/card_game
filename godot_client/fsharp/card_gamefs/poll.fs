@@ -39,16 +39,14 @@ type Poll<'T>(func: unit -> PollResult<'T>) =
         | Got (x) -> Got(x)
         | NotYet ->
             let res = func ()
-            match res with
-            | Got (x) ->
-                funcResult <- Got(x)
-                res
-            | x -> x
+            funcResult <- res
+            funcResult
 
     member this.Force(waiter: unit -> SignalAwaiter2) =
         task {
             let mutable value: option<'T> = None
             let mutable breakOut = false
+
             while not breakOut do
                 let shouldWait =
                     match this.Poll() with
@@ -68,13 +66,15 @@ type Poll<'T>(func: unit -> PollResult<'T>) =
         }
 
     static member FromResult<'T, 'B>(res: Result<Poll<'T>, 'B>): (Poll<Result<'T, 'B>>) =
-        new Poll<Result<'T, 'B>>(fun () ->
-        match res with
-        | Ok (x) ->
-            match x.Poll() with
-            | Got (z) -> Got(Ok(z))
-            | NotYet -> NotYet
-        | Result.Error (x) -> Got(Result.Error(x)))
+        new Poll<Result<'T, 'B>>(
+            fun () ->
+                match res with
+                | Ok (x) ->
+                    match x.Poll() with
+                    | Got (z) -> Got(Ok(z))
+                    | NotYet -> NotYet
+                | Result.Error (x) -> Got(Result.Error(x))
+        )
 
     static member Ready<'T> res =
         new Poll<'T>(fun () -> PollResult.Got(res))
@@ -83,30 +83,35 @@ module Poll =
     let AndThen<'A, 'T> (func: 'A -> Poll<'T>) (poll1: Poll<'A>) =
         let mutable otherPoll: option<Poll<'T>> = None
 
-        new Poll<'T>(fun () ->
-        match otherPoll with
-        | Some (x) -> x.Poll()
-        | None ->
-            match poll1.Poll() with
-            | Got (x) ->
-                otherPoll <- Some(func (x))
-                NotYet
-            | NotYet -> NotYet)
+        new Poll<'T>(
+            fun () ->
+                match otherPoll with
+                | Some (x) -> x.Poll()
+                | None ->
+                    match poll1.Poll() with
+                    | Got (x) ->
+                        otherPoll <- Some(func (x))
+                        NotYet
+                    | NotYet -> NotYet
+        )
 
     let AndThenOk<'A, 'ERR, 'B> (func: 'A -> Poll<Result<'B, 'ERR>>) (poll1: Poll<Result<'A, 'ERR>>) =
         let mutable otherPoll: option<Poll<Result<'B, 'ERR>>> = None
 
-        new Poll<Result<'B, 'ERR>>(fun () ->
-        match otherPoll with
-        | Some (x) -> x.Poll()
-        | None ->
-            match poll1.Poll() with
-            | Got (x) ->
-                match x with
-                | Ok (x) -> otherPoll <- Some(func (x))
-                | Result.Error (x) -> otherPoll <- Some(Poll(fun () -> Got(Result.Error(x))))
-                NotYet
-            | NotYet -> NotYet)
+        new Poll<Result<'B, 'ERR>>(
+            fun () ->
+                match otherPoll with
+                | Some (x) -> x.Poll()
+                | None ->
+                    match poll1.Poll() with
+                    | Got (x) ->
+                        match x with
+                        | Ok (x) -> otherPoll <- Some(func (x))
+                        | Result.Error (x) -> otherPoll <- Some(Poll(fun () -> Got(Result.Error(x))))
+
+                        NotYet
+                    | NotYet -> NotYet
+        )
 
     let Map<'A, 'T> (func: 'A -> 'T) (poll1: Poll<'A>) =
         poll1
@@ -114,30 +119,34 @@ module Poll =
 
     let MapOk<'A, 'T, 'Err> (func: 'A -> 'T) (poll: Poll<Result<'A, 'Err>>) =
         poll
-        |> Map(fun x ->
-            match x with
-            | Ok (x) -> Ok(func (x))
-            | Result.Error (x) -> Result.Error(x))
+        |> Map
+            (fun x ->
+                match x with
+                | Ok (x) -> Ok(func (x))
+                | Result.Error (x) -> Result.Error(x))
 
     let After func poll =
         poll
-        |> Map(fun x ->
-            func (x)
-            x)
+        |> Map
+            (fun x ->
+                func (x)
+                x)
 
     let AfterOk func poll =
         poll
-        |> After(fun x ->
-            match x with
-            | Result.Error (_) -> ()
-            | Ok (x) -> func (x))
+        |> After
+            (fun x ->
+                match x with
+                | Result.Error (_) -> ()
+                | Ok (x) -> func (x))
 
     let Flatten<'T, 'ERR> (poll: Poll<Result<Result<'T, 'ERR>, 'ERR>>) =
         poll
-        |> Map(fun x ->
-            match x with
-            | Ok (x) -> x
-            | Result.Error (x) -> Result.Error x)
+        |> Map
+            (fun x ->
+                match x with
+                | Ok (x) -> x
+                | Result.Error (x) -> Result.Error x)
 
     let IgnoreResult poll = poll |> Map ignore
 
@@ -163,25 +172,26 @@ module Poll =
     let TryIgnorePoll<'T> (poll: Option<Poll<'T>>) = poll |> TryPoll ignore |> ignore
 
     let All<'T> (polls: Poll<'T> []): Poll<'T list> =
-        Poll<'T list>(fun () ->
-            let rec loop (polls: Poll<'T> list) (state: PollResult<'T list>): PollResult<'T list> =
-                match polls with
-                | top :: tail ->
-                    let res = top.Poll()
+        Poll<'T list>
+            (fun () ->
+                let rec loop (polls: Poll<'T> list) (state: PollResult<'T list>): PollResult<'T list> =
+                    match polls with
+                    | top :: tail ->
+                        let res = top.Poll()
 
-                    let newState =
-                        match res with
-                        | Got x ->
-                            match state with
-                            | Got y -> y |> List.append [ x ] |> Got
+                        let newState =
+                            match res with
+                            | Got x ->
+                                match state with
+                                | Got y -> y |> List.append [ x ] |> Got
+                                | NotYet -> NotYet
+
                             | NotYet -> NotYet
 
-                        | NotYet -> NotYet
+                        loop tail newState
+                    | [] -> state
 
-                    loop tail newState
-                | [] -> state
-
-            [] |> Got |> loop (polls |> Array.toList))
+                [] |> Got |> loop (polls |> Array.toList))
 
     type PollBuilder() =
         member this.Bind(value, func) = AndThen func value
@@ -189,13 +199,9 @@ module Poll =
         member this.ReturnFrom x = x
         member this.Zero() = Poll.Ready()
 
-        member this.Combine<'a, 'b>(a: Poll<'a>, b: Poll<'b>) =
-            Poll(fun () ->
-                let resA = a.Poll()
-                let resB = b.Poll()
-                match (resA, resB) with
-                | PollResult.Got (a), PollResult.Got (b) -> PollResult.Got(a, b)
-                | _ -> PollResult.NotYet)
+        member this.Combine<'b>(a: Poll<unit>, b: Poll<'b>) =
+
+            a |> AndThen(fun _ -> b)
 
         member this.Delay f = f ()
 

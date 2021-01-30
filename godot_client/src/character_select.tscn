@@ -1,9 +1,11 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://src/character_select.cs" type="Script" id=1]
 [ext_resource path="res://src/SceneController.cs" type="Script" id=2]
+[ext_resource path="res://src/Dungeon.tscn" type="PackedScene" id=3]
+[ext_resource path="res://src/Arena.tscn" type="PackedScene" id=4]
 
-[node name="SceneController" type="Node"]
+[node name="SceneController" type="Node2D"]
 script = ExtResource( 2 )
 
 [node name="CharacterSelect" type="Control" parent="."]
@@ -22,5 +24,13 @@ margin_bottom = 235.593
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Dungeon" parent="." instance=ExtResource( 3 )]
+visible = false
+
+[node name="Arena" parent="." instance=ExtResource( 4 )]
 [connection signal="SelectedCharacter" from="CharacterSelect" to="." method="_OnSelectedCharacter"]
 [connection signal="pressed" from="CharacterSelect/Button" to="CharacterSelect" method="OnCharSelectButtonPressed"]
+[connection signal="BattleEnded" from="Arena" to="." method="OnBattleEnded"]
+
+[editable path="Arena"]

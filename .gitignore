@@ -18,3 +18,4 @@
 .fake
 .ionide
 /**/.vscode/settings.json
+/godot_client/mono_crash.*
