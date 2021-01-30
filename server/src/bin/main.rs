@@ -157,9 +157,11 @@ fn handle_custom_error(error: &ReturnError) -> ReturnHandle {
             ReturnHandle::new(StatusCode::INTERNAL_SERVER_ERROR, "in custom error".into())
         }
         ReturnError::CustomError(message, code) => ReturnHandle::new(*code, message.to_string()),
-        ReturnError::BattleErrors(x) => serde_json::to_string(x)
-            .map(|v| warp::reply::with_status(v, StatusCode::CONFLICT).into())
-            .unwrap_or_else(|v| handle_custom_error(&ReturnError::from(v))),
+        ReturnError::BattleErrors(x) => {
+            serde_json::to_string(&card_game_shared::battle::TurnResponse::Error(x.to_owned()))
+                .map(|v| warp::reply::with_status(v, StatusCode::CONFLICT).into())
+                .unwrap_or_else(|v| handle_custom_error(&ReturnError::from(v)))
+        }
         ReturnError::DatabaseError(_) | ReturnError::LuaError(_) | ReturnError::JsonError(_) => {
             ReturnHandle::new(
                 StatusCode::INTERNAL_SERVER_ERROR,

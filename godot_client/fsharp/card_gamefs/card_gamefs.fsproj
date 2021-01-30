@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- When compiling .NET SDK 2.0 projects targeting .NET 4.x on Mono using 'dotnet build' you -->
+    <!-- have to teach MSBuild where the Mono copy of the reference asssemblies is -->
+    <TargetIsMono Condition="$(TargetFramework.StartsWith('net4')) and '$(OS)' == 'Unix'">true</TargetIsMono>
+
+    <!-- Look in the standard install locations -->
+    <BaseFrameworkPathOverrideForMono Condition="'$(BaseFrameworkPathOverrideForMono)' == '' AND '$(TargetIsMono)' == 'true' AND EXISTS('/Library/Frameworks/Mono.framework/Versions/Current/lib/mono')">/Library/Frameworks/Mono.framework/Versions/Current/lib/mono</BaseFrameworkPathOverrideForMono>
+    <BaseFrameworkPathOverrideForMono Condition="'$(BaseFrameworkPathOverrideForMono)' == '' AND '$(TargetIsMono)' == 'true' AND EXISTS('/usr/lib/mono')">/usr/lib/mono</BaseFrameworkPathOverrideForMono>
+    <BaseFrameworkPathOverrideForMono Condition="'$(BaseFrameworkPathOverrideForMono)' == '' AND '$(TargetIsMono)' == 'true' AND EXISTS('/usr/local/lib/mono')">/usr/local/lib/mono</BaseFrameworkPathOverrideForMono>
+    <FrameworkPathOverride Condition="'$(BaseFrameworkPathOverrideForMono)' != '' AND '$(TargetFramework)' == 'net472'">$(BaseFrameworkPathOverrideForMono)/4.7.2-api</FrameworkPathOverride>
+    <EnableFrameworkPathOverride Condition="'$(BaseFrameworkPathOverrideForMono)' != ''">true</EnableFrameworkPathOverride>
+
+    <!-- Add the Facades directory.  Not sure how else to do this. Necessary at least for .NET 4.5 -->
+    <AssemblySearchPaths Condition="'$(BaseFrameworkPathOverrideForMono)' != ''">$(FrameworkPathOverride)/Facades;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <compile Include="schemas/ImageUrlWithName.schema.fs"/>
+    <compile Include="schemas/SerializedSpriteSheet.schema.fs"/>
+    <compile Include="schemas/BattleErrors.schema.fs"/>
+    <compile Include="schemas/TileState.schema.fs"/>
+    <compile Include="schemas/ErrorMessage.schema.fs"/>
+    <compile Include="schemas/EventProcesed.schema.fs"/>
+    <compile Include="schemas/PossibleActions.schema.fs"/>
+    <compile Include="schemas/RegisterData.schema.fs"/>
+    <compile Include="schemas/ReturnBattle.schema.fs"/>
+    <compile Include="schemas/TakeAction.schema.fs"/>
+    <compile Include="schemas/TriggerTypes.schema.fs"/>
+    <compile Include="schemas/LoginData.schema.fs"/>
+    <compile Include="schemas/LoginReply.schema.fs"/>
+    <compile Include="schemas/CharacterList.schema.fs"/>
+    <compile Include="schemas/CharacterCreationResponse.schema.fs"/>
+    <compile Include="schemas/Action.schema.fs"/>
+    <compile Include="schemas/ActionsDuringTurn.schema.fs"/>
+    <compile Include="schemas/TurnResponse.schema.fs"/>
+    <compile Include="schemas/DungeonLayout.schema.fs"/>
+  </ItemGroup>
+  <ItemGroup>
+     <compile Include="SignalAwaiter.fs" />
+    <compile Include="poll.fs" />
+    <compile Include="basicClient.fs" />
+    <compile Include="globals.fs"/>
+    <Compile Include="newBasicClient.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HandContainerFs.fs" />
+    <Compile Include="RuneContainerFs.fs" />
+    <Compile Include="ArenaFs.fs"/>
+    <Compile Include="DungeonFs.fs" />
+    <Compile Include="DungeonTilesFs.fs" />
+    <Compile Include="SceneControllerFs.fs" />
+    <Compile Include="character_selectFs.fs" />
+    <Compile Include="LoginScreenFs.fs" />
+    <Compile Include="PlayerDungeonFs.fs"/>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <PackageReference Include="Ply" Version="0.3.1" />
+    <Reference Include="GodotSharp">
+      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="netstandard" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="FSharp.Json" Version="0.4.0" />
+  </ItemGroup>
+</Project>

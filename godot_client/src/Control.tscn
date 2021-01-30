@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://src/LoginScreen.cs" type="Script" id=1]
+
+[node name="LoginScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="UserName" type="LineEdit" parent="."]
+margin_left = 436.0
+margin_top = 36.0
+margin_right = 863.0
+margin_bottom = 60.0
+placeholder_text = "Username"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Password" type="LineEdit" parent="."]
+margin_left = 437.0
+margin_top = 77.0
+margin_right = 861.0
+margin_bottom = 101.0
+secret = true
+placeholder_text = "Password"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LoginButton" type="Button" parent="."]
+margin_left = 693.0
+margin_top = 120.0
+margin_right = 857.0
+margin_bottom = 140.0
+text = "Login"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="LoginButton" to="." method="_OnLoginButtonpressed"]

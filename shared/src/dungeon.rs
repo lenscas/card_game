@@ -1,12 +1,12 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub enum TileState {
     Seen(String),
     Empty,
     Hidden,
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct DungeonLayout {
     pub height: usize,
     pub widht: usize,
@@ -14,7 +14,7 @@ pub struct DungeonLayout {
     pub tiles: Vec<TileState>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub enum EventProcesed {
     Success(bool),
     Error,

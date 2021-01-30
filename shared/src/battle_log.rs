@@ -3,10 +3,11 @@ use rlua::{MetaMethod, UserDataMethods};
 #[cfg(feature = "server")]
 use tealr::{TealData, TealDataMethods, TealDerive, TypeRepresentation, UserData};
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub enum PossibleActions {
     Card(String),
     Nothing,
@@ -15,7 +16,7 @@ pub enum PossibleActions {
 impl TealData for PossibleActions {}
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub enum TriggerTypes {
     SmallRuneUser(usize),
     HexaRune(usize),
@@ -25,7 +26,7 @@ pub enum TriggerTypes {
 impl TealData for TriggerTypes {}
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct Action {
     pub triggered_before: Vec<TriggerTypes>,
     pub taken_action: PossibleActions,
@@ -47,7 +48,7 @@ impl TealData for Action {
 }
 
 #[cfg_attr(feature = "server", derive(TealDerive))]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct ActionsDuringTurn {
     before_turn: Vec<TriggerTypes>,
     first_action: Action,

@@ -31,6 +31,7 @@ card_game_shared = {path="../shared", features=["server"]}
 pretty_env_logger = "*"
 tealr = {version = "0.2.0"}
 #card_game_shared = {path="../card_game_shared", features=["server"]}
-
+sheep = "*"
+image = "*"
 [profile.dev.package."*"]
 opt-level = 3

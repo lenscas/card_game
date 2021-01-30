@@ -1,4 +1,11 @@
+/**/.import
+/**/.ionide
+/**/.mono
 /*/target
+/godot_client/obj
+/godot_client/fsharp/card_gamefs/bin
+/godot_client/fsharp/card_gamefs/obj
+/godot_client/fsharp/card_gamefs/schemas/*.fs
 **/*.rs.bk
 .env
 /server/lua/compiled/**/*.lua
@@ -8,3 +15,7 @@
 /server/assets/cards/*.svg
 /client/static/default_server.txt
 **/generation_time.txt
+.fake
+.ionide
+/**/.vscode/settings.json
+/godot_client/mono_crash.*

@@ -39,7 +39,9 @@ async fn do_turn(
         battle.save(user_id, action.character_id, &mut con).await?;
     }
     con.commit().await?;
-    Ok(Box::new(warp::reply::json(&event_list)))
+    Ok(Box::new(warp::reply::json(&TurnResponse::NextTurn(
+        event_list,
+    ))))
 }
 
 pub fn battle_route(
