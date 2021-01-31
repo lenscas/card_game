@@ -18,7 +18,7 @@ card_game_shared = {path = "../shared", features = ["server"]}
 dotenv = "*"
 futures = "*"
 http = "0.2.0"
-image = "*"
+image = {version = "*", default-features = false, features = ["png"]}
 pretty_env_logger = "*"
 rand = "*"
 rand_core = "*"
