@@ -7,8 +7,8 @@ use std::collections::HashSet;
 
 fn get_random_tile_loc(rng: &mut ThreadRng, width: usize, height: usize) -> BasicVector<usize> {
     BasicVector {
-        x: rng.gen_range(0 .. (width - 1)),
-        y: rng.gen_range(0 .. (height - 1)),
+        x: rng.gen_range(0..(width - 1)),
+        y: rng.gen_range(0..(height - 1)),
     }
 }
 
@@ -37,7 +37,7 @@ fn get_randomly_closer(
     target: usize,
     max_size: usize,
 ) -> usize {
-    if rng.gen_range(0.0 .. 1.0) < 0.4 {
+    if rng.gen_range(0.0..1.0) < 0.4 {
         if current < max_size - 1 {
             current + 1
         } else {
@@ -47,7 +47,7 @@ fn get_randomly_closer(
         current + 1
     } else if current > target {
         current - 1
-    } else if rng.gen_range(0. .. 1.) < 0.3 {
+    } else if rng.gen_range(0. ..1.) < 0.3 {
         current
     } else if rng.gen() {
         if current < max_size - 1 {
