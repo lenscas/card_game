@@ -7,7 +7,7 @@ on:
       - '**/Cargo.lock'
       - '.github/workflows/CI.yml'
 jobs:
-  formatting:
+  formatting_server:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -15,10 +15,10 @@ jobs:
       with:
         rust-version: stable
         components: rustfmt
-    - name: Formatting check
-      run: cargo fmt --all -- --check
+    - name: cargo fmt
+      run: cd server && cargo fmt --all -- --check
 
-  clippy:
+  clippy_server:
     runs-on: ubuntu-latest
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -26,5 +26,27 @@ jobs:
         rust-version: stable
         components: clippy
     - uses: actions/checkout@master
-    - name: Clippy
-      run: cargo clippy -- -D warnings
+    - name: cargo clippy
+      run: cd server && cargo clippy -- -D warnings
+  
+  formatting_shared:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: stable
+        components: rustfmt
+    - name: cargo fmt
+      run: cd shared && cargo fmt --all -- --check
+  
+  clippy_shared:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1.3.4 
+      with:
+        rust-version: stable
+        components: clippy
+    - uses: actions/checkout@master
+    - name: cargo clippy
+      run: cd shared && cargo clippy -- -D warnings
