@@ -1,26 +1,5 @@
 {
   "db": "PostgreSQL",
-  "13d19459227c9f1c0878d008da3ee9eb91bc02612140119b1a46214a1504ca6a": {
-    "query": "INSERT INTO characters (user_id, dungeon) VALUES ($1, $2) RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8",
-          "Json"
-        ]
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
   "22b2249ccc3d1e2d0c0b8b7c060ebd7deb0eb003531776e547ff8d7d688ee2af": {
     "query": "INSERT INTO characters (user_id, dungeon, character_state) VALUES ($1, $2,$3) RETURNING id",
     "describe": {
@@ -40,6 +19,74 @@
       },
       "nullable": [
         false
+      ]
+    }
+  },
+  "2a6b1a8258981f5bddedc3141f63172373f1f31865c747d515e204d41ee0e328": {
+    "query": "\n                SELECT cards.id,cards.json_file_path\n                FROM cards\n                INNER JOIN cards_in_deck\n                ON cards_in_deck.card_id = cards.id\n                INNER JOIN decks\n                ON decks.id = cards_in_deck.deck_id\n                INNER JOIN characters\n                ON characters.id = decks.character_id\n                WHERE characters.user_id = $1\n                AND character_id = $2\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "json_file_path",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "2eefd17012eb79845c6bb24475a94b9e4710d4eeb2d9a19298c372e07d98422f": {
+    "query": "SELECT current_battle \n            FROM characters \n            WHERE user_id = $1 \n            AND current_battle IS NOT NULL\n            AND characters.id = $2",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "current_battle",
+          "type_info": "Json"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true
+      ]
+    }
+  },
+  "347543bc55a45fe06bbc38471d261fdb09206643eed01594666522eb9b50bfac": {
+    "query": "SELECT dungeon_tile_map FROM users WHERE id=$1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "dungeon_tile_map",
+          "type_info": "Json"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true
       ]
     }
   },
@@ -77,64 +124,6 @@
       "nullable": []
     }
   },
-  "40a96fd0d65ca60f1cac88c22baa83f9fb86f6cca888dbcfc51d67df5a094899": {
-    "query": "UPDATE characters SET current_battle = $1 WHERE user_id = $2",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Json",
-          "Int8"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "458c1c108f3be7848dcee6fe5c1e64042df4f11f0b22218444653d16ba4b3ba1": {
-    "query": "UPDATE characters SET current_battle = null WHERE user_id = $1",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "46ff089e39fd2f4b37ace3c5576d71939e5fded7d7cbaf72330f42903abc22d7": {
-    "query": "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND current_battle IS NULL",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Json",
-          "Int8"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "48c347baf8b5aea7f849e33e581add16afacfa4b362e7af8b8d8cabbcd802ed2": {
-    "query": "SELECT COUNT(*) AS count FROM characters WHERE user_id = $1 AND current_battle IS NOT NULL",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "count",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        null
-      ]
-    }
-  },
   "48ef972bd9984fda391a8125531baf8853bd8a8a17f33f3dac999624125fe3fd": {
     "query": "UPDATE characters \n            SET dungeon=$1 \n            WHERE user_id = $2 \n            AND id = $3",
     "describe": {
@@ -142,40 +131,6 @@
       "parameters": {
         "Left": [
           "Json",
-          "Int8",
-          "Int8"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "5249da089b58709a29759f9c7fc794cad2225c7b60b6d163df6998e2c2497559": {
-    "query": "SELECT current_battle \n        FROM characters \n        WHERE user_id = $1 \n        AND current_battle IS NOT NULL\n        AND characters.id = $2",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "current_battle",
-          "type_info": "Json"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        true
-      ]
-    }
-  },
-  "54a09b66cb6aa3e2fca3f550eb1160b904d86ccb5c4e30d5859790af0af39233": {
-    "query": "UPDATE characters\n        SET current_battle = NULL \n        WHERE user_id = $1\n        AND characters.id = $2",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
           "Int8",
           "Int8"
         ]
@@ -194,26 +149,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "655354e23f5fa6a4b5a8126fc67c1219a4cc97570765b419c5d3441b155d664a": {
-    "query": "INSERT INTO characters (user_id) VALUES ($1) RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false
-      ]
     }
   },
   "687fc3a4135c8f275fe897f9b4a858598860f7bf3662879411c139b352581ccc": {
@@ -249,6 +184,19 @@
       ]
     }
   },
+  "72d03815c372b185ab8d2cf994e255591f23f691476e55291fb7b5dbc75d5ceb": {
+    "query": "UPDATE users\n        SET dungeon_tile_map = $1\n        WHERE id=$2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Json",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "7652159f753c4e7de03b28d4c6c3256a058bb127140b6ee8d788a314cc0a9265": {
     "query": "SELECT id FROM characters WHERE user_id = $1",
     "describe": {
@@ -267,6 +215,20 @@
       "nullable": [
         false
       ]
+    }
+  },
+  "7ca86d897b125999b6eb0442914fbaa140fb69fd0d85adea4ec31874d1936db3": {
+    "query": "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND id=$3",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Json",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": []
     }
   },
   "9460899f247e7850fd0a829d5413680fc51e1bccdb301e1520a294b75a5b766a": {
@@ -315,30 +277,17 @@
       ]
     }
   },
-  "a2f3fc87a2f8c3c55c138c95cbd73ece386d016fa20e7834b91138835c0d52da": {
-    "query": "\n                SELECT cards.id,cards.json_file_path\n                FROM cards\n                INNER JOIN cards_in_deck\n                ON cards_in_deck.card_id = cards.id\n                INNER JOIN decks\n                ON decks.id = cards_in_deck.deck_id\n                INNER JOIN characters\n                ON characters.id = decks.character_id\n                WHERE characters.user_id = $1\n            ",
+  "b481a97b21abd82037ad52805555eee2b550da4e04161d02ca48e69fe47ebdec": {
+    "query": "UPDATE characters SET current_battle = null WHERE user_id = $1 and id=$2",
     "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 1,
-          "name": "json_file_path",
-          "type_info": "Text"
-        }
-      ],
+      "columns": [],
       "parameters": {
         "Left": [
+          "Int8",
           "Int8"
         ]
       },
-      "nullable": [
-        false,
-        false
-      ]
+      "nullable": []
     }
   },
   "b92371c12a3bdc61d9678d8573077582362ef0b17a707236180e9ef5989118d7": {
