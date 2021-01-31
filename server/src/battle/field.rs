@@ -40,7 +40,7 @@ impl Field {
         Ok(serde_json::from_value(v.current_battle.unwrap())?)
     }
 
-    pub(crate) fn to_shared(self) -> ReturnBattle {
+    pub(crate) fn into_shared(self) -> ReturnBattle {
         let hand = self.player.deck.get_ids_from_hand();
         ReturnBattle {
             player_hp: self.player.life,
@@ -108,7 +108,7 @@ impl Field {
         )
         .execute(con)
         .await
-        .map(|v| ())
+        .map(drop)
         .map_err(Into::into)
     }
 

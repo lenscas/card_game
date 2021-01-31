@@ -12,7 +12,7 @@ async fn get_battle(
     Ok(Box::new(warp::reply::json(
         &Field::get_from_db(user_id, character_id, &db)
             .await?
-            .to_shared(),
+            .into_shared(),
     )))
 }
 
