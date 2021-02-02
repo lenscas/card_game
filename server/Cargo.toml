@@ -28,7 +28,7 @@ serde_json = "*"
 sha2 = "*"
 sheep = {version = "*", default-features = false}
 sqlx = {version = "0.4.2", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "offline", "json"]}
-tealr = {version = "0.3.1", default-features = false, features = ["derive"]}
+tealr = {version = "0.4.0", default-features = false, features = ["derive"]}
 tokio = {version = "0.2", features = ["macros", "fs", "stream"]}
 warp = {version = "0.2.5", default-features = false}
 
