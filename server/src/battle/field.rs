@@ -4,15 +4,18 @@ use card_game_shared::{
     battle::ReturnBattle,
     battle_log::{Action, ActionsDuringTurn, PossibleActions},
 };
-use rlua::{Lua, MetaMethod, UserDataMethods};
+use rlua::{Lua, MetaMethod};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, Executor, Postgres, Transaction};
 use std::{error::Error, fmt::Display, fs::read_to_string as read_to_string_sync, sync::Arc};
-use tokio::fs::read_to_string;
 
-use tealr::{TealData, TealDataMethods, TypeRepresentation, UserData};
+use tealr::{
+    embed_compiler,
+    rlu::{TealData, TealDataMethods},
+    TypeName, UserData,
+};
 
-#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeRepresentation)]
+#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeName)]
 pub struct Field {
     pub(crate) player: Player,
     pub(crate) ai: Player,
@@ -118,14 +121,18 @@ impl Field {
     ) -> Result<(Self, ActionsDuringTurn, bool), ReturnError> {
         let card = self.player.get_casted_card(chosen_card)?;
         let lua = Lua::new();
-        let engine = read_to_string("./lua/preload.lua").await?;
+        let compiler = embed_compiler!(Local());
+        let engine = compiler("lua/engine");
         let (battle, events, is_over) =
             lua.context::<_, Result<_, ReturnError>>(move |lua_ctx| {
                 let globals = lua_ctx.globals();
                 globals.set("battle", self).half_cast()?;
                 globals.set("chosenCard", card).half_cast()?;
-                let v = lua_ctx.load(&engine).set_name("test?")?.eval()?;
-                Ok(v)
+                let res: rlua::Table = lua_ctx.load(&engine).set_name("test?")?.eval()?;
+                let new_self = res.get(1)?;
+                let actions = res.get(2)?;
+                let is_over = res.get(3)?;
+                Ok((new_self, actions, is_over))
             })?;
         Ok((battle, events, is_over))
     }

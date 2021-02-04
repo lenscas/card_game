@@ -11,7 +11,7 @@ local function load_hexa_rune_code(rune : Rust.HexaRune): Rune.Rune
 end
 
 local function run_rune_code(
-	battle: Rust.Field,
+	_battle: Rust.Field,
 	owner: Rust.Player,
 	index : number,
 	rune : Rust.SmallRune, 
@@ -21,8 +21,8 @@ local function run_rune_code(
 	index = index - 1
 	local code = load_small_rune_code(rune)
 	local func = code[rune_func]
-	if code[rune_func] then
-		local x= code[rune_func] as function(...:any):(number,boolean) 
+	if func then
+		local x= func as function(...:any):(number,boolean) 
 		local y = {x(code,table.unpack(params))}
 		local ret_value = y
 		owner:save_rune(rune,index)
@@ -31,7 +31,7 @@ local function run_rune_code(
 end
 
 local function run_turn_trigger_rune(
-	battle: Rust.Field,
+	_battle: Rust.Field,
 	owner: Rust.Player,
 	index : number,
 	rune : Rust.SmallRune, 
@@ -41,8 +41,8 @@ local function run_turn_trigger_rune(
 	index = index - 1
 	local code = load_small_rune_code(rune)
 	local func = code[rune_func]
-	if code[rune_func] then
-		local x= code[rune_func] as function(...:any):boolean
+	if func then
+		local x= func as function(...:any):boolean
 		local y = x(code,table.unpack(params))
 		owner:save_rune(rune,index)
 		return y

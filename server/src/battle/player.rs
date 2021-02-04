@@ -1,11 +1,13 @@
 use super::{deck::Deck, Card, SimpleError, SmallRune};
 use crate::errors::ReturnError;
 use card_game_shared::battle::BattleErrors;
-use rlua::UserDataMethods;
 use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string as read_to_string_sync, sync::Arc};
-use tealr::{TealData, TealDataMethods, TypeRepresentation, UserData};
-#[derive(Clone, Deserialize, Serialize, Debug, UserData, TypeRepresentation)]
+use tealr::{
+    rlu::{TealData, TealDataMethods},
+    TypeName, UserData,
+};
+#[derive(Clone, Deserialize, Serialize, Debug, UserData, TypeName)]
 pub struct Player {
     pub(crate) life: u64,
     pub(crate) deck: Deck,

@@ -17,5 +17,5 @@ schemars = "*"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "*"
 sheep = "*"
-tealr = {version = "0.3.1", optional = true, default-features = false, features = ["derive"]}
+tealr = {version = "0.4.1", optional = true, default-features = false, features = ["derive", "embed_compiler_from_local"]}
 type_gen = {path = "../../type_gen", git = "https://github.com/lenscas/type_generator"}

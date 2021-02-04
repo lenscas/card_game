@@ -1,7 +1,10 @@
 #[cfg(feature = "server")]
-use rlua::{MetaMethod, UserDataMethods};
+use rlua::MetaMethod;
 #[cfg(feature = "server")]
-use tealr::{TealData, TealDataMethods, TealDerive, TypeRepresentation, UserData};
+use tealr::{
+    rlu::{TealData, TealDataMethods},
+    TealDerive, TypeName, UserData,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
