@@ -1,12 +1,15 @@
-use rlua::{MetaMethod, UserDataMethods};
+use rlua::MetaMethod;
 use serde::{Deserialize, Serialize};
-use tealr::{TealData, TealDataMethods, TypeRepresentation, UserData};
+use tealr::{
+    rlu::{TealData, TealDataMethods},
+    TypeName, UserData,
+};
 
 fn default_true() -> bool {
     true
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeRepresentation)]
+#[derive(Deserialize, Serialize, Clone, Debug, UserData, TypeName)]
 pub struct Card {
     pub(crate) id: String,
     pub(crate) name: String,

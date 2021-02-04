@@ -26,7 +26,7 @@ local function createRunCardFunc(card : Rust.Card, owner: Rust.Player, oponent:R
 			local ownedRunes = owner:get_runes()
 			for k, v in ipairs(ownedRunes) do
 				print("looping over runes", event_list)
-				if runes.run_turn_trigger_rune(battle.battle,owner, k, v, "end_of_turn_effect", {v,battle.battle,owner, oponent}) then
+				if runes.run_turn_trigger_rune(battle.battle,owner, k, v, "end_of_turn_effect", {v,battle.battle,owner, oponent} as {any}) then
 					print(k,v)
 					local a = event_list.create_trigger_small_rune_user(k);
 					event_list:add_after(a)

@@ -1,7 +1,9 @@
-use rlua::UserDataMethods;
 use serde::{Deserialize, Serialize};
 
-use tealr::{TealData, TealDataMethods, TealDerive, TypeRepresentation, UserData};
+use tealr::{
+    rlu::{TealData, TealDataMethods},
+    TealDerive, TypeName, UserData,
+};
 
 #[derive(Clone, Deserialize, Serialize, Debug, TealDerive)]
 pub struct RawRune {
