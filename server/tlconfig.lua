@@ -1,5 +1,5 @@
 return {
-    src_dir = "lua",
+    source_dir = "lua",
     include_dir = {
         "lua","lua/engine","lua/types"
     },

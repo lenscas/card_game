@@ -53,7 +53,7 @@ local function deal_damage(params: DamageParameters)
 				k,
 				rune,
 				"owner_modify_damage",
-				{rune, amount, params.from, params.to}
+				{rune, amount, params.from, params.to} as {any}
 			)
 		buff = buff or 0
 		if buff > 0 then
@@ -73,7 +73,7 @@ local function deal_damage(params: DamageParameters)
 	local hexaRunes = battle.battle:get_runes()
 	negatives = {}
 	for key, rune in ipairs(hexaRunes) do
-		local value, register_anyway = runes.run_hexa_code(battle.battle,key,rune,"modify_damage",{rune,params.from,params.to})
+		local value, register_anyway = runes.run_hexa_code(battle.battle,key,rune,"modify_damage",{rune,params.from,params.to} as {any})
 		if value > 0 then
 			amount = amount + (amount / 100 * value)
 		elseif value <0 then
@@ -97,7 +97,7 @@ local function deal_damage(params: DamageParameters)
 			k,
 			v,
 			"receiver_modify_damage",
-			{v, amount, params.from, params.to}
+			{v, amount, params.from, params.to} as {any}
 		)
 		reduction = reduction or 0
 		if reduction > 0 then
