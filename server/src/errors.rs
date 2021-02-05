@@ -59,12 +59,6 @@ impl From<HashError> for ReturnError {
     }
 }
 
-impl From<ReturnError> for warp::reject::Rejection {
-    fn from(error: ReturnError) -> Self {
-        warp::reject::custom(error)
-    }
-}
-
 impl From<std::io::Error> for ReturnError {
     fn from(error: std::io::Error) -> Self {
         ReturnError::Io(error)
