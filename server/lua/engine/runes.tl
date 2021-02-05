@@ -60,8 +60,8 @@ local function run_rune_speed_code(
 index = index - 1
 	local code = load_small_rune_code(rune)
 	local func = code[rune_func]
-	if code[rune_func] then
-		local x= code[rune_func] as function(...:any):(number,boolean)
+	if func then
+		local x= func as function(...:any):(number,boolean)
 		local y = x(code,table.unpack(params))
 		owner:save_rune(rune,index)
 		return y
@@ -136,7 +136,7 @@ return {
 				k,
 				v,
 				"owner_modify_speed",
-				{v, battle ,card, caster}
+				{v, battle ,card, caster} as {any}
 			)
 			speed = speed or 0
 			extraSpeed = extraSpeed + speed
@@ -153,7 +153,7 @@ return {
 				k,
 				v,
 				"oponent_modify_speed",
-				{v, battle ,card, caster}
+				{v, battle ,card, caster} as {any}
 			)
 			speed = speed or 0
 			extraSpeed = extraSpeed - speed

@@ -1,8 +1,8 @@
 use super::users::{force_logged_in, with_db};
 use crate::{dungeon::Dungeon, errors::ReturnError, util::convert_error};
 use card_game_shared::characters::{CharacterCreationResponse, CharacterList};
+use futures::StreamExt;
 use sqlx::{query, PgPool};
-use tokio::stream::StreamExt;
 use warp::{Filter, Reply};
 
 pub(crate) async fn create_character(
@@ -60,9 +60,12 @@ pub(crate) async fn get_characters(id: i64, db: PgPool) -> Result<Box<dyn Reply>
     let mut con = db.begin().await?;
     let res = query!("SELECT id FROM characters WHERE user_id = $1", id)
         .fetch(&mut con)
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
         .map(|v| v.map(|v| v.id))
-        .collect::<Result<_, _>>()
-        .await?;
+        .collect::<Result<Vec<_>, _>>()?;
+
     let list = CharacterList { characters: res };
 
     con.commit().await?;
