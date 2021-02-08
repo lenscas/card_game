@@ -12,7 +12,9 @@ module PollingClient =
     let mutable private url: string option = None
     let mutable private port: int option = None
     let mutable private usessl: bool option = None
-
+    let mutable private checkedCache = false
+    let mutable private memCache = new Dictionary<string, Image>()
+    let mutable private imagesStored = new HashSet<string>()
     let clients = new List<HTTPClient>()
 
     //let private client = new HTTPClient()
@@ -31,7 +33,9 @@ module PollingClient =
     let fromGodotError x y =
         match y with
         | Error.Ok -> x ()
-        | x -> Result.Error(x)
+        | x ->
+            GD.PrintErr(x)
+            Result.Error(x)
 
     let private getConnection (client: HTTPClient) host port ssl =
         client.ConnectToHost(host, port, ssl, false)
@@ -55,12 +59,6 @@ module PollingClient =
 
     let createUrl parts =
         parts |> List.fold (fun r s -> r + "/" + s) ""
-
-
-
-
-
-
 
 
     let connect host port1 ssl =
@@ -140,17 +138,180 @@ module PollingClient =
                 elif trimmed = "true" then Some true
                 else None)
 
+    let checkCacheDate () =
+        let url =
+            createUrl [ "assets"
+                        "cards"
+                        "generation_time.txt" ]
+
+        bareRequest url HTTPClient.Method.Get None
+        |> Poll.MapOk System.Text.Encoding.UTF8.GetString
+        |> Poll.Map
+            (fun y ->
+                match y with
+                | Result.Error x -> Result.Error x
+                | Ok y ->
+                    let file = new File()
+
+                    let res =
+                        if file.FileExists("user://last_update_time.txt") then
+                            let res =
+                                file.Open("user://last_update_time.txt", File.ModeFlags.Read)
+                                |> fromGodotError (fun () -> Ok(file.GetAsText()))
+                                |> Result.map (fun x -> x = y)
+
+                            file.Close()
+                            res
+                        else
+                            Ok false
+
+                    file.Open("user://last_update_time.txt", File.ModeFlags.Write)
+                    |> fromGodotError (fun _ -> Ok(file.StoreString y))
+                    |> ignore
+
+                    res)
+
+
+
+
+
+
+
+
+
+
+
+
+
+    let readCachedImages () =
+        let file = new File()
+
+        if file.FileExists("user://cached_images.json") then
+            let x =
+                file.Open("user://cached_images.json", File.ModeFlags.Read)
+                |> fromGodotError (fun _ -> Ok(file.GetAsText()))
+                |> Result.map
+                    (fun x ->
+                        let arr =
+                            try
+                                Json.deserialize x
+                            with err ->
+                                GD.PrintErr(err)
+                                []
+
+                        let set = new HashSet<_>()
+
+                        for x in arr do
+                            set.Add(x) |> ignore
+
+                        set)
+
+            match x with
+            | Ok x -> x
+            | Result.Error _ -> new HashSet<_>()
+        else
+            new HashSet<string>()
+
+    let tryGetImageFromCache url =
+        let (found, image) = memCache.TryGetValue(url)
+
+        if found then
+            Some image
+        else if imagesStored.Contains url then
+            let img = new Image()
+
+            match img.Load("user://" + url) with
+            | Error.Ok -> Some img
+            | _ -> None
+        else
+            None
+
+    let initCache () =
+        if not checkedCache then
+            checkCacheDate ()
+            |> Poll.AfterOk(fun x -> checkedCache <- true)
+            |> Poll.AfterOk
+                (fun x ->
+                    let imageList = readCachedImages ()
+
+                    imagesStored <-
+                        if not x then
+                            let dir = new Directory()
+
+                            for v in imageList do
+                                dir.Remove("user://" + v) |> ignore
+
+                            new HashSet<_>()
+
+                        else
+                            imageList
+
+                    )
+            |> Poll.Map ignore
+
+        else
+            Poll.Ready()
+
+
+
     let getImage url =
-        (bareRequest url HTTPClient.Method.Get None)
-        |> Poll.MapOk
-            (fun x ->
-                let image = new Image()
+        let image = tryGetImageFromCache url
 
-                image.LoadPngFromBuffer(x)
-                |> fromGodotError (fun _ -> Ok(image))
+        match image with
+        | Some x -> x |> Ok |> Poll.Ready
+        | None ->
+            (bareRequest url HTTPClient.Method.Get None)
+            |> Poll.MapOk
+                (fun x ->
+                    let image = new Image()
 
-                )
-        |> Poll.Flatten
+                    image.LoadPngFromBuffer(x)
+                    |> fromGodotError
+                        (fun _ ->
+                            let urlArr = (url.Split '/')
+
+                            let (_, backToStr) =
+                                urlArr
+                                |> Array.fold
+                                    (fun (i: int, s: string) y ->
+                                        GD.Print("Y = ")
+                                        GD.Print(y)
+                                        GD.Print("X =")
+                                        GD.Print(s)
+                                        GD.Print("I = ")
+                                        GD.Print(i)
+
+                                        if i = urlArr.Length - 1 then
+                                            (i + 1, s)
+                                        else
+                                            (i + 1, s + "/" + y))
+                                    (0, "user://")
+
+                            let dir = new Directory()
+
+                            dir.MakeDirRecursive(backToStr)
+                            |> fromGodotError (ignore >> Ok)
+                            |> ignore
+
+                            match image.SavePng("user://" + url) with
+                            | Error.Ok ->
+                                imagesStored.Add(url) |> ignore
+                                let file = new File()
+
+                                file.Open("user://cached_images.json", File.ModeFlags.Write)
+                                |> fromGodotError
+                                    (fun _ -> Ok(file.StoreString(imagesStored |> Seq.toArray |> Json.serialize)))
+                                |> ignore
+
+                                file.Close()
+
+                            | _ -> ()
+
+                            memCache.Add(url, image)
+                            Ok(image))
+
+                    )
+            |> Poll.Flatten
 
     let request<'T, 'A> urlPart method (data: Option<'A>) =
         data
@@ -186,6 +347,7 @@ module PollingClient =
                         x.success
                     | None -> false
                 | x -> false)
+        |> Poll.AndThen(fun x -> initCache () |> Poll.Map(fun _ -> x))
 
     let characeterSelect () = get<CharacterList> "/characters"
 
