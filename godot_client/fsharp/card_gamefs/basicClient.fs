@@ -274,12 +274,6 @@ module PollingClient =
                                 urlArr
                                 |> Array.fold
                                     (fun (i: int, s: string) y ->
-                                        GD.Print("Y = ")
-                                        GD.Print(y)
-                                        GD.Print("X =")
-                                        GD.Print(s)
-                                        GD.Print("I = ")
-                                        GD.Print(i)
 
                                         if i = urlArr.Length - 1 then
                                             (i + 1, s)

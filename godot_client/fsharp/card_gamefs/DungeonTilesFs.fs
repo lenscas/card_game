@@ -7,24 +7,16 @@ type DungeonTilesFs() =
 
     let mutable drawDungeon: Option<Poll<JsonData.DungeonLayout>> = None
     let mutable moveInDungeon: Option<Poll<unit>> = None
+    let mutable lastDungeon: Option<JsonData.DungeonLayout> = None
 
-    member this._GotDungeon dungeon =
-        let dungeon =
-            FSharp.Json.Json.deserialize<JsonData.DungeonLayout> dungeon
+    let calcPos index width =
+        let x = (index % width) |> float32
+        let y = (index / width) |> float32
+        Vector2(x, y)
 
+    member this._GotDungeon(dungeon: JsonData.DungeonLayout) =
 
-
-        let tiles =
-            dungeon.tiles
-            |> Array.mapi
-                (fun index tile ->
-                    let x = (index % dungeon.widht) |> float32
-                    let y = (index / dungeon.widht) |> float32
-                    let pos = Vector2(x, y)
-
-                    (pos, tile))
-
-        GD.Print("got here?")
+        moveInDungeon <- None
 
         drawDungeon <-
             PollingClient.getDungeonTiles ()
@@ -46,38 +38,54 @@ type DungeonTilesFs() =
                 (fun x ->
                     let rec loop (images: (Image * string) list) count =
                         match images with
-                        | head :: tail ->
-                            let (image, name) = head
-                            this.TileSet.CreateTile count
-                            let texture = new ImageTexture()
-                            texture.CreateFromImage image
-                            this.TileSet.TileSetTexture(count, texture)
-                            this.TileSet.TileSetName(count, name)
-                            (count + 1) |> loop tail
+                        | (image, name) :: tail ->
+                            let nextCount =
+                                if this.TileSet.FindTileByName name < 0 then
+                                    this.TileSet.CreateTile count
+                                    let texture = new ImageTexture()
+                                    texture.CreateFromImage image
+                                    this.TileSet.TileSetTexture(count, texture)
+                                    this.TileSet.TileSetName(count, name)
+                                    count + 1
+                                else
+                                    count
+
+                            loop tail nextCount
                         | [] -> ()
 
-                    loop x 0
+                    this.TileSet.GetLastUnusedTileId() |> loop x
 
                     )
             |> Poll.IgnoreResult
             |> Poll.After
                 (fun _ ->
-                    this.Clear()
+                    let checker =
+                        match lastDungeon with
+                        | None ->
+                            this.Clear()
+                            (fun _ _ -> false)
+                        | Some lastDungeon ->
+                            if lastDungeon.tiles.Length = dungeon.tiles.Length then
+                                (fun i state -> lastDungeon.tiles.[i] = state)
+                            else
+                                this.Clear()
+                                (fun _ _ -> false)
 
-                    for tile in tiles do
-                        let (pos, state) = tile
+                    for (i, state) in dungeon.tiles |> Seq.indexed do
+                        if checker i state |> not then
+                            let pos = calcPos i dungeon.widht
 
-                        let name =
-                            match state with
-                            | JsonData.TileState.Empty -> None
-                            | JsonData.TileState.Hidden -> Some(this.TileSet.FindTileByName("hidden.png"))
-                            | JsonData.TileState.Seen x -> Some(this.TileSet.FindTileByName(x))
+                            let name =
+                                match state with
+                                | JsonData.TileState.Empty -> None
+                                | JsonData.TileState.Hidden -> Some(this.TileSet.FindTileByName("hidden.png"))
+                                | JsonData.TileState.Seen x -> Some(this.TileSet.FindTileByName(x))
 
-                        match name with
-                        | Some (x) -> this.SetCellv(pos, x)
-                        | None -> ()
+                            match name with
+                            | Some (x) -> this.SetCellv(pos, x)
+                            | None -> ()
 
-                    GD.Print "done")
+                        GD.Print "done")
             |> Poll.AndThen
                 (fun _ ->
                     Globals.getCurrentId ()
@@ -134,23 +142,19 @@ type DungeonTilesFs() =
 
                                     moveInDungeon <-
                                         Poll.poll {
-
-
-                                            let! res =
-                                                PollingClient.MoveInDungeon
-                                                    (Globals.getCurrentId ())
-                                                    { x = moveX; y = moveY }
+                                            let currentId = Globals.getCurrentId ()
+                                            let! res = PollingClient.MoveInDungeon currentId { x = moveX; y = moveY }
 
                                             match res with
                                             | Ok (Some (x)) ->
                                                 match x with
                                                 | JsonData.EventProcesed.Error
                                                 | JsonData.EventProcesed.CurrentlyInBattle ->
-                                                    moveInDungeon <- None
-                                                    drawDungeon <- oldRequest
+                                                    //there was a desync, and we showed the dungeon screen while the character is in a battle
+                                                    //lets fix this by going to the battle screen.
+                                                    this.EmitSignal("EnteredBattle")
                                                 | JsonData.EventProcesed.Success true ->
                                                     this.EmitSignal("EnteredBattle")
-
                                                 | JsonData.EventProcesed.Success false ->
                                                     let newLocation: JsonData.BasicVector_for_uint =
                                                         { x = playerX; y = playerY }
@@ -160,8 +164,7 @@ type DungeonTilesFs() =
                                                               player_at = newLocation }
 
                                                     moveInDungeon <- None
-                                                    //TODO: Get the new dungeon information.
-                                                    this._GotDungeon (FSharp.Json.Json.serialize newDungeon)
+                                                    this.EmitSignal("UpdateDungeon", currentId)
                                             | Result.Error _
                                             | Ok (None) ->
                                                 moveInDungeon <- None
