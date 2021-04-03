@@ -88,7 +88,7 @@ local function deal_damage(params: DamageParameters)
 	end
 
 	--and finally, the runes from the target
-	local positives:{number} = {}
+	local positives:{integer} = {}
 	local toRunes = params.to:get_runes()
 	for k, v in ipairs(toRunes) do
 		local reduction, register_anyway = runes.run_rune_code(
@@ -113,7 +113,7 @@ local function deal_damage(params: DamageParameters)
 		amount = amount - (amount / 100 * v)
 	end
 
-	params.to:deal_damage(amount)
+	params.to:deal_damage(math.floor(amount))
 end
 
 local function makeSaveRun(func:function(any):any...):function(any):any

@@ -13,27 +13,27 @@ end
 local function run_rune_code(
 	_battle: Rust.Field,
 	owner: Rust.Player,
-	index : number,
+	index : integer,
 	rune : Rust.SmallRune, 
 	rune_func : Rune.BasicRuneMethodNames,
 	params : {any}
-): (number,boolean)
+): (integer,boolean)
 	index = index - 1
 	local code = load_small_rune_code(rune)
 	local func = code[rune_func]
 	if func then
-		local x= func as function(...:any):(number,boolean) 
+		local x= func as function(...:any):(integer,boolean) 
 		local y = {x(code,table.unpack(params))}
 		local ret_value = y
 		owner:save_rune(rune,index)
-		return table.unpack(ret_value) as (number,boolean)
+		return table.unpack(ret_value) as (integer,boolean)
 	end
 end
 
 local function run_turn_trigger_rune(
 	_battle: Rust.Field,
 	owner: Rust.Player,
-	index : number,
+	index : integer,
 	rune : Rust.SmallRune, 
 	rune_func : Rune.TriggeredByTurnMethodNames,
 	params : {any}
@@ -52,16 +52,16 @@ end
 local function run_rune_speed_code(
 	battle: Rust.Field,
 	owner: Rust.Player,
-	index : number,
+	index : integer,
 	rune : Rust.SmallRune, 
 	rune_func : Rune.SpeedRuneMethodNames,
 	params : {any}
-):(number,boolean)
+):(integer,boolean)
 index = index - 1
 	local code = load_small_rune_code(rune)
 	local func = code[rune_func]
 	if func then
-		local x= func as function(...:any):(number,boolean)
+		local x= func as function(...:any):(integer,boolean)
 		local y = x(code,table.unpack(params))
 		owner:save_rune(rune,index)
 		return y
@@ -69,16 +69,16 @@ index = index - 1
 end
 local function run_hexa_code(
 	battle: Rust.Field,
-	index : number,
+	index : integer,
 	rune: Rust.HexaRune, 
 	rune_func : Rune.BasicHexaMethodNames, 
 	params : {any}
-): (number,boolean)
+): (integer,boolean)
 	index = index - 1
 	local code = load_hexa_rune_code(rune)
 	
 	if code[rune_func] then
-		local x= code[rune_func] as function(...:any):(number, boolean) 
+		local x= code[rune_func] as function(...:any):(integer, boolean) 
 		local y = x(code,table.unpack(params))
 		local ret_value = {y}
 		battle:save_rune(rune,index)
@@ -88,7 +88,7 @@ end
 
 local function run_turn_trigger_hexa_code(
 	battle: Rust.Field,
-	index : number,
+	index : integer,
 	rune: Rust.HexaRune, 
 	rune_func : Rune.TriggeredByTurnHexaMethodNames, 
 	params : {any}
@@ -116,7 +116,7 @@ return {
 		caster:Rust.Player, 
 		oponent : Rust.Player, 
 		card: Rust.Card
-	): (number,Rune.TriggeredRunes)
+	): (integer,Rune.TriggeredRunes)
 
 		local casterRunes = caster:get_runes()
 		local extraSpeed = 0
