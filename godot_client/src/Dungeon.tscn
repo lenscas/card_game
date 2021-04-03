@@ -20,5 +20,5 @@ __meta__ = {
 
 [node name="Player" type="Sprite" parent="."]
 script = ExtResource( 3 )
-[connection signal="GotDungeonLayout" from="." to="DungeonTiles" method="_GotDungeon"]
 [connection signal="SetPlayerPos" from="DungeonTiles" to="Player" method="_on_SetPlayerPosAndImage"]
+[connection signal="UpdateDungeon" from="DungeonTiles" to="." method="_UpdateDungeon"]

@@ -51,8 +51,8 @@
     <Compile Include="HandContainerFs.fs" />
     <Compile Include="RuneContainerFs.fs" />
     <Compile Include="ArenaFs.fs"/>
-    <Compile Include="DungeonFs.fs" />
     <Compile Include="DungeonTilesFs.fs" />
+    <Compile Include="DungeonFs.fs" />
     <Compile Include="SceneControllerFs.fs" />
     <Compile Include="character_selectFs.fs" />
     <Compile Include="LoginScreenFs.fs" />

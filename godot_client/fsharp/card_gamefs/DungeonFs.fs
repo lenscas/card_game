@@ -2,10 +2,13 @@ namespace CardGame
 
 open Godot
 
-type DungeonFs() =
+type DungeonFs() as this =
     inherit Node2D()
 
     let mutable dungeonRequest = None
+
+    let dungeonTileNode =
+        lazy (this.GetNode<DungeonTilesFs>(new NodePath("DungeonTiles")))
 
     member this.GetDungeon currentId =
         this.Show()
@@ -17,10 +20,12 @@ type DungeonFs() =
                 (fun x ->
                     match x with
                     | Some (x) ->
-                        this.EmitSignal("GotDungeonLayout", (FSharp.Json.Json.serialize x))
+                        dungeonTileNode.Value._GotDungeon (x)
                         this.Show()
                     | None -> ())
             |> Poll.IgnoreResult
             |> Some
+
+    member this._UpdateDungeon id = this.GetDungeon id
 
     override this._Process _ = dungeonRequest |> Poll.TryIgnorePoll

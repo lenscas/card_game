@@ -27,12 +27,12 @@ global record Rune
     enum TriggeredByTurnHexaMethodNames
         "end_of_turn_effect"
     end
-    type BasicRuneFunc = function(Rune,Rust.SmallRune,Rust.Field, Rust.Player,Rust.Player):(number,boolean)
-    type RuneSpeedFunc = function(Rune,Rust.SmallRune,Rust.Card,Rust.Player):(number,boolean)
+    type BasicRuneFunc = function(Rune,Rust.SmallRune,Rust.Field, Rust.Player,Rust.Player):(integer,boolean)
+    type RuneSpeedFunc = function(Rune,Rust.SmallRune,Rust.Card,Rust.Player):(integer,boolean)
     type RuneFuncTurnTrigger = function(Rune,Rust.SmallRune,Rust.Field, Rust.Player,Rust.Player):boolean
     type HexaRuneFunc = function(Rune,Rust.HexaRune,Rust.Field, Rust.Player,Rust.Player):boolean
     record Rune
-        turns_left: number
+        turns_left: integer
         end_of_turn_effect: RuneFuncTurnTrigger
         modify_damage: BasicRuneFunc
         owner_modify_damage: BasicRuneFunc
@@ -41,19 +41,19 @@ global record Rune
         receiver_modify_damage: BasicRuneFunc
     end
     record HexaRune
-        turns_left: number
+        turns_left: integer
         end_of_turn_effect: HexaRuneFunc
         modify_damage: BasicRuneFunc
     end
      
     record ReturnValue
-        value: number
+        value: integer
         register_anyway : boolean
     end
     record TriggeredRunes 
-        owner: {number}
-        hexa: {number}
-        oponent:{number}
+        owner: {integer}
+        hexa: {integer}
+        oponent:{integer}
     end
 end
 

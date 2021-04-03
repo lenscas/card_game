@@ -1,8 +1,8 @@
 global record CardTemplate 
 	name : string
 	description:string
-	cost : number
-	speed : number
+	cost : integer
+	speed : integer
     id: string
     func : function(CardFuncParams)
     code : string
