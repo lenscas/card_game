@@ -17,7 +17,7 @@ base64 = "*"
 card_game_shared = {path = "../shared", features = ["server"]}
 dotenv = "*"
 futures = "*"
-http = "0.2.0"
+http = "0.2.4"
 image = {version = "*", default-features = false, features = ["png"]}
 pretty_env_logger = "*"
 rand = "*"
