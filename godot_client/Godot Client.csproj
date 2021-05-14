@@ -1,11 +1,12 @@
 <Project Sdk="Godot.NET.Sdk/3.2.3">
-  <ItemGroup>
-    <ProjectReference Include="fsharp\card_gamefs\card_gamefs.fsproj" />
-  </ItemGroup>
-  <PropertyGroup>
+<PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>GodotClient</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="fsharp\card_gamefs\card_gamefs.fsproj" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <Reference Include="GodotSharp">

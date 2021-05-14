@@ -165,7 +165,7 @@ fn handle_custom_error(error: &ReturnError) -> ReturnHandle {
         ReturnError::DatabaseError(_) | ReturnError::LuaError(_) | ReturnError::JsonError(_) => {
             ReturnHandle::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "something wend wrong".into(),
+                "something went wrong".into(),
             )
         }
     }

@@ -1,7 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Godot.NET.Sdk/3.2.3">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <PackageReference Include="Ply" Version="0.3.1" />
+    <Reference Include="GodotSharp">
+      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="netstandard" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="FSharp.Json" Version="0.4.0" />
+  </ItemGroup>
 
   <PropertyGroup>
     <!-- When compiling .NET SDK 2.0 projects targeting .NET 4.x on Mono using 'dotnet build' you -->
@@ -18,6 +29,7 @@
     <!-- Add the Facades directory.  Not sure how else to do this. Necessary at least for .NET 4.5 -->
     <AssemblySearchPaths Condition="'$(BaseFrameworkPathOverrideForMono)' != ''">$(FrameworkPathOverride)/Facades;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
+  
 
   <ItemGroup>
     <compile Include="schemas/ImageUrlWithName.schema.fs"/>
@@ -58,14 +70,5 @@
     <Compile Include="LoginScreenFs.fs" />
     <Compile Include="PlayerDungeonFs.fs"/>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Runtime" Version="4.3.1" />
-    <PackageReference Include="Ply" Version="0.3.1" />
-    <Reference Include="GodotSharp">
-      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="netstandard" />
-    <Reference Include="System.Net.Http" />
-    <PackageReference Include="FSharp.Json" Version="0.4.0" />
-  </ItemGroup>
+
 </Project>

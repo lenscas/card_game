@@ -1,5 +1,5 @@
 use super::users::{force_logged_in, with_db};
-use crate::{battle::Field, dungeon::Dungeon, errors::ReturnError, util::convert_error};
+use crate::{dungeon::Dungeon, errors::ReturnError, util::convert_error};
 use card_game_shared::{dungeon::EventProcesed, image_map::ImageUrlWithName};
 use image::{open, png::PngEncoder, EncodableLayout, Rgba};
 use sqlx::{query, PgPool};
@@ -32,24 +32,35 @@ pub(crate) async fn do_move(
         Some(x) => x,
         None => {
             return Err(ReturnError::CustomError(
-                serde_json::to_string(&EventProcesed::CurrentlyInBattle)?,
+                serde_json::to_string(&EventProcesed::CurrentlyInAction(None))?,
                 StatusCode::CONFLICT,
             ))
         }
     };
+    if let Some(x) = dungeon.get_forced_actions_on_current_tile() {
+        return Err(ReturnError::CustomError(
+            serde_json::to_string(&EventProcesed::CurrentlyInAction(Some(x)))?,
+            StatusCode::CONFLICT,
+        ));
+    }
     let did_move = dungeon.try_move(move_to);
     match did_move {
-        Some(entered_fight) => {
+        Some(new_tile) => {
+            let tile_action = if !new_tile.has_been_processed {
+                Some(
+                    new_tile
+                        .start_process(user_id, character_id, &mut transaction)
+                        .await?,
+                )
+            } else {
+                None
+            };
             dungeon
                 .save(user_id, character_id, &mut transaction)
                 .await?;
-            if entered_fight {
-                let field = Field::new(user_id, character_id, &mut transaction).await?;
-                field.save(user_id, character_id, &mut transaction).await?;
-            }
             transaction.commit().await?;
             Ok(Box::new(warp::reply::json(&EventProcesed::Success(
-                entered_fight,
+                tile_action,
             ))))
         }
         None => Err(ReturnError::CustomError(

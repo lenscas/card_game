@@ -5,9 +5,9 @@ open Godot
 type DungeonTilesFs() =
     inherit TileMap()
 
-    let mutable drawDungeon: Option<Poll<JsonData.DungeonLayout>> = None
-    let mutable moveInDungeon: Option<Poll<unit>> = None
-    let mutable lastDungeon: Option<JsonData.DungeonLayout> = None
+    let mutable drawDungeon : Option<Poll<JsonData.DungeonLayout>> = None
+    let mutable moveInDungeon : Option<Poll<unit>> = None
+    let mutable lastDungeon : Option<JsonData.DungeonLayout> = None
 
     let calcPos index width =
         let x = (index % width) |> float32
@@ -126,53 +126,51 @@ type DungeonTilesFs() =
 
                     match res with
                     | Some (playerX, playerY, moveX, moveY) ->
-                        if playerY >= 0 && playerX >= 0 then
-                            let tileIndex =
-                                (playerY * dungeonLayout.widht) + playerX
+                        if not (playerY >= 0 && playerX >= 0) then
+                            return ()
 
-                            if tileIndex < dungeonLayout.tiles.Length then
-                                let tile = dungeonLayout.tiles.[tileIndex]
+                        let tileIndex =
+                            (playerY * dungeonLayout.widht) + playerX
 
-                                match tile with
-                                | JsonData.TileState.Empty -> ()
-                                | JsonData.TileState.Hidden
-                                | JsonData.TileState.Seen _ ->
-                                    let oldRequest = drawDungeon
-                                    drawDungeon <- None
+                        if tileIndex < dungeonLayout.tiles.Length then
+                            let tile = dungeonLayout.tiles.[tileIndex]
 
-                                    moveInDungeon <-
-                                        Poll.poll {
-                                            let currentId = Globals.getCurrentId ()
-                                            let! res = PollingClient.MoveInDungeon currentId { x = moveX; y = moveY }
+                            match tile with
+                            | JsonData.TileState.Empty -> ()
+                            | JsonData.TileState.Hidden
+                            | JsonData.TileState.Seen _ ->
+                                let oldRequest = drawDungeon
+                                drawDungeon <- None
 
-                                            match res with
-                                            | Ok (Some (x)) ->
-                                                match x with
-                                                | JsonData.EventProcesed.Error
-                                                | JsonData.EventProcesed.CurrentlyInBattle ->
-                                                    //there was a desync, and we showed the dungeon screen while the character is in a battle
-                                                    //lets fix this by going to the battle screen.
-                                                    this.EmitSignal("EnteredBattle")
-                                                | JsonData.EventProcesed.Success true ->
-                                                    this.EmitSignal("EnteredBattle")
-                                                | JsonData.EventProcesed.Success false ->
-                                                    let newLocation: JsonData.BasicVector_for_uint =
-                                                        { x = playerX; y = playerY }
+                                moveInDungeon <-
+                                    Poll.poll {
+                                        let currentId = Globals.getCurrentId ()
+                                        let! res = PollingClient.MoveInDungeon currentId { x = moveX; y = moveY }
 
-                                                    let newDungeon: JsonData.DungeonLayout =
-                                                        { dungeonLayout with
-                                                              player_at = newLocation }
+                                        match res with
+                                        | Ok (Some (x)) ->
+                                            match x with
+                                            | JsonData.EventProcesed.Error -> GD.PrintErr("Something has gone wrong")
+                                            | JsonData.EventProcesed.CurrentlyInAction action
+                                            | JsonData.EventProcesed.Success action ->
+                                                match action with
+                                                | Some action ->
+                                                    match action.tile_type with
+                                                    | JsonData.TileType.Fight -> this.EmitSignal("EnteredBattle")
+                                                    | _ ->
+                                                        let newLocation : JsonData.BasicVector_for_uint =
+                                                            { x = playerX; y = playerY }
 
-                                                    moveInDungeon <- None
-                                                    this.EmitSignal("UpdateDungeon", currentId)
-                                            | Result.Error _
-                                            | Ok (None) ->
-                                                moveInDungeon <- None
-                                                drawDungeon <- oldRequest
-                                        }
-                                        |> Some
+                                                        let newDungeon : JsonData.DungeonLayout =
+                                                            { dungeonLayout with
+                                                                  player_at = newLocation }
 
-                                ()
+                                                        moveInDungeon <- None
+                                                        this.EmitSignal("UpdateDungeon", currentId)
+                                    }
+                                    |> Some
+
+                            ()
                     | None -> ()
 
                     ())
