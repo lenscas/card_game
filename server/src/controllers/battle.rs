@@ -1,7 +1,10 @@
 use super::users::force_logged_in;
-use crate::{battle::Field, controllers::users::with_db, errors::ReturnError, util::convert_error};
+use crate::{
+    battle::Field, controllers::users::with_db, dungeon::Dungeon, errors::ReturnError,
+    util::convert_error,
+};
 use card_game_shared::battle::{TakeAction, TurnResponse};
-use sqlx::{query, PgPool};
+use sqlx::{query, Executor, PgPool};
 use warp::{path::param, Filter, Reply};
 
 async fn get_battle(
@@ -27,12 +30,13 @@ async fn do_turn(
     let (battle, event_list, is_over) = battle.process_turn(chosen_card).await?;
     if is_over {
         query!(
-            "UPDATE characters SET current_battle = null WHERE user_id = $1 and id=$2",
+            "UPDATE characters SET current_event = null WHERE user_id = $1 and id=$2",
             user_id,
             action.character_id
         )
         .execute(&mut con)
         .await?;
+        Dungeon::end_current_event(user_id, action.character_id, &mut con).await?;
         con.commit().await?;
         return Ok(Box::new(serde_json::to_string(&TurnResponse::Done)?));
     } else {

@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <Reference Include="GodotSharp">
-      <HintPath>.mono/assemblies/Release/GodotSharp.dll</HintPath>
+      <HintPath>.mono/assemblies/Debug/GodotSharp.dll</HintPath>
     </Reference>
     <Reference Include="netstandard" />
   </ItemGroup>

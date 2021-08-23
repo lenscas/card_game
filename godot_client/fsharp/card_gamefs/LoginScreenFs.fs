@@ -1,12 +1,6 @@
 namespace CardGame
 
 open Godot
-open JsonData
-open System.Threading.Tasks
-open FSharp.Json
-open FSharp.Json.Json
-open FSharp.Control.Tasks
-open FSharp.Control.Tasks.NonAffine
 
 type LoginScreenFs() as this =
     inherit Control()
@@ -18,9 +12,9 @@ type LoginScreenFs() as this =
         lazy (this.GetNode<LineEdit>(new NodePath("Password")))
 
 
-    let mutable currentlyProcessing: Option<Poll<unit>> = None
+    let mutable currentlyProcessing : Option<Poll<unit>> = None
 
-    override this._Process(delta) =
+    override __._Process _ =
         currentlyProcessing |> Poll.TryIgnorePoll
 
     member this._OnLoginButtonpressed() =
@@ -32,9 +26,9 @@ type LoginScreenFs() as this =
                     let! canLogin =
                         match res with
                         | Ok (_) -> PollingClient.login userNameNode.Value.Text passwordNode.Value.Text
-                        | Result.Error (x) ->
-                            GD.PrintErr(x)
-                            Poll.Ready(false)
+                        | Result.Error x ->
+                            GD.PrintErr x
+                            Poll.Ready false
 
                     if canLogin then
                         this

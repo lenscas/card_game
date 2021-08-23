@@ -10,6 +10,9 @@ type DungeonFs() as this =
     let dungeonTileNode =
         lazy (this.GetNode<DungeonTilesFs>(new NodePath("DungeonTiles")))
 
+    let DungeonCardContainer =
+        lazy (this.GetNode<DungeonCardContainerFs>(new NodePath("DungeonCardContainer")))
+
     member this.GetDungeon currentId =
         this.Show()
 
@@ -20,7 +23,7 @@ type DungeonFs() as this =
                 (fun x ->
                     match x with
                     | Some (x) ->
-                        dungeonTileNode.Value._GotDungeon (x)
+                        dungeonTileNode.Value._GotDungeon x DungeonCardContainer.Value.Open
                         this.Show()
                     | None -> ())
             |> Poll.IgnoreResult

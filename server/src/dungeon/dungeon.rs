@@ -1,10 +1,11 @@
 use super::Tile;
+use crate::battle::Field;
 use crate::errors::ReturnError;
 use card_game_shared::dungeon::{TileAction, TileType};
 use card_game_shared::BasicVector;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sqlx::{query, Executor};
+use sqlx::{query, Executor, Transaction};
 use std::collections::HashSet;
 
 use super::{connect_tiles, place_tile_at_random_location};
@@ -20,23 +21,55 @@ impl Dungeon {
     pub(crate) async fn select_from_db_no_battle<'c, E>(
         user_id: i64,
         character_id: i64,
-        con: E,
+        con: &'c mut E,
     ) -> Result<Option<Self>, ReturnError>
     where
-        E: Executor<'c, Database = sqlx::postgres::Postgres>,
+        &'c mut E: Executor<'c, Database = sqlx::postgres::Postgres>,
     {
         let dungeon = query!(
-            "SELECT dungeon FROM characters WHERE user_id = $1 AND id=$2 AND characters.current_battle IS NULL",
+            "
+                SELECT dungeon, current_event
+                FROM characters
+                WHERE user_id = $1
+                AND id=$2
+            ",
             user_id,
             character_id
         )
         .fetch_optional(con)
-        .await?.map(|d|d.dungeon).map(serde_json::from_value);
-
+        .await?
+        .into_iter()
+        .filter_map(|x| {
+            let (current_event, dungeon) = (x.current_event, x.dungeon);
+            current_event
+                .map(|event| serde_json::from_value::<Field>(event).is_err())
+                .unwrap_or(true)
+                .then(|| dungeon)
+        })
+        .map(serde_json::from_value)
+        .next();
         match dungeon {
             Some(x) => Ok(Some(x?)),
             None => Ok(None),
         }
+    }
+    pub(crate) async fn end_current_event<'t, 'c>(
+        user_id: i64,
+        character_id: i64,
+        con: &'t mut Transaction<'c, sqlx::Postgres>,
+    ) -> Result<(), ReturnError> {
+        let dungeon = Self::select_from_db_no_battle(user_id, character_id, con).await?;
+        if let Some(mut dungeon) = dungeon {
+            let tile = card_game_shared::funcs::get_index_matrix(
+                dungeon.length as usize,
+                &dungeon.character_at,
+            );
+            let tile = dungeon.tiles.get_mut(tile).unwrap();
+            tile.has_been_processed = true;
+            tile.visited = true;
+            dungeon.save(user_id, character_id, con).await?;
+        }
+        Ok(())
     }
     pub(crate) fn get_forced_actions_on_current_tile(&self) -> Option<TileAction> {
         self.tiles
@@ -166,25 +199,31 @@ impl Dungeon {
                 &self.character_at,
             ))
             .map(|v| if v.can_walk() { Some(v) } else { None });
-        if tile.is_none() {
-            self.character_at = old_character_location;
-            return None;
+        match tile {
+            None => {
+                self.character_at = old_character_location;
+                None
+            }
+            Some(Some(x)) => {
+                x.visited = true;
+                Some(x)
+            }
+            _ => None,
         }
-        tile.unwrap()
     }
     pub(crate) async fn save<'c, E>(
         self,
         user_id: i64,
         character_id: i64,
-        con: E,
+        con: &'c mut E,
     ) -> Result<(), ReturnError>
     where
-        E: Executor<'c, Database = sqlx::postgres::Postgres>,
+        &'c mut E: Executor<'c, Database = sqlx::postgres::Postgres>,
     {
         query!(
-            "UPDATE characters 
-            SET dungeon=$1 
-            WHERE user_id = $2 
+            "UPDATE characters
+            SET dungeon=$1
+            WHERE user_id = $2
             AND id = $3",
             serde_json::to_value(self)?,
             user_id,

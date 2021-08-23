@@ -5,7 +5,7 @@ open Godot
 type SceneControllerFs() as this =
     inherit Node2D()
 
-    let mutable currentRequest: Option<Poll<unit>> = None
+    let mutable currentRequest : Option<Poll<unit>> = None
 
     let DungeonNode =
         lazy (this.GetNode<DungeonFs>(new NodePath("Dungeon")))
@@ -13,27 +13,28 @@ type SceneControllerFs() as this =
     let ArenaNode =
         lazy (this.GetNode<ArenaFs>(new NodePath("Arena")))
 
+
     override this._Ready() =
         this
             .GetNode(new NodePath("Dungeon/DungeonTiles"))
             .Connect("EnteredBattle", this, "OnEnteredBattle")
         |> ignore
 
-    override this._Process delta = currentRequest |> Poll.TryIgnorePoll
+    override __._Process delta = currentRequest |> Poll.TryIgnorePoll
 
-    member this.OnEnteredBattle() =
+    member __.OnEnteredBattle() =
         DungeonNode.Value.Hide()
 
         Globals.getCurrentId ()
         |> ArenaNode.Value.GetArena
 
-    member this.OnBattleEnded() =
+    member __.OnBattleEnded() =
         ArenaNode.Value.Hide()
 
         Globals.getCurrentId ()
         |> DungeonNode.Value.GetDungeon
 
-    member this._OnSelectedCharacter(id: int) =
+    member __._OnSelectedCharacter(id: int) =
         GD.Print("in on select")
         Globals.SetCurrentId id
 

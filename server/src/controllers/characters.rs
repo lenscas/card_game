@@ -79,11 +79,11 @@ pub(crate) async fn get_character_in_battle(
 ) -> Result<Box<dyn Reply>, ReturnError> {
     let count = query!(
         "
-        SELECT COUNT(*) as count 
-        FROM characters 
-        WHERE user_id=$1 
-        AND id=$2 
-        AND current_battle IS NULL",
+        SELECT COUNT(*) as count
+        FROM characters
+        WHERE user_id=$1
+        AND id=$2
+        AND current_event IS NULL",
         user_id,
         char_id
     )

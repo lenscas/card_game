@@ -30,17 +30,17 @@ impl Field {
         con: E,
     ) -> Result<Self, ReturnError> {
         let v = query!(
-            "SELECT current_battle 
-            FROM characters 
-            WHERE user_id = $1 
-            AND current_battle IS NOT NULL
+            "SELECT current_event
+            FROM characters
+            WHERE user_id = $1
+            AND current_event IS NOT NULL
             AND characters.id = $2",
             user_id,
             character_id
         )
         .fetch_one(con)
         .await?;
-        Ok(serde_json::from_value(v.current_battle.unwrap())?)
+        Ok(serde_json::from_value(v.current_event.unwrap())?)
     }
 
     pub(crate) fn into_shared(self) -> ReturnBattle {
@@ -104,7 +104,7 @@ impl Field {
         con: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ReturnError> {
         query!(
-            "UPDATE characters SET current_battle=$1 WHERE user_id=$2 AND id=$3",
+            "UPDATE characters SET current_event=$1 WHERE user_id=$2 AND id=$3",
             serde_json::to_value(self)?,
             user_id,
             character_id

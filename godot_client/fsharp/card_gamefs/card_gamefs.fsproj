@@ -7,7 +7,7 @@
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="Ply" Version="0.3.1" />
     <Reference Include="GodotSharp">
-      <HintPath>../../.mono/assemblies/Release/GodotSharp.dll</HintPath>
+      <HintPath>../../.mono/assemblies/Debug/GodotSharp.dll</HintPath>
     </Reference>
     <Reference Include="netstandard" />
     <Reference Include="System.Net.Http" />
@@ -29,7 +29,7 @@
     <!-- Add the Facades directory.  Not sure how else to do this. Necessary at least for .NET 4.5 -->
     <AssemblySearchPaths Condition="'$(BaseFrameworkPathOverrideForMono)' != ''">$(FrameworkPathOverride)/Facades;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
-  
+
 
   <ItemGroup>
     <compile Include="schemas/ImageUrlWithName.schema.fs"/>
@@ -60,6 +60,7 @@
     <Compile Include="newBasicClient.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DungeonCardContainerFs.fs" />
     <Compile Include="HandContainerFs.fs" />
     <Compile Include="RuneContainerFs.fs" />
     <Compile Include="ArenaFs.fs"/>
@@ -70,5 +71,4 @@
     <Compile Include="LoginScreenFs.fs" />
     <Compile Include="PlayerDungeonFs.fs"/>
   </ItemGroup>
-
 </Project>
