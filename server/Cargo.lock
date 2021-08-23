@@ -296,7 +296,7 @@ dependencies = [
  "sha2",
  "sheep",
  "sqlx",
- "tealr",
+ "tealr 0.7.0",
  "tokio",
  "warp",
 ]
@@ -310,7 +310,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sheep",
- "tealr",
+ "tealr 0.5.1",
  "type_gen",
 ]
 
@@ -2094,7 +2094,17 @@ checksum = "72f95fefafd8ae577fff21f1c90393a4b450203d3f74f3dd354985b1846a5977"
 dependencies = [
  "bstr",
  "rlua",
- "tealr_derive",
+ "tealr_derive 0.5.1",
+]
+
+[[package]]
+name = "tealr"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db74e6f0b9ce2ebb0171a6cfd678e7f98ac85a204b735efc3934cc1f6817ee23"
+dependencies = [
+ "bstr",
+ "tealr_derive 0.6.0",
 ]
 
 [[package]]
@@ -2102,6 +2112,19 @@ name = "tealr_derive"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8a2a6fa6043ab31495861941f8079c965f34f8b9e4505dd4eefce6c10206cbb"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.8",
+ "syn",
+ "tempfile",
+ "zip",
+]
+
+[[package]]
+name = "tealr_derive"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8738d67ea1aad5fa3554487634b8f4bb9ec2cf442f47b61d5fb786626bb87bdf"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.8",
