@@ -290,7 +290,7 @@ dependencies = [
  "pretty_env_logger",
  "rand 0.8.3",
  "rand_core 0.6.1",
- "rlua",
+ "rlua 0.18.0",
  "serde",
  "serde_json",
  "sha2",
@@ -305,7 +305,7 @@ dependencies = [
 name = "card_game_shared"
 version = "0.1.0"
 dependencies = [
- "rlua",
+ "rlua 0.18.0",
  "schemars",
  "serde",
  "serde_json",
@@ -1693,9 +1693,22 @@ dependencies = [
 
 [[package]]
 name = "rlua"
-version = "0.17.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25fa5b2c667bae0b6218361e96d365e414fe4a0fa80f476b9631aa2dea2c6881"
+checksum = "93397b9792dc237cab7554ab4c4128b8aa5fc9ec25892cfd82c92286055313d0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "cc",
+ "libc",
+ "num-traits",
+]
+
+[[package]]
+name = "rlua"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24d76c08e66e69d182a41ff735a0931ecf1879de3552c6989c65a8268ee95b19"
 dependencies = [
  "bitflags",
  "bstr",
@@ -2093,7 +2106,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f95fefafd8ae577fff21f1c90393a4b450203d3f74f3dd354985b1846a5977"
 dependencies = [
  "bstr",
- "rlua",
+ "rlua 0.17.1",
  "tealr_derive",
 ]
 
